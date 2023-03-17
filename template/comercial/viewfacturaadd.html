@@ -1,0 +1,452 @@
+{% extends "base.html" %}
+
+{% block title %}Factura{% endblock %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.simplemodal.1.4.min.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-ui-1.8.7.js"></script>
+{% endblock %}
+
+{% block js_code %}
+ 
+$(document).ready(function() {     
+  $('a.delete').click(function (e) {
+        e.preventDefault();
+       
+        // example of calling the confirm function
+        // you must use a callback function to perform the "yes" action
+        confirm("&iquest;Desea eliminar la factura?", function () {
+            window.location.href = "{% url factura_del idfa=rc_id %}";
+        });
+    });
+    
+    $('a.confirm').click(function (e) {
+        e.preventDefault();
+       
+        confirm("Al confirmar la factura no podr&aacute; realizar modificaciones. &iquest;Desea confirmar la factura?" , function () {
+            window.location.href = "{% url factura_confirmar idfa=rc_id %}" ;
+        });
+    });
+    
+  
+    $('a.cancelar').click(function (e) {
+        e.preventDefault();
+        // example of calling the confirm function
+        // you must use a callback function to perform the "yes" action
+        confirm("&iquest;Desea cancelar la factura " + ' "' + "{{ rc_nro }}" + '"?' , function () {
+            window.location.href = "{% url factura_cancelar idfa=rc_id %}";
+        });
+    });
+  
+   $('a.imprim').click(function (e) {
+        e.preventDefault();
+        var ccup = document.getElementById('checkcup').checked;
+        var ccuc = document.getElementById('checkcuc').checked;
+        var valor_cup=1;
+        var valor_cuc=1;
+        if (ccup==false){
+        	valor_cup=0;
+        }
+        if (ccuc==false){
+        	valor_cuc=0;
+        }
+        if (valor_cup==0 && valor_cuc==0){
+        	var a1="{% url verfactura idfactura=rc_id haycup=0 haycuc=0 cantcascos=cant_cascos %}"
+        }
+        if (valor_cup==1 && valor_cuc==0){
+        	var a1="{% url verfactura idfactura=rc_id haycup=1 haycuc=0 cantcascos=cant_cascos %}"
+        }
+        if (valor_cup==1 && valor_cuc==1){
+        	var a1="{% url verfactura idfactura=rc_id haycup=1 haycuc=1 cantcascos=cant_cascos %}"
+        }
+        if (valor_cup==0 && valor_cuc==1){
+        	var a1="{% url verfactura idfactura=rc_id haycup=0 haycuc=1 cantcascos=cant_cascos %}"
+        }
+        // example of calling the confirm function
+        // you must use a callback function to perform the "yes" action
+            window.location.href = a1;
+    });
+    
+$('a.elimdet').live("click",function(e){
+        e.preventDefault();
+        ira = this.href 
+        confirm("&iquest;Desea eliminar el casco seleccionado?", function () {
+            $.ajax({
+            url:ira,
+            dataType:'json',
+            success: function(data) {
+            
+            
+               if(typeof(data.error) == "undefined")
+               {
+                   $("#table-fact tbody tr").remove() //limpiar todas las filas de la tabla
+                   pmn=0.0;
+                   pcuc=0.0; 
+                   tot_preciocasco=0.0;
+                   cantidad_total=0;
+                   crenglones=0;
+                   ccascos=0;
+                   $.each(data, function(key, val) { 
+                   		if (cantidad_total==0){
+                   			pmn=val.importetotalcup
+                   			pcuc=val.importetotalcuc
+                   			tot_preciocasco=val.importetotalcasco
+                   			crenglones=val.cant_renglones
+                   			ccasco=val.total_casco
+                   			cantidad_total=1
+                   			
+                   		}
+                        // val is { pk, model, {fields}}
+                        var urldel = "{% url detalleFactura_delete2 %}" + val.id_doc +"/" + val.casco_id +"/";
+                        var urledit = "{% url detalleFactura_edit2 %}" + val.id_doc +"/" + val.casco_id +"/"; 
+                         cade= "<tr>\n" +
+                         			"<td>\n" +
+                                            "<div class='ui-corner-all' id='acciones'>\n"+
+                                                "<a href='" + urledit + "' title='Editar' class='right'><span class='ui-icon ui-icon-pencil'></span></a>\n"+
+                                                 "<a href='" + urldel + "' title='Eliminar' class='right elimdet'><span class='ui-icon ui-icon-trash'></span></a>\n"+
+                                            "</div>\n"+
+                                    "</td>\n" +
+                                    
+                                    "<td>" + val.casco_nro +"</td>\n" +
+                                    "<td>" + val.productosalida +"</td>\n"+
+                                    "<td>" + formatCurrency(val.precio_cup,'') +"</td>\n" +
+                                    "<td>" + formatCurrency(val.precio_cuc,'') +"</td>\n" +
+                                    "<td>" + formatCurrency(val.precio_casco,'') +"</td>\n"
+                                    if (val.cantidad!=undefined)
+                                    {
+                                      //cantidad_total=cantidad_total+val.cantidad
+                                      cade=cade+"<tr>\n"+
+                                           "<td></td>\n"+
+                                           "<td style='font-size: 8pt; font-style: italic; font-weight: bold;'>Total Medida</td>\n"+
+                                           "<td style='font-size: 8pt; font-style: italic; font-weight: bold;'>"+val.cantidad+"</td>\n"+
+                                           "<td style='font-size: 8pt; font-style: italic; font-weight: bold;'>"+formatCurrency(val.t_preciocup,'')+"</td>\n"+
+                                           "<td style='font-size: 8pt; font-style: italic; font-weight: bold;'>"+formatCurrency(val.t_preciocuc,'')+"</td>\n"+
+                                           "<td style='font-size: 8pt; font-style: italic; font-weight: bold;'>"+formatCurrency(val.t_preciocasco,'')+"</td>\n"+
+                                       "<tr>\n"
+                                    }
+                                    
+                                    cade=cade+"</tr>\n"
+                        $("#table-fact tbody").append(
+                                cade); 
+                    });
+                    $("#table-fact tbody").append(
+                                "<tr>\n"+
+                                "<td></td>\n"+
+                                "<td style='font-size: 10pt; font-weight: bold;'>Total Cascos</td>\n"+
+                                "<td style='font-size: 10pt; font-weight: bold;'>"+ccasco+"</td>\n"+
+                                "<td style='font-size: 10pt; font-weight: bold;'>"+pmn+"</td>\n"+
+                                "<td style='font-size: 10pt; font-weight: bold;'>"+pcuc+"</td>\n"+
+                                "<td style='font-size: 10pt; font-weight: bold;'>"+tot_preciocasco+"</td>\n"+
+                                "</tr>");
+                  
+                  if (pmn!=undefined){
+                  document.getElementById('pmn').innerHTML = pmn 
+                  document.getElementById('pcuc').innerHTML = pcuc 
+                  document.getElementById('ccasco').innerHTML = ccasco 
+                  document.getElementById('crenglones').innerHTML = crenglones 
+                  }
+                  
+               }
+               else
+               {
+                    //mostrar error mandado del servidor
+                    alert(data.message);
+               } 
+              } 
+            }); //llamada ajax
+        });
+    });
+      
+  
+      $('a.elimdet1').click(function (e) {
+        e.preventDefault();
+        ira = this.href 
+        
+        
+        confirm("&iquest;Desea eliminar el casco seleccionado?" , function () {
+            window.location.href = ira;
+
+        });
+    });
+    
+    $('#checkcup,#checkcuc').change(function(e) {
+        e.preventDefault();
+        //var organismo = $(this).val();
+        var ccup = document.getElementById('checkcup').checked;
+        var ccuc = document.getElementById('checkcuc').checked;
+        if (ccup==false){
+        	document.getElementById('impcup').style.display = 'none';
+        	document.getElementById('preccup').style.display = 'none';
+        }
+        else{
+        	document.getElementById('impcup').style.display = 'block';
+        	
+        }
+        if (ccuc==false){
+        	document.getElementById('impcuc').style.display = 'none';
+        }
+        else{
+        	document.getElementById('impcuc').style.display = 'block';
+        }
+         });
+    
+     
+ });
+
+function formatCurrency(num,signo) {
+num = num.toString().replace(/$|,/g,'');
+if(isNaN(num))
+num = "0";
+sign = (num == (num = Math.abs(num)));
+num = Math.floor(num*100+0.50000000001);
+cents = num%100;
+num = Math.floor(num/100).toString();
+if(cents<10)
+cents = "0" + cents;
+for (var i = 0; i < Math.floor((num.length-(1+i))/3); i++)
+num = num.substring(0,num.length-(4*i+3))+','+
+num.substring(num.length-(4*i+3));
+return (((sign)?'':'-') + signo + num + '.' + cents);
+}
+
+function confirm(message, callback) {
+    $('#confirm').modal({
+        closeHTML: "<a href='#' title='Close' class='modal-close'>x</a>",
+        position: ["20%",],
+        overlayId: 'confirm-overlay',
+        containerId: 'confirm-container', 
+        onShow: function (dialog) {
+            $('.message', dialog.data[0]).append(message);
+
+            // if the user clicks "yes"
+            $('.yes', dialog.data[0]).click(function () {
+                // call the callback
+                if ($.isFunction(callback)) {
+                    callback.apply();
+                }
+                // close the dialog
+                $.modal.close();
+            });
+        }
+    });
+}
+
+
+
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/confirm.css">
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+{% endblock %}
+
+{% block controller-name %}Facturas{% endblock %}
+
+{% block side-menu %}
+    <ul>
+        <li><a href="{% url factura_index %}">&Iacute;ndice</a></li>
+        <li><a href="{% url factura_edit idfa=rc_id %}">Editar</a></li>
+        <li><a href="#" class="delete">Cancelar</a></li>
+    </ul>
+{% endblock %}
+
+
+{% block main-content %}
+        <div id='confirm'  >
+            <div class='header'><span>Confirmar</span></div>
+            <div class='message'></div>
+            <div class='buttons'>
+                <div class='no simplemodal-close'>No</div><div class='yes'>S&iacute;</div>
+            </div>
+        </div>
+
+    <div class="botones">
+            <ul>
+                {% if editar == 1 %}
+                  <li>
+                    <a href="{% url factura_edit idfa=rc_id %}"><span>Editar</span></a>
+                   </li>
+                {% endif %}
+                {% if confirmar != 1 %}
+                    <li>
+                        <a href="{% url factura_confirmar idfa=rc_id %}" class="confirm" ><span>Confirmar</span></a>
+                    </li>
+                {% endif %}
+                {% if eliminar == 1 %}
+                    <li>
+                        <a href="#" class="delete"><span>Eliminar</span></a>
+                    </li>
+                {% endif %}
+                {% if confirmar == 1 %}
+                    <li>
+                        <!--<a href="{% url factura_imprimir idfa=rc_id %}"><span>Imprimir</span></a>-->
+                        
+                        <a href="#" target="_blank" class="imprim"><span >Imprimir</span></a>
+                    </li>
+                    <li>
+                        {% if cancelar == 0 %}
+                            <a href="#" class="cancelar"><span>Cancelar</span></a>
+                        {% endif %}
+                    </li>   
+                {% endif %}            
+                <li>
+                    <a href="{% url factura_index %}" ><span>Regresar</span></a>
+                </li>
+            </ul>
+    </div>
+    {% if error2 %} 
+     <div class="ui-state-error">
+         <ul>
+            {% for error in error2 %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+     </div>    
+    {% endif %}
+<div style="width:100%;">
+    <!-- Content Here -->
+    <form name='mm'>
+        <div id="tipo" value="0" style="visibility:hidden"></div>
+        <div class="data">
+            <div class="data-wraper"> <!-- DATOS GENERALES -->
+                <div class="data-left">
+                    {% if eliminar != 1 %}
+                    <div class="item">
+                        <span class="label">No:</span>
+                        <span class="value">{{ rc_nro }}</span>
+                     </div>
+                     {% endif %}
+                     <div class="item">
+                        <span class="label">Cliente:</span>
+                        <span class="value">{{ cliente }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Personas Autorizadas:</span>
+                        <span class="value">{{ transportador }}</span>
+                    </div>
+                    <div class="item">
+                        <span class="label">CUP:</span>
+                        <span class="label"><input id="checkcup" type='checkbox' checked="checked" ></span>
+                    </div>
+                    <div class="item">
+                        <span class="label">MLC:</span>
+                        <span class="label"><input id="checkcuc" type='checkbox' checked="checked" ></span>
+                    </div>
+                    <div class="item">
+                        <span class="label">Cant. Cascos:</span>
+                        <span id="ccasco" class="value">{{ cant_cascos }}</span>
+                    </div>
+                    <div class="item">
+                        <span class="label">Renglones:</span>
+                        <span id="crenglones" class="value">{{ cant_renglones }}</span>
+                    </div>
+                </div>
+                 <div class="data-rigth">
+                    <div class="item">
+                        <span class="label">Fecha:</span>
+                        <span class="value">{{ fecha }}</span>
+                    </div>
+                    <div class="item">
+                        <span class="label">Tipo:</span>
+                        <span class="value">{{ tipo }}</span>
+                    </div>
+                    <div class="item">
+                        <span class="label">Licencia:</span>
+                        <span class="value">{{ licencia }}</span>
+                    </div>
+                    <div class="item">
+                        <span class="label">Chapa:</span>
+                        <span class="value">{{ chapa }}</span>
+                    </div>
+                    <div id="impcup" class="item">
+                        <span class="label">Importe CUP:</span>
+                        <span id="pmn" class="value">{{ importecup }}</span>
+                    </div>
+                    <div id="impcuc" class="item">
+                        <span class="label">Importe MLC:</span>
+                        <span id="pcuc" class="value">{{ importecuc }}</span>
+                    </div>
+                    
+                    
+                    
+                     <div class="item">
+                        <span class="label">Observaciones:</span>
+                        <span class="value">{{ observaciones }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+         
+         
+         </form>
+        
+        <div class="result">
+         
+        </div>
+        <div class="docdig-wraper"> <!-- Detalles -->
+            <div class="titleview2">
+                <span>Cascos</span>
+                  {% if confirmar == 0 %}
+                        <span><a href="{% url detalleFactura_add idfa=rc_id %}">+adicionar</a></span>
+                        <span><a href="{% url detalleFactura_addofer idfa=rc_id %}">+desde oferta</a></span>
+                  {% endif %}
+                <div class="line2"></div>
+            </div>
+            <div class="table" id="table-fact">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>N&uacute;mero</th>
+                            <th>Medida</th>
+                            <th class="preccup">{{precio_CUP}}</th>
+                            <th>{{precio_CUC}}</th>
+                            <th>Precio Casco</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    
+                           {% for filas in elementos_detalle %}
+                                <tr>
+                                
+                                <td>
+                                    <div class="ui-corner-all" id="acciones">
+                                    {% if confirmar == 0 %}
+                                    	<a href="{% url detalleFactura_edit idfa=rc_id idcasco=filas.casco_id %}" title="Editar" class="right"><span class="ui-icon ui-icon-pencil"></span></a>
+                                        <a href="{% url detalleFactura_delete idfa=rc_id idcasco=filas.casco_id %}" title="Eliminar" class="right elimdet"><span class="ui-icon ui-icon-trash"></span></a>
+                                    {% endif %}
+                                    </div>
+                                </td>
+                                    <td>{{ filas.casco_nro }}</td>
+                                    <td>{{ filas.productosalida }}</td>
+                                    <td>{{ filas.precio_cup }}</td>
+                                    <td>{{ filas.precio_cuc }}</td>
+                                    <td>{{ filas.precio_casco }}</td>
+                                    {% if filas.cantidad %}
+                                    <tr>
+                                        <td></td>
+                                    	<td style="font-size: 8pt; font-style: italic; font-weight: bold;">Total Medida</td>
+                                    	<td style="font-size: 8pt; font-style: italic; font-weight: bold;">{{ filas.cantidad }}</td>
+                                    	<td style="font-size: 8pt; font-style: italic; font-weight: bold;">{{ filas.t_preciocup }}</td>
+                                    	<td style="font-size: 8pt; font-style: italic; font-weight: bold;">{{ filas.t_preciocuc  }}</td>
+                                    	<td style="font-size: 8pt; font-style: italic; font-weight: bold;">{{ filas.t_preciocasco  }}</td>
+                                    </tr>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}  
+                                <tr>
+                               <td></td>
+	                         	   <td style="font-size: 10pt; font-weight: bold;">Total Cascos</td>
+	                         	   <td style="font-size: 10pt; font-weight: bold;">{{ total_casco }}</td>
+	                         	   <td style="font-size: 10pt; font-weight: bold;">{{ importecup}}</td>
+	                         	   <td style="font-size: 10pt; font-weight: bold;">{{ importecuc}}</td>
+	                         	   <td style="font-size: 10pt; font-weight: bold;">{{ importecasco }}</td>
+                               </tr>                          
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    <!-- End Content -->
+</div>
+
+{% endblock %}

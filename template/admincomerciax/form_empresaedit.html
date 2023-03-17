@@ -1,0 +1,14 @@
+{% extends "form/form_edit.html" %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.maskedinput-1.3.min.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.validate.min.js"></script>
+{% endblock %}
+
+{% block js_code %}    
+ $(document).ready(function(){
+    $("#id_codigo").mask("999.9.?********");
+    $(".formulario").validate();
+ }); 
+    
+{% endblock %}

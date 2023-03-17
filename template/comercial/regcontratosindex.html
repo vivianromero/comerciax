@@ -1,0 +1,42 @@
+{% extends "form/form.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.validate.min.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-ui-1.8.7.js"></script>
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+    <style>
+        .areportes{
+                   padding: 20px 30px;
+                   }
+        .areportes a{
+                   display:list-item;
+                   margin-left: 20px;
+                   color:buttonshadow
+                }
+        .areportes span{
+                        color:gray;
+                        font-size:20px;
+                        } 
+        .areportes a:hover{
+                   color:gray;
+                   text-decoration: underline
+                }
+    </style>
+{% endblock %}
+
+{% block controller-name %}{{ controlador }}{% endblock %}
+
+{% block form_form %}
+    <form class="formulario" action="{{ accion }}" method="post">
+        <div class="zend_form">
+                {% include "form/form_snippet.html" %}
+                
+                <p class="submit-group">
+                    <input type="submit" name="submit1" id="submit" class="submit" value="Generar Reporte">
+                </p>
+        </div>
+    </form>
+{% endblock %}

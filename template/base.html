@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+		<title>{% block title %}{% endblock %}</title>
+		
+		<!-- javascript -->
+		<script type="text/javascript" SRC="/comerciax/media/js/jquery-1.4.2.min.js"></script>
+		<script type="text/javascript" SRC="/comerciax/media/js/jquery.easing.1.3.js"></script>
+		<script type="text/javascript" SRC="/comerciax/media/js/superfish.js"></script>
+		<script type="text/javascript" SRC="/comerciax/media/js/hoverIntent.js"></script>
+		
+		{% block js_include %}{% endblock %}
+		
+		<script type="text/javascript">
+			jQuery(function(){
+				jQuery('ul.sf-menu').superfish();
+				
+				// Variables
+				var objMain = $('#main_content2');
+			 
+				// Show sidebar
+				function showSidebar(){
+					objMain.addClass('use-sidebar');
+				}
+			 
+				// Hide sidebar
+				function hideSidebar(){
+					objMain.removeClass('use-sidebar');
+				}
+			 
+				// Sidebar separator
+				var objSeparator = $('#separator');
+			 
+				objSeparator.click(function(e){
+					e.preventDefault();
+					if ( objMain.hasClass('use-sidebar') ){
+						hideSidebar();
+					}
+					else {
+						showSidebar();
+					}
+				});
+			});
+			
+			{% block js_code %}{% endblock %}
+		</script>
+		
+		
+		<!-- css -->
+		<link rel="stylesheet" type="text/css" href="/comerciax/media/css/960.css">
+		<link rel="stylesheet" type="text/css" href="/comerciax/media/css/reset.css">
+		<link rel="stylesheet" type="text/css" href="/comerciax/media/css/text.css">
+		<link rel="stylesheet" type="text/css" href="/comerciax/media/css/superfish.css">
+		<link rel="stylesheet" type="text/css" href="/comerciax/media/css/myform.css">
+		<link rel="stylesheet" type="text/css" href="/comerciax/media/css/viewlevant.css">
+		<link rel="stylesheet" type="text/css" href="/comerciax/media/css/style.css">
+		{% block css %}{% endblock %}
+	</head>
+	
+	<body>
+		<div class="container_12" id="head">
+			{% include "head.html" %}
+		</div>
+		<div class="clear"></div>
+		
+		<div class="container_12" id="main">
+			<div class="grid_12" id="main_content_top">
+		    	<h2>{% block controller-name %}{% endblock %}</h2>
+			</div>	
+		    <div class="clear"></div>
+			
+			<div class="grid_12" id="main_content">
+					<div class="use-sidebar sidebar-at-left" id="main_content2">
+		                <div id="sidebar">
+		                	{% block side-menu %}{% endblock %}
+		                </div>
+										
+		 				<a href="#" id="separator"></a>
+						
+		                <div id="content">
+		                     {% block main-content %}{% endblock %}
+		                     {{ mensage }}
+		                </div>
+						
+		                <div class="clearer">&nbsp;</div>
+					</div>
+		    </div>   
+		    <div class="clear"></div>
+		    
+		    <div class="grid_12" id="main_content_bottom">
+		    	<!-- aqui se muestra el cierre del cuerpo -->
+		    </div>    
+		    <div class="clear"></div> 
+		</div>
+		<div class="clear"></div>
+		
+		<div class="container_12" id="footer">
+			<div class="container_12" id="footer">
+	
+			</div>
+		</div>
+		<div class="clear"></div>
+	</body>
+</html>

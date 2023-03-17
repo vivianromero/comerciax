@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Cascos x Clientes{% endblock %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.form.js"></script>
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+    <style>
+        .negritas{
+                  font-weight:bold;
+                  }
+        .fecha p{
+                 margin-bottom: 0;
+                 }
+        .fecha{
+               font-size: 11px;
+               text-align: right;
+               }
+        table{
+              margin-bottom:0px;
+              }
+        .leyenda{
+                 font-size: 11px;
+                 margin: 0 10px;
+                 }
+        .itemfoot{
+                  float:left;
+                  padding:10px 40px;
+                }
+        .itemfoot span{
+                       display: block;
+                       }
+        .itemfoot p{
+                    font-weight:bold;
+                    }
+        @media print
+        {
+            .titleview2, #head, #main_content_top, .botones {
+                display:none;
+            }
+            body {
+                width:100% !important;
+                margin:0 !important;
+                padding:0 !important;
+                line-height: 1.4;
+                word-spacing:1.1pt;
+                letter-spacing:0.2pt; font-family: Garamond,"Times New Roman", serif; color: #000; background: none; font-size: 12pt;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block js_code %}
+ $(document).ready(function() {
+                               
+    $('.imprimir').click(function() {
+         window.print();
+        });
+                               
+   // Variables
+    var objMain = $('#main_content2');
+    
+    hideSidebar();
+    
+    // Hide sidebar
+    function hideSidebar(){
+    objMain.removeClass('use-sidebar');
+    }
+  
+ });
+{% endblock %}
+
+
+{% block controller-name %}Reporte{% endblock %}
+
+{% block main-content %}
+    
+<div style="width:100%;">
+    <!-- Content Here --> 
+        {% if error2 %}
+            <div class="ui-state-error">
+               <ul>
+                    {% for error in error2 %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+               </ul> 
+            </div>
+        {% endif %}      
+        <div class="docdig-wraper" id="detalles"> <!-- Detalles -->
+            <div class="criterio">
+                <div class="fecha">
+                     <p>Fecha de emisi&oacute;n:   {% now "d/m/Y P" %}</p> 
+                </div>
+                <div style="padding:5px 10px;margin-bottom: 5px;">
+                  <img src="/comerciax/media/img/logo111.png" class="loguo" style="float: left;" />
+                  <div id="textencb" style="margin-left: 250px;">
+                      <h2 style="margin-bottom:0px;">Facturas x Cobrar</h2>
+                      <div class="leyenda">
+                        <p> 
+                            {% if filtro %}
+                            Filtro:
+                            {% endif %}
+                            </br>
+                            {% for filt in filtro %}
+                            {{ filt }}
+                            </br>
+                            {% endfor %}
+                        </p>
+                     </div>
+                   </div>
+                </div>
+            </div>
+            <div class="titleview2">
+                <span>&nbsp;</span>
+                <span class="right">
+                    <a href="{% url pdfcliente %}" id="printer"><img src="/comerciax/media/img/pdf.png"></a>
+                    <a href="#" class="imprimir" ><img src="/comerciax/media/img/printer.png"></a>
+                </span>
+                <div class="line2"></div>
+            </div>
+            
+                <div class="table">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example" style="width:100%;">
+                <thead>
+                        <tr>
+                            <th style="" rowspan=2 >Cliente</th>
+                            <th style="" rowspan=2 >Factura</th>
+                            <th style="" rowspan=2 >Fecha</th>
+                            <th style="" rowspan=2 >Edad</th>
+                            <th style="text-align: center;" colspan=2 >Facturado</th>
+                            <th style="text-align: center;" colspan=2 >Pagado</th>
+                            <th style="text-align: center;" colspan=2 >Por Cobrar</th>
+                        </tr>
+                        <tr>
+                            <th style="" >CUP</th>
+                            <th style="" >MLC</th>
+                            <th style="" >CUP</th>
+                            <th style="" >MLC</th>
+                            <th style="" >CUP</th>
+                            <th style="" >MLC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fila in resultado %}
+                           {% if fila.totalimportecup %}
+                        		<tr>
+                             <td style="font-weight: bold;text-align: right;font-size: 24px;"><em> Total General</em></td>
+                             <td>&nbsp;</td>
+                             <td>&nbsp;</td>
+                             <td>&nbsp;</td>
+                             <td style="font-weight: bold;"><em>{{ fila.totalimportecup }}</em></td>
+                             <td style="font-weight: bold;"><em>{{ fila.totalimportecuc }}</em></td>
+                             <td style="font-weight: bold;"><em>{{ fila.totalcobradocup }}</em></td>
+                             <td style="font-weight: bold;"><em>{{ fila.totalcobradocuc }}</em></td>
+                             <td style="font-weight: bold;"><em>{{ fila.totalpendientecup }}</em></td>
+                             <td style="font-weight: bold;"><em>{{ fila.totalpendientecuc }}</em></td>
+                             <tr>
+                            {% else %}
+	                            <tr>
+	                            <td>{{ fila.cliente }}</td>
+	                            <td>{{ fila.nro }}</td>
+	                            <td>{{ fila.fecha|date:"d/m/Y"  }}</td>
+	                            <td>{{ fila.edad }}</td>
+	                            <td>{{ fila.importecup }}</td>
+	                            <td>{{ fila.importecuc }}</td>
+	                            <td>{{ fila.cobradocup }}</td>
+	                            <td>{{ fila.cobradocuc }}</td>
+	                            <td>{{ fila.pendientecup }}</td>
+	                            <td>{{ fila.pendientecuc }}</td>                                    
+	                            </tr>
+                            {% endif %}
+                            
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+           
+            </div>
+        </div>
+         
+    <!-- End Content -->
+
+
+{% endblock %}

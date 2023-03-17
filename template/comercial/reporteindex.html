@@ -1,0 +1,197 @@
+{% extends "form/form.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.validate.min.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-ui-1.8.7.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.ui.datepicker-es.js"></script>
+{% endblock %}
+
+{% block js_code %}
+
+ $(function(){
+    var pickerOpts = {
+            dateFormat:"dd/mm/yy",
+            changeMonth: true,
+            changeYear: true
+     };
+        $(".formulario").validate();
+        $(".date").datepicker(pickerOpts);
+        
+     $('#id_desglosado').change(function(e) {
+        e.preventDefault();
+        //var organismo = $(this).val();
+        var desglo = document.getElementById('id_desglosado').checked;
+        if (desglo==true){
+        	//document.getElementById('id_organismo').style.visibility = "hidden";  
+         	
+           //$("#id_organismo").attr('hidden','hidden')
+           $("#id_organismo").removeAttr('disabled');
+           $("#id_provincia").removeAttr('disabled');
+           $("#id_ccliente").removeAttr('disabled');
+           document.getElementById('submit1').style.visibility = "visible";
+        }
+        else{
+           //document.getElementById('id_organismo').style.visibility = "visible";  
+           document.getElementById('id_organismo').value=""
+           document.getElementById('id_provincia').value=""
+           document.getElementById('id_ccliente').value=""
+           $("#id_organismo").attr('disabled','disabled')
+           $("#id_provincia").attr('disabled','disabled')
+           $("#id_ccliente").attr('disabled','disabled')
+           document.getElementById('submit1').style.visibility = "hidden";
+        }
+        a1=2
+                
+         }); 
+         
+         
+       $('#id_seleccionar_por_0, #id_seleccionar_por_1').change(function(e) {
+        e.preventDefault();
+        var selecc1 = document.getElementById('id_seleccionar_por_0').checked;
+        var selecc2 = document.getElementById('id_seleccionar_por_1').checked;
+        if (selecc1==true){
+           $("#id_agrupado_por").removeAttr('disabled');
+        }
+        else{
+           document.getElementById('id_agrupado_por').checked=false
+           $("#id_agrupado_por").attr('disabled','disabled')
+        }
+    });
+    
+              
+    $('#id_particular').change(function(e) {
+        e.preventDefault();
+        //var organismo = $(this).val();
+        var partic = document.getElementById('id_particular').checked;
+        if (partic==false){
+           $("#id_organismo").removeAttr('disabled');
+           $("#id_provincia").removeAttr('disabled');
+           $("#id_ccliente").removeAttr('disabled');
+        }
+        else{
+           document.getElementById('id_organismo').value=""
+           document.getElementById('id_provincia').value=""
+           document.getElementById('id_ccliente').value=""
+           $("#id_organismo").attr('disabled','disabled')
+           $("#id_provincia").attr('disabled','disabled')
+           $("#id_ccliente").attr('disabled','disabled')
+        }
+        a1=2
+                
+         });
+        
+    $('#id_organismo,#id_provincia').change(function(e) {
+        e.preventDefault();
+        //var organismo = $(this).val();
+        var organismo = document.getElementById('id_organismo').value
+        var provincia = document.getElementById('id_provincia').value
+        if (organismo=="")
+        {
+         organismo=0;
+         }
+         if (provincia=="")
+        {
+         provincia=0;
+         }
+        //fecha.split("/").join("-")
+        var url = "{% url obtenerclientes_list2 %}" + organismo + "/"+provincia+"/2";
+        a1=20
+           $.ajax({
+            url:url,
+            dataType:'json',
+            success: function(data) {
+                
+                var options = '<option value="">---------</option>';
+                for (var i = 0; i < data.length; i++){
+                    a1='<option value="'+data[i]["id"]+'">'
+                    a1+=  data[i]["nombre"] + '</option>'
+                    options += '<option value="'+data[i]["id"]+'">' + data[i]["codigo"] +" | "+ data[i]["nombre"] + '</option>'
+                }
+                
+                $('#id_ccliente').html(options)
+                $("#id_ccliente option:first").attr('selected', 'selected');
+                
+              } 
+            }); //llamada ajax 
+         });
+         
+      $('#id_ccliente').change(function(e) {
+        e.preventDefault();
+        var cliente = $(this).val();
+        var fecha = document.getElementById('id_fecha').value
+        if (cliente=="")
+        {
+         cliente=0;
+         }
+        fecha.split("/").join("-")
+        var url = "{% url obtenercontrato_list2 %}" + cliente + "/"+fecha.split("/").join("-")+"/";
+           $.ajax({
+            url:url,
+            dataType:'json',
+            success: function(data) {
+            	mess1=""
+				if (data[0]["nro"]=="Sin Contrato"){
+                	mess1="no tiene contrato."
+                }
+                if (data[0]["vencido"]=="1"){
+                  	mess1="tiene el contrato vencido."
+                }
+                if (mess1!="") {
+                	document.getElementById('id_ccliente').value="";
+                	confirm("El cliente '"+ data[0]["nombre"] +"' "+ mess1+ "&iquest;Desea realizar la operaci&oacute;n?" , function () {
+                        document.getElementById('id_ccliente').value=cliente;
+                     });
+                }
+                
+                
+              } 
+            }); //llamada ajax
+         });
+    }); 
+
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+    
+    <style>
+        .areportes{
+                   padding: 20px 30px;
+                   }
+        .areportes a{
+                   display:list-item;
+                   margin-left: 20px;
+                   color:buttonshadow
+                }
+        .areportes span{
+                        color:gray;
+                        font-size:20px;
+                        } 
+        .areportes a:hover{
+                   color:gray;
+                   text-decoration: underline
+                }
+    </style>
+{% endblock %}
+
+{% block controller-name %}{{ controlador }}{% endblock %}
+
+{% block form_form %}
+    <form class="formulario" action="{{ accion }}" method="post">
+        <div class="zend_form">
+                {% include "form/form_snippet.html" %}
+                
+                <p class="submit-group">
+                    {% if not vprev %}
+                    <input type="submit" name="submit" id="submit" class="submit" value="Vista Previa">
+                    {% endif %}
+                    {% if not vpdf%}
+                    	<input type="submit" name="submit1" id="submit1" class="submit" value="Generar Pdf">
+                    {% endif %}
+                    {% if email %}
+                    	<input type="submit" name="submit2" id="submit2" class="submit" value="Enviar e_mail">
+                    {% endif %}
+                </p>
+        </div>
+    </form>
+{% endblock %}

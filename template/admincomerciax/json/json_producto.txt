@@ -1,0 +1,28 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for producto in querySet %}
+    [
+    	"{{producto.id}}",
+    	"{{producto.descripcion}}",
+    	"{{producto.codigo}}",
+    	"{{producto.um.descripcion}}",
+    	"{{producto.precio_mn}}",
+    	"{{producto.precio_cuc}}",
+    	"{{producto.precio_costo_mn}}",
+    	"{{producto.precio_costo_cuc}}",
+    	"{{producto.precio_externo_cup}}",
+    	"{{producto.precio_particular}}",
+    	"{{producto.precio_casco}}",
+    	"{{producto.otro_precio_casco}}",
+    	"{{producto.precio_vulca}}"
+    	
+	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}

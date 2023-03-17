@@ -1,0 +1,102 @@
+{% extends "form/form.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block js_include %}
+    
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.validate.min.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-ui-1.8.7.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.ui.datepicker-es.js"></script>
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+    <style>
+        .areportes{
+                   padding: 20px 30px;
+                   }
+        .areportes a{
+                   display:list-item;
+                   margin-left: 20px;
+                   color:buttonshadow
+                }
+        .areportes span{
+                        color:gray;
+                        font-size:20px;
+                        } 
+        .areportes a:hover{
+                   color:gray;
+                   text-decoration: underline
+                }
+        #form .body_form .formulario p.submit-group {
+            clear:both;
+        }
+    </style>
+{% endblock %}
+{% block js_code %}    
+    $(document).ready(function(){
+    
+        $('#id_organismo,#id_provincia').change(function(e) {
+        e.preventDefault();
+        //var organismo = $(this).val();
+        var organismo = document.getElementById('id_organismo').value
+        var provincia = document.getElementById('id_provincia').value
+        if (organismo=="")
+        {
+         organismo=0;
+         }
+         if (provincia=="")
+        {
+         provincia=0;
+         }
+        //fecha.split("/").join("-")
+        //form_adddetalle
+        var tipo= document.getElementById('tipocliente').textContent;
+        var url = "{% url obtenerclientes_list2 %}" + organismo + "/"+provincia+"/2/";
+        a1=20
+           $.ajax({
+            url:url,
+            dataType:'json',
+            success: function(data) {
+                
+                var options = '<option value="">---------</option>';
+                for (var i = 0; i < data.length; i++){
+                    a1='<option value="'+data[i]["id"]+'">'
+                    a1+=  data[i]["nombre"] + '</option>'
+                    options += '<option value="'+data[i]["id"]+'">' + data[i]["codigo"] +" | "+ data[i]["nombre"] + '</option>'
+                }
+                
+                $('#id_cliente').html(options)
+                $("#id_cliente option:first").attr('selected', 'selected');
+                
+              } 
+            }); //llamada ajax 
+         });
+         
+        $(".formulario").validate();
+        
+        var pickerOpts = {
+            dateFormat:"dd/mm/yy",
+            changeMonth: true,
+            changeYear: true
+        };
+        
+        $(".date").datepicker(pickerOpts); 
+    }); 
+{% endblock %}
+
+{% block controller-name %}{{ controlador }}{% endblock %}
+
+{% block form_form %}
+    <form class="formulario" action="{{ accion }}" method="post">
+        <div class="zend_form">
+                {% include "form/form_snippet.html" %}
+                
+                <p class="submit-group">
+                    <input type="submit" name="submit1" id="submit" class="submit" value="Mostrar">
+                    <input type="submit" name="submit2" id="submit" class="submit2" value="Generar Pdf">
+                    {% if email %}
+                    	<input type="submit" name="submit3" id="submit" class="submit3" value="Enviar e-mail">
+                    {% endif %}
+                </p>
+        </div>
+    </form>
+{% endblock %}

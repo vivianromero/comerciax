@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Usuario{% endblock %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.simplemodal.1.4.min.js"></script>
+{% endblock %}
+
+{% block js_code %}
+ $(document).ready(function() {
+  $('#confirm-dialog input.confirm, #confirm-dialog a.confirm, a.delete').click(function (e) {
+        e.preventDefault();
+        confirm("Desea eliminar el usuario " + ' "' + "{{ nombre  }}" + '"' , function () {
+            window.location.href = "{% url delusuario idusuario=pk %}";
+        });
+    });
+    
+    $('form').submit(function() {  
+     $('#select2 option').each(function(i) {  
+      $(this).attr("selected", "selected");  
+     });  
+    });  
+    
+   $('#add').click(function() {
+        $('#select1 option:selected').each(function(){
+            var valor = parseInt($(this).val());
+            var selector = "#select2 option[value=" +valor+ "]"; 
+            var exist = $(selector).length > 0; 
+            if (!exist) //no exist
+             {
+                var option = '<option value="' + valor +'">' + $(this).text() +'</option>';
+                !$('#select2').append(option); //solo adicionar
+                //return !$(this).appendTo('#select2'); //solo adicionar 
+             }
+        })
+        return;
+        
+   });  
+   
+   $('#remove').click(function() {
+      $('#select2 option:selected').each(function(){
+        !$(this).remove(); //siempre eliminar
+      })
+      return;
+   });  
+ });
+ 
+function confirm(message, callback) {
+    $('#confirm').modal({
+        closeHTML: "<a href='#' title='Close' class='modal-close'>x</a>",
+        position: ["20%",],
+        overlayId: 'confirm-overlay',
+        containerId: 'confirm-container', 
+        onShow: function (dialog) {
+            $('.message', dialog.data[0]).append(message);
+
+            // if the user clicks "yes"
+            $('.yes', dialog.data[0]).click(function () {
+                // call the callback
+                if ($.isFunction(callback)) {
+                    callback.apply();
+                }
+                // close the dialog
+                $.modal.close();
+            });
+        }
+    });
+}
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/confirm.css">
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+{% endblock %}
+
+{% block controller-name %}Contrato{% endblock %}
+
+{% block side-menu %}
+    <ul>
+        <li><a href="#">Index</a></li>
+       <!-- <li><a href="#">Editar</a></li>
+        <li><a href="#" class="delete">Eliminar</a></li> -->
+    </ul>
+{% endblock %}
+
+{% block main-content %}
+        <div id='confirm'>
+            <div class='header'><span>Confirmar</span></div>
+            <div class='message'></div>
+            <div class='buttons'>
+                <div class='no simplemodal-close'>No</div><div class='yes'>S&iacute;</div>
+            </div>
+        </div>
+
+    <div class="botones">
+            <ul>
+                <li>
+                    <a href="{% url editusuario idusuario=pk %}"><span>Editar</span></a>
+                </li>
+                <li>
+                    <a href="#" class="delete"><span>Eliminar</span></a>
+                </li>
+                <li>
+                    <a href="{% url usuario %}" ><span>Regresar</span></a>
+                </li>
+                <li>
+                    <a href="{% url changepassword idusuario=pk %}" ><span>Cambiar clave</span></a>
+                </li>
+            </ul>
+    </div>
+    
+    {% if error2 %}
+        <div class="ui-state-error">
+           <ul>
+                <li>{{ error2 }}</li>
+           </ul> 
+        </div>
+    {% endif %}
+ 
+ <style type="text/css"> 
+   select {
+           width: 300px;
+           height: 200px;
+           
+           }
+   span.selecttitle{
+        display: block;
+        color: #464646;
+        font-family: "Times New Roman",Times,serif;
+        font-size: 18px;
+        font-style: italic;
+        } 
+ </style>   
+      
+<div style="width:100%;">
+    <!-- Content Here -->
+        <div class="data">
+            <div class="data-wraper"> <!-- DATOS GENERALES -->
+                <div class="data-left">
+                    <div class="item">
+                        <span class="label">Nombre:</span>
+                        <span class="value">{{ nombre }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Apellidos:</span>
+                        <span class="value">{{ apellidos }}</span>
+                     </div>
+                </div>
+                 <div class="data-rigth">
+                    <div class="item">
+                        <span class="label">Usuario:</span>
+                        <span class="value">{{ username }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Email:</span>
+                        <span class="value">{{ email }}</span>
+                     </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="docdig-wraper"> <!-- Detalles -->
+            <div class="titleview2">
+                <span>Grupos de usuarios</span>
+                <div class="line2"></div>
+            </div>
+            
+            <form class="formulario" action="/comerciax/admincom/usuario/puser" method="post">
+                <input type="hidden" name="idusuario" value="{{ pk }}" />
+                <div class="botones">
+                    <ul>
+                        <li>
+                          <span class="selecttitle">Todos</span>
+                          <select multiple id="select1" name="todos">
+                           {% for rfila in todos %}
+                            <option value="{{ rfila.pk }}">{{ rfila.name }}</option>  
+                           {% endfor %} 
+                          </select> 
+                        </li>
+                        <li>
+                            <div>
+                            <a href="#" id="add" style="float:none; background:none; color:#546675; margin-top: 90px;" >&gt;&gt;</a>
+                            <a href="#" id="remove" style="float:none; background:none; color:#546675;">&lt;&lt;</a>
+                            <div> 
+                        </li>
+                        <li>
+                            <span class="selecttitle">Seleccionados</span>
+                            <select multiple id="select2" name="selecc">
+                               {% for rfila2 in seleccionados %}
+                                <option value="{{ rfila2.id }}">{{ rfila2.name }}</option>  
+                               {% endfor %}
+                            </select> 
+                        </li>
+                    </ul>
+                </div>
+                <input type="submit" name="submit1" id="submit" class="submit" value="Salvar">
+            </form>
+            
+        </div>
+
+    <!-- End Content -->
+</div>
+
+{% endblock %}

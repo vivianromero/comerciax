@@ -1,0 +1,139 @@
+{% extends "form/form.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.validate.min.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-ui-1.8.7.js"></script>
+{% endblock %}
+
+{% block js_code %}
+
+$(document).ready(function() {
+    
+    $(".formulario").validate();  
+    
+    $('.id_importe').keyup(function(e) {
+      CalculaTotal();
+    
+      
+    }); 
+    });
+
+function CalculaTotal()
+{
+
+    var a = parseFloat(0);
+    var total = parseFloat(0);
+    var btn = document.getElementById("submit");
+    //var coleccion = document.getElementsByName("sumar[]"); // que valor lleva en medio de estos carcteres?
+    var coleccion =document.querySelectorAll(".id_sumar");
+    
+    for (a = 0; elements = coleccion[a]; a++) { 
+        //alert(elements.value);
+       if(!isNaN(elements.value) && elements.value.length!=0){   
+          pp = parseFloat(elements.value).toFixed(2);                                                                                                 
+          total += parseFloat(pp);     
+        }
+    }
+    a1=document.getElementById('imp_pago').value
+    a2=parseFloat(total).toFixed(2)
+    a3=parseFloat(a2)
+    if (a3>parseFloat(document.getElementById('imp_pago').value)){
+        document.getElementById('er').style.visibility = "visible";                                                                        
+        btn.disabled = 'true';
+    }else{
+         document.getElementById('er').style.visibility = "hidden";  
+         btn.disabled = '';
+         }
+        
+    document.getElementById('sum').innerHTML = formatCurrency(total,'')
+    //$("#total").html(total);
+} 
+
+function formatCurrency(num,signo) {
+num = num.toString().replace(/$|,/g,'');
+if(isNaN(num))
+num = "0";
+sign = (num == (num = Math.abs(num)));
+num = Math.floor(num*100+0.50000000001);
+cents = num%100;
+num = Math.floor(num/100).toString();
+if(cents<10)
+cents = "0" + cents;
+for (var i = 0; i < Math.floor((num.length-(1+i))/3); i++)
+num = num.substring(0,num.length-(4*i+3))+','+
+num.substring(num.length-(4*i+3));
+return (((sign)?'':'-') + signo + num + '.' + cents);
+}  
+
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+    
+{% endblock %}
+
+{% block controller-name %}{{ controlador }}{% endblock %}
+
+{% block side-menu %}
+    <ul>
+        <li><a href="{% url pagoefect_index %}">Index</a></li>
+        <li><a href="{% url pagoefect_edit idpa=rc_id %}">Editar</a></li>
+        <li><a href="#" class="delete">Eliminar</a></li>
+    </ul>
+{% endblock %}
+
+{% block form_form %}
+   
+    <form class="formulario" action="{{ accion }}" method="post">
+        <div class="zend_form">
+          <label for="id_imppago">Importe del Pago</label>
+          <input id="imp_pago" name="imp_pago" class="required number" value={{imp_pago}} disabled="" type="text" decimal_places="2">
+           <p class="element-group">
+             <div class="table">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
+                    <thead>
+                        <tr>
+                                                                                             
+                            <th>Factura Nro.</th>
+                            <th>{{ encab }}</th>
+                            <th>A Pagar</th>
+                            
+                        </tr>
+                    </thead>
+                     <tbody>
+                     
+                        {% for filas in elementos_detalle %}
+                            <tr>
+                                   <td>{{ filas.nro }}</td>
+                                   <td>{{ filas.importe }}</td>
+                                <td class="sumar">
+                                <div class="ui-corner-all" id="1">
+                                    <input class="required number id_importe id_sumar" type="text" max_digits="7" min="0.00" max={{ filas.imp_num }} value="0.00" decimal_places="2" name={{ filas.pk }} >                           
+                                </div>
+                                </td>
+                            </tr>
+                        {% endfor %} 
+                       
+                     </tbody>
+                      <tr >
+                            <td>&nbsp;</td>
+                            <td style="font-weight:bold;font-family:verdana;font-size:12px;font-style:italic" align="right">Total a Pagar:</td>
+                            <td style="font-weight:bold;"><span id="sum" name="totals">0.00</span></td>
+                            <td id="er" style="visibility:hidden;clear:both;color:#FF0000;display:block;float:none;font-size:0.8em;text-align:left;width:220px;">Saldo a pagar mayor que el importe del pago</td>
+                        </tr>
+                </table>
+                
+                        
+             </div>
+           </p>
+                <p class="submit-group">
+                    <input type="submit" name="submit" id="submit" class="submit" value="Salvar" >
+                    <span class="element-canel-link"><a href= {{ cancelbtn }}>Cancelar</a></span>
+                </p>
+        </div>
+    </form>
+
+{% endblock %}
+

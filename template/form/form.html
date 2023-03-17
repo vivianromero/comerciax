@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block main-content %}
+<!-- template -->
+<div id="form">
+    <div class="head_form">
+    <div id="tipocliente" style="visibility: hidden;">{{ tipocliente }}</div>
+        <h1>{{ form_name }}</h1>
+        <p> {{ form_description }}</p>
+    </div> 
+    
+    {% if error2 %} 
+     <div class="ui-state-error">
+         <ul>
+            {% for error in error2 %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+     </div>    
+    {% endif %}
+               
+    <div class="body_form"> 
+        {% block form_form %} 
+         <!-- formulario -->
+        {% endblock %}
+    </div>
+</div>
+{% endblock %}  

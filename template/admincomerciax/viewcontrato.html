@@ -1,0 +1,479 @@
+{% extends "base.html" %}
+
+{% block title %}Contrato{% endblock %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.simplemodal.1.4.min.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-ui-1.8.7.js"></script>
+{% endblock %}
+
+{% block js_code %}
+ $(document).ready(function() {
+  $('#confirm-dialog input.confirm, #confirm-dialog a.confirm, a.delete').click(function (e) {
+        e.preventDefault();
+        confirm("&iquest;Desea eliminar el contrato " + ' "' + "{{ contrato_nro }}" + '"?' , function () {
+            window.location.href = "{% url contratodel idcontrato=contrato_id idcliente=cliente_id %}";
+        });
+    });
+    
+  $('#confirm-dialog input.confirm, #confirm-dialog a.confirm, a.delete, a.cancelar').click(function (e) {
+        e.preventDefault();
+        confirm("&iquest;Desea cancelar el contrato " + ' "' + "{{ contrato_nro }}" + '"?' , function () {
+            window.location.href = "{% url contratocancel idcontrato=contrato_id idcliente=cliente_id %}";
+        });
+    });
+     
+  $('a.delrepre').live("click",function(e){
+        e.preventDefault();
+        ira = this.href 
+        confirm("&iquest;Desea eliminar el Representante seleccionado? ", function () {
+            $.ajax({
+            url:ira,
+            dataType:'json',
+            success: function(data) {
+               if(typeof(data.error) == "undefined")
+               {
+                   $("#table-repre tbody tr").remove() //limpiar todas las filas de la tabla
+                   $.each(data, function(key, val) { 
+                        // val is { pk, model, {fields}}
+                         var urledit = "{% url repedit2 %}" + "{{contrato_id}}/{{cliente_id}}/"+ val.pk ;
+                         var urldel = "{% url repdel2 %}" + "{{contrato_id}}/{{cliente_id}}/"+ val.pk ;
+                        $("#table-repre tbody").append(
+                                "<tr>\n" +
+                                    "<td>\n" +
+                                            "<div class='ui-corner-all' id='acciones'>\n"+
+                                                "<a href='" + urledit + "' title='Editar' class='right'><span class='ui-icon ui-icon-pencil'></span></a>\n"+
+                                                "<a href='" + urldel + "' title='Eliminar' class='right delrepre'><span class='ui-icon ui-icon-trash'></span></a>\n"+
+                                            "</div>\n"+
+                                    "</td>\n" +
+                                    "<td>" + val.fields.nombre +"</td>\n" +
+                                    "<td>" + val.fields.cargo +"</td>\n" +
+                                    "<td>" + val.fields.ci  +"</td>\n" +
+                         "</tr>\n");                          
+                    });
+               }
+               else
+               {
+                    //mostrar error mandado del servidor
+                    alert(data.message);
+               } 
+              } 
+            }); //llamada ajax
+            
+        });
+    });
+    
+  $("a.deltrans").live("click",function(e){
+        e.preventDefault();
+        ira = this.href 
+        confirm("&iquest;Desea eliminar la persona Autorizada seleccionada?", function () {
+                                                                 
+            $.ajax({
+            url:ira,
+            dataType:'json',
+            success: function(data) {
+               if(typeof(data.error) == "undefined")
+               {
+                   $("#table-transp tbody tr").remove() //limpiar todas las filas de la tabla
+                   $.each(data, function(key, val) { 
+                        // val is { pk, model, {fields}}
+                         var urledit = "{% url transedit2 %}" + "{{contrato_id}}/{{cliente_id}}/"+ val.pk ;
+                         var urldel = "{% url transdel2 %}" + "{{contrato_id}}/{{cliente_id}}/"+ val.pk ;
+                         var activo = "No";
+                         
+                         if (val.fields.activo == true){
+                            activo = "Si";
+                         }
+                         
+                        $("#table-transp tbody").append(
+                                "<tr>\n" +
+                                    "<td>\n" +
+                                            "<div class='ui-corner-all' id='acciones'>\n"+
+                                                "<a href='" + urledit + "' title='Editar' class='right'><span class='ui-icon ui-icon-pencil'></span></a>\n"+
+                                                "<a href='" + urldel + "' title='Eliminar' class='right deltrans'><span class='ui-icon ui-icon-trash'></span></a>\n"+
+                                            "</div>\n"+
+                                    "</td>\n" +
+                                    "<td>" + val.fields.nombre +"</td>\n" +
+                                    "<td>" + val.fields.ci  +"</td>\n" +
+                                    "<td>" + activo  +"</td>\n" +
+                         "</tr>\n");                          
+                    });
+               }
+               else
+               {
+                    //mostrar error mandado del servidor
+                    alert(data.message);
+               } 
+              } 
+            }); //llamada ajax
+            
+        });
+    }); 
+    
+ $("a.delplan").live("click",function(e){
+        e.preventDefault();
+        ira = this.href 
+        confirm("&iquest;Desea eliminar el Plan seleccionado? ", function () {
+                                                                 
+            $.ajax({
+            url:ira,
+            dataType:'json',
+            success: function(data) {
+               if(typeof(data.error) == "undefined")
+               {
+                   $("#table-plan tbody tr").remove() //limpiar todas las filas de la tabla
+                   $.each(data, function(key, val) { 
+                        // val is { pk, model, {fields}}
+                         var urledit = "{% url planedit2 %}" + val.pk +"/";
+                         var urldel = "{% url plandel2 %}" + val.pk +"/"+val.fields.contrato;
+                         
+                        $("#table-plan tbody").append(
+                                "<tr>\n" +
+                                    "<td>\n" +
+                                            "<div class='ui-corner-all' id='acciones'>\n"+
+                                                "<a href='" + urledit + "' title='Editar' class='right'><span class='ui-icon ui-icon-pencil'></span></a>\n"+
+                                                "<a href='" + urldel + "' title='Eliminar' class='right delplan'><span class='ui-icon ui-icon-trash'></span></a>\n"+
+                                            "</div>\n"+
+                                    "</td>\n" +
+                                    "<td>" + val.fields.plan_ano +"</td>\n" +
+                                    "<td>" + val.fields.plan_contratado +"</td>\n" +
+                         "</tr>\n");                          
+                    });
+               }
+               else
+               {
+                    //mostrar error mandado del servidor
+                    alert(data.message);
+               } 
+              } 
+            }); //llamada ajax
+            
+        });
+    });
+ });
+ 
+function confirm2(message, callback) {
+    $('#confirm').modal({
+        closeHTML: "<a href='#' title='Close' class='modal-close'>x</a>",
+        position: ["20%",],
+        overlayId: 'confirm-overlay',
+        containerId: 'confirm-container', 
+        onShow: function (dialog) {
+            $('.message', dialog.data[0]).append(message);
+
+            // if the user clicks "yes"
+            $('.yes', dialog.data[0]).click(function () {
+                // call the callback
+                if ($.isFunction(callback)) {
+                    callback.apply();
+                }
+                // close the dialog
+                $.modal.close();
+            });
+        }
+    });
+} 
+ 
+function confirm(message, callback) {
+    $('#confirm').modal({
+        closeHTML: "<a href='#' title='Close' class='modal-close'>x</a>",
+        position: ["20%",],
+        overlayId: 'confirm-overlay',
+        containerId: 'confirm-container', 
+        onShow: function (dialog) {
+            $('.message', dialog.data[0]).append(message);
+
+            // if the user clicks "yes"
+            $('.yes', dialog.data[0]).click(function () {
+                // call the callback
+                if ($.isFunction(callback)) {
+                    callback.apply();
+                }
+                // close the dialog
+                $.modal.close();
+            });
+        }
+    });
+}
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/confirm.css">
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+{% endblock %}
+
+{% block controller-name %}Contrato{% endblock %}
+
+{% block side-menu %}
+    <ul>
+       <!--  <li><a href="#">Index</a></li>
+       <li><a href="#">Editar</a></li>
+        <li><a href="#" class="delete">Eliminar</a></li> -->
+    </ul>
+{% endblock %}
+
+{% block main-content %}
+        <div id='confirm'>
+            <div class='header'><span>Confirmar</span></div>
+            <div class='message'></div>
+            <div class='buttons'>
+                <div class='no simplemodal-close'>No</div><div class='yes'>S&iacute;</div>
+            </div>
+        </div>
+
+    {% if cerrado %}
+    <div class="ccancel">
+        <h2>Contrato Cancelado</h2>
+    </div>
+    {% endif %}
+    <div class="botones">
+            <ul>
+                {% if not cerrado %}
+	                {% if not selecc %}
+	                 {% if perms.admincomerciax.change_contrato %} 
+	                <li>
+	                    <a href="{% url contratoedit idcon=contrato_id idcliente=cliente_id %}"><span>Editar</span></a>
+	                </li>
+	                {% endif %}
+	                {% endif %}
+	                {% if not selecc %}
+	                 {% if perms.admincomerciax.change_contrato %}
+	                <li>
+	                    <a href="#" class="cancelar"><span>Cancelar</span></a>
+	                </li>
+	                {% endif %}
+	                {% endif %}
+	                {% if not selecc %}
+	                 {% if perms.admincomerciax.change_contrato %}
+	                <li>
+	                    <a href="#" class="delete"><span>Eliminar</span></a>
+	                </li>
+	                {% endif %}
+	                {% endif %}
+                {% endif %}
+                {% if not selecc %}
+                <li>
+                    <a href="{% url viewcliente idcliente=cliente_id %}" ><span>Regresar</span></a>
+                </li>
+                {% else %}
+                <li>
+                    <a href="{% url contratoexiste idcliente=cliente_id %}" ><span>Regresar</span></a>
+                </li>
+                {% endif %}
+            </ul>
+    </div>
+    
+    {% if error2 %}
+        <div class="ui-state-error">
+           <ul>
+                <li>{{ error2 }}</li>
+           </ul> 
+        </div>
+    {% endif %}
+    
+<div style="width:100%;">
+    <!-- Content Here -->
+        <div class="data">
+            <div class="data-wraper"> <!-- DATOS GENERALES -->
+                <div class="data-left">
+                    <div class="item">
+                        <span class="label">No:</span>
+                        <span class="value">{{ contrato_nro }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Vigencia:</span>
+                        <span class="value">{{ fecha_vigencia }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Vencimiento:</span>
+                        <span class="value">{{ fecha_vencimiento }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">T&iacute;po</span>
+                        <span class="value">{{ para_la_venta }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Precio CUP:</span>
+                        <span class="value">{{ preciomn }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Precio MLC:</span>
+                        <span class="value">{{ preciocuc }}</span>
+                     </div>
+                    <div class="item">
+                        <span class="label large">Precio costo CUP:</span>
+                        <span class="value">{{ preciocostomn }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Precio Externo:</span>
+                        <span class="value">{{ precioextcup }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label large">Precio costo MLC:</span>
+                        <span class="value">{{ preciocostocuc }}</span>
+                     </div>
+                     
+                </div>
+                 <div class="data-rigth">
+                    <div class="item">
+                        <span class="label">T&iacute;tular CUP:</span>
+                        <span class="value">{{ titular_mn }}</span>
+                     </div>
+                    <div class="item">
+                        <span class="label">Sucursal CUP:</span>
+                        <span class="value">{{ sucursal_mn }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Cuenta CUP:</span>
+                        <span class="value">{{ cuenta_mn }}</span>
+                     </div>
+                    <div class="item">
+                        <span class="label">T&iacute;tular MLC:</span>
+                        <span class="value">{{ titular_usd }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Sucursal MLC:</span>
+                        <span class="value">{{ sucursal_usd }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Cuenta MLC:</span>
+                        <span class="value">{{ cuenta_usd }}</span>
+                     </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="docdig-wraper"> <!-- Detalles -->
+            <div class="titleview2">
+                <span>Representantes</span>
+                    {% if perms.admincomerciax.change_contrato %}
+                    {% if not cerrado %}
+                        <span><a href="{% url repadd idcliente=cliente_id idcont=contrato_id %}">+adicionar</a></span>
+                    {% endif %}
+                     {% endif  %}
+                <div class="line2"></div>
+            </div>
+            <div class="table" id="table-repre">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Nombre</th>
+                            <th>Cargo</th>
+                            <th>Resol. Nombramiento</th>
+                            <th>Carn&eacute;</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                       {% for rfila in representantes %}
+                           <tr>
+                            <td>
+                                {% if not cerrado %}
+                                {% if perms.admincomerciax.change_contrato %}
+                                <div class="ui-corner-all" id="acciones">
+                                    <a href="{% url repedit idrep=rfila.id idcliente=cliente_id idcont=contrato_id %}" title="Editar" class="right"><span class="ui-icon ui-icon-pencil"></span></a>
+                                    <a href="{% url repdel idrep=rfila.id idcliente=cliente_id idcont=contrato_id %}" title="Eliminar" class="right delrepre"><span class="ui-icon ui-icon-trash"></span></a>
+                                </div>
+                                {% endif %}
+                                {% endif %}
+                            </td>
+                             <td>{{ rfila.nombre }}</td>
+                             <td>{{ rfila.cargo }}</td>
+                             <td>{{ rfila.nombramiento }}</td>
+                             <td>{{ rfila.ci }}</td>
+                           </tr>
+                       {% endfor %}                         
+                    </tbody>
+                </table>
+            </div>
+        </div>
+         
+         
+        <div class="docdig-wraper"> <!-- Detalles -->
+            <div class="titleview2">
+                <span>Personas Autorizadas</span>
+                    {% if not cerrado %}
+                     {% if perms.admincomerciax.change_contrato %}
+                    <span><a href="{% url transadd idcliente=cliente_id idcont=contrato_id %}">+adicionar</a></span>
+                    {% endif %}
+                    {% endif %}
+                <div class="line2"></div>
+            </div>
+            <div class="table" id="table-transp">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Nombre</th>
+                            <th>Carn&eacute;</th>
+                            <th>Activo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                           {% for tfila in transportadores %}
+                                <tr>
+                                <td>
+                                    {% if not cerrado %}
+                                    {% if perms.admincomerciax.change_contrato %}
+                                    <div class="ui-corner-all" id="acciones">
+                                        <a href="{% url transedit idtrans=tfila.id idcliente=cliente_id idcont=contrato_id %}" title="Editar" class="right"><span class="ui-icon ui-icon-pencil"></span></a>
+                                        <a href="{% url transdel idtrans=tfila.id idcliente=cliente_id idcont=contrato_id %}" title="Eliminar" class="right deltrans"><span class="ui-icon ui-icon-trash"></span></a>
+                                    </div>
+                                    {% endif %}
+                                    {% endif %}
+                                </td>
+                                    <td>{{ tfila.nombre }}</td>
+                                     <td>{{ tfila.ci }}</td>
+                                     <td>{{ tfila.activo|yesno:_("Si,No")}}</td>
+                                </tr>
+                            {% endfor %}                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        
+        <div class="docdig-wraper"> <!-- Detalles -->
+            <div class="titleview2">
+                <span>Planes Contratados</span>
+                    {% if not cerrado %}
+                     {% if perms.admincomerciax.planes %}
+                    <span><a href="{% url planesadd idcontcli=idcontcliente %}">+adicionar</a></span>
+                    {% endif %}
+                    {% endif %}
+                <div class="line2"></div>
+            </div>
+            <div class="table" id="table-plan">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>A&ntilde;o</th>
+                            <th>Plan Contratado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                           {% for pfila in planescont %}
+                                <tr>
+                                <td>
+                                    {% if not cerrado %}
+                                    {% if perms.admincomerciax.planes %}
+                                    <div class="ui-corner-all" id="acciones">
+                                        <a href="{% url planedit idplan=pfila.id idcliente=cliente_id %}" title="Editar" class="right"><span class="ui-icon ui-icon-pencil"></span></a>
+                                        <a href="{% url plandel idplan=pfila.id  idcont=pfila.contrato.id_contrato %}" title="Eliminar" class="right delplan"><span class="ui-icon ui-icon-trash"></span></a>
+                                    </div>
+                                    {% endif %}
+                                    {% endif %}
+                                </td>
+                                    <td>{{ pfila.plan_ano }}</td>
+                                     <td>{{ pfila.plan_contratado }}</td>
+                                </tr>
+                            {% endfor %}                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    <!-- End Content -->
+</div>
+
+{% endblock %}

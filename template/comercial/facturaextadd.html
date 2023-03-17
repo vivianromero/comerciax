@@ -1,0 +1,176 @@
+{% extends "form/form_adddetalle.html" %}
+
+
+
+{% block js_code %}    
+
+
+    
+$(document).ready(function() { 
+      
+
+    $('#id_organismo,#id_provincia').change(function(e) {
+        e.preventDefault();
+        //var organismo = $(this).val();
+        var organismo = document.getElementById('id_organismo').value
+        var provincia = document.getElementById('id_provincia').value
+        if (organismo=="")
+        {
+         organismo=0;
+         }
+         if (provincia=="")
+        {
+         provincia=0;
+         }
+        //fecha.split("/").join("-")
+        var url = "{% url obtenerclientes_list2 %}" + organismo + "/"+provincia+"/1/";
+        a1=20
+           $.ajax({
+            url:url,
+            dataType:'json',
+            success: function(data) {
+                
+                var options = '<option value="">---------</option>';
+                for (var i = 0; i < data.length; i++){
+                    a1='<option value="'+data[i]["id"]+'">'
+                    a1+=  data[i]["nombre"] + '</option>'
+                    options += '<option value="'+data[i]["id"]+'">' + data[i]["codigo"] +" | "+ data[i]["nombre"] + '</option>'
+                }
+                
+                $('#id_cliente1').html(options)
+                $("#id_cliente1 option:first").attr('selected', 'selected');
+                
+              } 
+            }); //llamada ajax 
+         });
+      
+      $('#id_cliente1').change(function(e) {
+        e.preventDefault();
+        var cli = $(this).val();
+        $("#id_transportador").removeAttr('disabled');
+        var url = "{% url obtener_transp2 %}" + cli + "/" ;
+           $.ajax({
+            url:url,
+            dataType:'json',
+            success: function(data) {
+            	mess1=""
+				
+                if (data[0]["por_pagar"]=="1"){
+                	mess1+="tiene Cuentas por Pagar"
+                }
+				if (data[0]["nro"]=="Sin Contrato"){
+				    if (mess1==""){
+                    	mess1+="no tiene contrato"
+                    }
+                    else{
+                  		mess1+=" y no tiene contrato"
+                  	}
+                	mess1+="no tiene contrato"
+                }
+                if (data[0]["vencido"]=="1"){
+                    if (mess1==""){
+                    	mess1+="tiene el contrato vencido"
+                    }
+                    else{
+                  		mess1+=" y el contrato vencido"
+                  	}
+                }
+                if (data[0]["vencido"]=="3"){
+                    if (mess1==""){
+                    	mess1+="no tiene contrato "
+                    }
+                    else{
+                  		mess1+=" y no tiene contrato"
+                  	}
+                }
+                if (mess1!="") {
+                   mess1+="."
+                }
+                if (mess1!="") {
+                	document.getElementById('id_cliente1').value="";
+                	confirm("El cliente "+ mess1+ "&iquest;Desea realizar la operaci&oacute;n?" , function () {
+       					document.getElementById('id_cliente1').value=cli;
+		                var options = '<option value="">---------</option>';
+		                for (var i = 0; i < data.length; i++){
+		                    options += '<option value="'+data[i]["pk"]+'">' +data[i]["nombre"] +'</option>'
+		                }
+		                
+		                $('#id_transportador').html(options)
+		                $("#id_transportador option:first").attr('selected', 'selected');
+                        
+                     });
+		                $('#id_transportador').html('<option value="">---------</option>')
+		                $("#id_transportador option:first").attr('selected', 'selected');
+                }
+                else{
+	                  var options = '<option value="">---------</option>';
+	                  for (var i = 0; i < data.length; i++){
+	                    options += '<option value="'+data[i]["pk"]+'">' +data[i]["nombre"] +'</option>'
+	                  }
+                
+	                $('#id_transportador').html(options)
+	                $("#id_transportador option:first").attr('selected', 'selected');
+                }
+              } 
+            }); //llamada ajax 
+    });
+    
+  $(function(){
+    var pickerOpts = {
+            dateFormat:"dd/mm/yy",
+            changeMonth: true,
+            changeYear: true,
+            minDate: '{{ fecha_minima }}',
+            maxDate: '{{ fecha_maxima }}'
+     };
+        $(".formulario").validate();
+        $(".date").datepicker(pickerOpts);
+    });
+    
+       $('#id_ci').change(function(e) {
+        e.preventDefault();
+        var cli = $(this).val();
+        $("#id_nombre").removeAttr('disabled');
+        var url = "{% url obtener_particular2 %}" + cli + "/" ;
+           $.ajax({
+            url:url,
+            dataType:'json',
+            success: function(data) {
+                
+                var options = '<option value="">---------</option>';
+                for (var i = 0; i < data.length; i++){
+                    options += '<option value="'+data[i]["pk"]+'">' +data[i]["fields"]["nombre"] +'</option>'
+                }
+                
+                $('#id_nombre').html(options)
+                $("#id_nombre option:first").attr('selected', 'selected');
+                
+              } 
+            }); //llamada ajax 
+    });
+                              
+ }); 
+ 
+function confirm(message, callback) {
+    $('#confirm').modal({
+        closeHTML: "<a href='#' title='Close' class='modal-close'>x</a>",
+        position: ["20%",],
+        overlayId: 'confirm-overlay',
+        containerId: 'confirm-container', 
+        onShow: function (dialog) {
+            $('.message', dialog.data[0]).append(message);
+
+            // if the user clicks "yes"
+            $('.yes', dialog.data[0]).click(function () {
+                // call the callback
+                if ($.isFunction(callback)) {
+                    callback.apply();
+                }
+                // close the dialog
+                $.modal.close();
+            });
+        }
+    });
+};
+    
+{% endblock %}

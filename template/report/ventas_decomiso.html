@@ -1,0 +1,264 @@
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-1.4.2.min.js"></script>
+{% endblock %}
+
+<script type="application/javascript" >
+    $(document).ready(function() {
+                                  
+        //window.print();                           
+        $('.imprimir').click(function() {
+             window.print();
+        });                                   
+     });
+</script>
+<style>
+    @media print
+    {
+        #top_btns {
+            display:none;
+        }
+    }
+
+</style>
+ 
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/fact.css">
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/print.css">
+{% endblock %}
+
+{% block main-content %}
+    
+<div style="width:100%;">
+    <!-- Content Here --> 
+    	  <div class="content">
+        <div id="top_btns" class="row">
+            <div class="titleview2">
+            <span>Vista previa de: Ventas de Decomiso</span>
+                        <span class="right">
+                            <a href="#" target="_new" class="imprimir" ><img src="/comerciax/media/img/printer.png"></a>
+                        </span>
+                <div class="line2"></div>
+            </div>
+        </div>
+        {% if error2 %}
+            <div class="ui-state-error">
+               <ul>
+                    {% for error in error2 %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+               </ul> 
+            </div>
+        {% endif %}      
+        <div class="docdig-wraper" id="detalles"> <!-- Detalles -->
+            <div class="criterio">
+                <div class="fecha">
+                     <p>Fecha de emisi&oacute;n:  {% now "d/m/Y P" %}</p> 
+                </div>
+                <div style="padding:5px 10px;margin-bottom: 5px;">
+                  <img src="/comerciax/media/img/logo111.png" class="loguo" style="float: left;" />
+                  <div id="textencb" style="margin-left: 250px;">
+                      <h2 style="margin-bottom:0px;">Ventas de Decomiso</h2>
+                      <div class="leyenda">
+                        <p>
+                        {% for filt in filtro %}
+                        Filtro - {{ filt }}
+                        {% endfor %}
+                        </p>
+                     </div>
+                   </div>
+                </div>
+            </div>
+            <div class="titleview2">
+                <span>&nbsp;</span>             
+                <div class="line2"></div>
+            </div>
+            <div>
+            	<table cellpadding="0" cellspacing="0" border="0" class="display" id="example" style="width:100%;">
+                   <thead>
+                        <tr>
+                           {% if desglosado %}
+                            <th style="" >Decomisado a:</th>
+                            <th style="" ></th>
+                            <th style="" ></th>
+                            <th style="" ></th>
+                            <th style="" ></th>
+                            <th style="" ></th>
+                            <th style="" ></th>
+                            <th style="" ></th>
+                            <th style="" ></th>
+                            <th style="" >Vendido a:</th>
+                            <th style="" ></th>
+                            <th style="" ></th>
+                            <th style="" ></th>
+                            <th style="" ></th>
+                           
+                           {% endif %}
+                        </tr>
+                    </thead>
+			</div>
+                </table>
+                <div class="table">
+                
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example" style="width:100%;">
+                   <thead>
+                        <tr>
+                            {% if desglosado %}
+	                            <th style="" >Organismo</th>
+	                            <th style="" >Cliente</th>
+	                            <th style="" >Medida</th>
+	                            <th style="" >Nro. Casco</th>
+	                            <th style="" ></th>
+	                            <th style="" >Organismo</th>
+	                            <th style="" >Cliente</th>
+	                            <th style="" >Nro. Factura</th>
+	                            <th style="" ></th>
+	                            <th style="" ></th>
+	                         {% else %}
+	                             {% for x in column %}
+	                                <th style="" >{{ x }}</th>
+	                             {% endfor %}
+	                          {% endif %}
+                        </tr>
+                    </thead>
+                </div>
+                    <tbody>
+                    {% if desglosado %}
+                        {% for fila in resultado %}
+                            <tr>
+                                <td>{{ fila.organismod }}</td>
+                                <td>{{ fila.cliented }}</td>
+                                <td>{{ fila.medida }}</td>
+                                <td>{{ fila.casconro }}</td>
+                                <td></td>
+                                <td>{{ fila.organismov }}</td>
+                                <td>{{ fila.clientev }}</td>
+                                <td>{{ fila.nrofact }}</td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        {% endfor %}
+                      {% else %}
+                      	{% for fila in resultado %}
+                            <tr>
+                               {% if fila.0 == 'T O T A L' %}
+                                    <td style='font-size: 10pt; font-weight: bold;'>{{ fila.0 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.1 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.2 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.3 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.4 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.5 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.6 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.7 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.8 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.9 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.10 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.11 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.12 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.13 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.14 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.15 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.16 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.17 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.18 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.19 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.20 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.21 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.22 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.23 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.24 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.25 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.26 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.27 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.28 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.29 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.30 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.31 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.32 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.33 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.34 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.35 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.36 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.37 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.38 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.39 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.40 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.41 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.42 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.43 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.44 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.45 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.46 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.47 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.48 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;'>{{ fila.49 }}</td>
+	                                <td style='font-size: 10pt; font-weight: bold;' >{{ fila.50 }}</td>
+                             </tr>
+                               {% else %}
+                                <td>{{ fila.0 }}</td>
+                                <td>{{ fila.1 }}</td>
+                                <td>{{ fila.2 }}</td>
+                                <td>{{ fila.3 }}</td>
+                                <td>{{ fila.4 }}</td>
+                                <td>{{ fila.5 }}</td>
+                                <td>{{ fila.6 }}</td>
+                                <td>{{ fila.7 }}</td>
+                                <td>{{ fila.8 }}</td>
+                                <td>{{ fila.9 }}</td>
+                                <td>{{ fila.10 }}</td>
+                                <td>{{ fila.11 }}</td>
+                                <td>{{ fila.12 }}</td>
+                                <td>{{ fila.13 }}</td>
+                                <td>{{ fila.14 }}</td>
+                                <td>{{ fila.15 }}</td>
+                                <td>{{ fila.16 }}</td>
+                                <td>{{ fila.17 }}</td>
+                                <td>{{ fila.18 }}</td>
+                                <td>{{ fila.19 }}</td>
+                                <td>{{ fila.20 }}</td>
+                                <td>{{ fila.21 }}</td>
+                                <td>{{ fila.22 }}</td>
+                                <td>{{ fila.23 }}</td>
+                                <td>{{ fila.24 }}</td>
+                                <td>{{ fila.25 }}</td>
+                                <td>{{ fila.26 }}</td>
+                                <td>{{ fila.27 }}</td>
+                                <td>{{ fila.28 }}</td>
+                                <td>{{ fila.29 }}</td>
+                                <td>{{ fila.30 }}</td>
+                                <td>{{ fila.31 }}</td>
+                                <td>{{ fila.32 }}</td>
+                                <td>{{ fila.33 }}</td>
+                                <td>{{ fila.34 }}</td>
+                                <td>{{ fila.35 }}</td>
+                                <td>{{ fila.36 }}</td>
+                                <td>{{ fila.37 }}</td>
+                                <td>{{ fila.38 }}</td>
+                                <td>{{ fila.39 }}</td>
+                                <td>{{ fila.40 }}</td>
+                                <td>{{ fila.41 }}</td>
+                                <td>{{ fila.42 }}</td>
+                                <td>{{ fila.43 }}</td>
+                                <td>{{ fila.44 }}</td>
+                                <td>{{ fila.45 }}</td>
+                                <td>{{ fila.46 }}</td>
+                                <td>{{ fila.47 }}</td>
+                                <td>{{ fila.48 }}</td>
+                                <td>{{ fila.49 }}</td>
+                                <td>{{ fila.50 }}</td>
+                             </tr>
+                            {% endif %}
+                        {% endfor %}
+                      {% endif %}
+                    </tbody>
+                </table>
+            </div>
+           
+            </div>
+        </div>
+         
+    <!-- End Content -->
+</div>
+</div>
+
+{% endblock %}

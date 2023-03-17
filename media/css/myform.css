@@ -1,0 +1,167 @@
+@charset "utf-8";
+/* CSS Document */
+
+/* ------ General ------ */
+#form{
+	/*width: 700px;
+	margin:50px auto;*/
+	padding:0;
+	border:thin solid #A4A4A4;
+	background-color:#F5F5F5;
+	/*padding: 5px;*/
+}
+#clear{
+	clear:both;
+}
+#form .head_form{
+	margin:2px;
+	padding: 3px 3px 1px 5px;
+	background: #BEBDBD;
+}
+#form .body_form{
+	padding: 5px 2px 0px 2px;
+}
+#form .head_form h1,#form .head_form p{
+	color:#FFFFFF;
+	font-family:"Times New Roman", Times, serif;
+	text-align:justify;
+}
+#form .head_form h1{
+	margin:0;
+}
+#form .head_form p{
+	font-size:14px;
+	margin:5px 0 0;
+}
+#form .body_form p.element-group{
+	margin:5px 0;
+}
+
+
+
+/* ------ Elementos del formulario -------*/
+#form .body_form .formulario p.element-group label{
+	float:left;
+	width: 120px;
+	margin-right: 3px;
+	text-align:right;
+	color:#546675;
+}
+#form .body_form .formulario p.element-group input,
+#form .body_form .formulario p.element-group textarea,
+#form .body_form .formulario p.element-group select,
+#form .body_form p.element-group span.input{
+	color:#546675;
+	width: 80%; /*220px;*/
+	margin-left: 3px;
+}
+
+#form .body_form .formulario p.element-group input[type='checkbox']{
+	width: 0px;
+}
+
+fieldset{
+	width:460px;
+	border: 1px solid #666666;
+	margin-left: 10px;
+}
+
+fieldset legend{
+	color:#666666;
+	font-size:14px;
+	margin-bottom:2px;
+	margin:5px 10px;
+}
+
+#form .body_form .formulario fieldset .element-group label{
+	display: inline-block;
+	line-height: 1.8;
+	vertical-align: top;
+	cursor: hand;
+	text-align: left;
+	width: 240px;
+}
+#form .body_form .formulario fieldset .element-group input.radio{
+	width:30px;
+}
+	
+#form .body_form .formulario p.element-group input.short,
+#form .body_form .formulario p.element-group select.short{
+	width: 80px;
+}
+#form .body_form .formulario p.element-group textarea{
+	height:200px;
+}
+
+#form .body_form .formulario .zend_form ul li{
+    display: inline;
+    margin-left: 3px;
+}
+
+/* ------ Mensaje de error ------ */
+#form .body_form .formulario p.element-group label.error{
+	color:#FF0000;
+	clear:both;
+	float:none;
+	width:220px;
+	margin-left:123px;
+	font-size: 0.8em;
+	display:block;
+	text-align:left;
+}
+
+#form .body_form .formulario p.element-group input.error,
+#form .body_form .formulario p.element-group textarea.error,
+#form .body_form .formulario p.element-group select.error{
+	border: 1px dotted red;
+}
+
+/* ------ Botones ------ */
+#form .body_form .formulario p.submit-group{
+	margin: 15px 0 5px 5px;
+}
+
+#form .body_form .formulario p.submit-group #submit,
+#form .body_form .formulario p.submit-group .submit{
+	border:1px solid #A4A4A4;
+	background:#BEBDBD;
+	clear:both;
+	padding:4px 6px;
+	cursor:pointer;
+	display:inline-block;
+}
+#form .body_form .formulario p.submit-group span{
+	border:1px solid #A4A4A4;
+	background:#BEBDBD;
+	clear:both;
+	padding:3px 6px;
+	cursor:pointer;
+	display:inline-block;
+}
+
+#form .body_form .formulario p.submit-group #submit,
+#form .body_form .formulario p.submit-group .submit,
+#form .body_form .formulario p.submit-group span a
+{	
+	color:#FFFFFF;
+	font-weight:bold;
+	font-family:Arial, Helvetica, sans-serif;
+	text-decoration:none;
+	font-size:12px;
+}
+
+#form .body_form .formulario label.error{
+	clear: both;
+    color: #FF0000;
+    display: block;
+    float: none;
+    font-size: 0.8em;
+    text-align: left;
+    width: 220px;
+}
+
+/******** ESPECIALES *********************/
+#form .body_form .formulario p.element-group label[for="id_nombramiento"]{
+	width:130px;
+}
+/*****************************************/

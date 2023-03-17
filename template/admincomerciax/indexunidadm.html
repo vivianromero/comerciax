@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Unidad de medida{% endblock %}
+{% block js_include %}
+    <script type="text/javascript" src="/comerciax/media/js/jquery.dataTables.min.js"></script>
+{% endblock %}
+
+{% block js_code %}
+ $(document).ready(function() {
+	$('#countries-table').dataTable({
+		'sPaginationType': 'full_numbers', 
+		"bServerSide": true, 
+		"sAjaxSource": "{% url get_unidadm_list %}",
+		"oLanguage": {
+								"sLengthMenu": "Mostrar _MENU_ registros por pagina",
+								"sZeroRecords": "No hay registro - lo siento",
+								"sInfo": "Mostrando _START_ a _END_ de _TOTAL_ registros",
+								"sInfoEmtpy": "Mostrando 0 a 0 de 0 registros",
+								"sInfoFiltered": "(Filtrado desde _MAX_ total de registro)",
+								"oPaginate":{
+											"sFirst":"Primero",
+											"sLast":"&Uacute;ltimo",
+											"sNext":"Siguiente",
+											"sPrevious":"Anterior"
+											},
+								"sSearch":"Buscar:"
+							 }
+		,"aoColumns": [
+                                {"bVisible": 0,"sWidth": "0%" },
+								{"fnRender": function ( oObj ) {
+                                    var url = "{% url viewunidadm2 %}" + oObj.aData[0]; 
+									return "<a href="+ url +">"+oObj.aData[1] +'</a>';
+								   },
+								 "sWidth": "55%" }, 
+							  ]
+	});
+ });
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/datatables.css">
+{% endblock %}
+
+{% block controller-name %}Unidad de medida{% endblock %}
+
+{% block side-menu %}
+    <ul>
+        <li><a href="#">Index</a></li>
+        <li><a href="{% url addunidadm %}">Adicionar</a></li>
+    </ul>
+{% endblock %}
+
+{% block main-content %}
+    <div class="botones">
+            <ul>
+                <li>
+                    <a href="{% url addunidadm %}">
+                        <span>Adicionar</span>
+                    </a>
+                </li>
+            </ul>
+    </div>
+<div style="width:100%;">
+<table id="countries-table" class="display" style="width:100%;">
+	<thead>
+		<tr>
+            <th>
+                ID
+            </th>
+			<th>
+				Unidad de medida
+			</th>
+		</tr>
+	</thead>
+	<tbody>
+
+	</tbody>
+</table>
+</div>
+
+{% endblock %}

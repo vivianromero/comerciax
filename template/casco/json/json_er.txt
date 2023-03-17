@@ -1,0 +1,16 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for errorrecepcion in querySet %}
+    [
+    	"{{errorrecepcion.doc_errorrecepcion.id_doc}}",
+    	"{{errorrecepcion.doc_errorrecepcion.fecha_doc|date:"d/m/Y"}}"
+	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}

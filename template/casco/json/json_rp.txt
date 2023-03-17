@@ -1,0 +1,28 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for recepcionparticular in querySet %}
+    [
+    	"{{recepcionparticular.doc_recepcionparticular.id_doc}}",
+    	"{{recepcionparticular.recepcionparticular_nro}}",
+    	"{{recepcionparticular.doc_recepcionparticular.fecha_doc|date:"d/m/Y"}}",
+    	"{{recepcionparticular.nombre}}",
+    	"{{recepcionparticular.ci}}",
+        {% if recepcionparticular.recepcionparticular_tipo == "A" %}
+           "Ajuste"
+        {% else %}
+    		{% if recepcionparticular.recepcionparticular_tipo == "O" %}
+                "Otro"
+         	{% else %}
+           		"Venta"
+    	 	{% endif %}
+    	 {% endif %}
+	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}

@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Cierre Mes{% endblock %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.simplemodal.1.4.min.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-ui-1.8.7.js"></script>
+{% endblock %}
+
+{% block js_code %}
+ 
+$(document).ready(function() {
+
+	$('.imprimir').click(function() {
+         window.print();
+        });
+                               
+   // Variables
+    var objMain = $('#main_content2');
+    
+    hideSidebar();
+    
+    // Hide sidebar
+    function hideSidebar(){
+    objMain.removeClass('use-sidebar');
+    }     
+    
+    $('a.cerrar').click(function (e) {
+        e.preventDefault();
+        // example of calling the confirm function
+        // you must use a callback function to perform the "yes" action
+        confirm("&iquest;Est&aacute; seguro de realizar el cierre del mes de " + ' "' + "{{ mes }}" + '"?' , function () {
+            window.location.href = "{% url cerrar_mesalmprod %}";
+        });
+    });
+ });
+
+function confirm(message, callback) {
+    $('#confirm').modal({
+        closeHTML: "<a href='#' title='Close' class='modal-close'>x</a>",
+        position: ["20%",],
+        overlayId: 'confirm-overlay',
+        containerId: 'confirm-container', 
+        onShow: function (dialog) {
+            $('.message', dialog.data[0]).append(message);
+
+            // if the user clicks "yes"
+            $('.yes', dialog.data[0]).click(function () {
+                // call the callback
+                if ($.isFunction(callback)) {
+                    callback.apply();
+                }
+                // close the dialog
+                $.modal.close();
+            });
+        }
+    });
+}
+
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/confirm.css">
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+    <style>
+        @media print
+        {
+            .titleview2, #head, #main_content_top, .botones {
+                display:none;
+            }
+            body {
+                width:100% !important;
+                margin:0 !important;
+                padding:0 !important;
+                line-height: 1.4;
+                word-spacing:1.1pt;
+                letter-spacing:0.2pt; font-family: Garamond,"Times New Roman", serif; color: #000; background: none; font-size: 12pt;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block controller-name %}Cierre de Mes{% endblock %}
+
+{% block main-content %}
+        <div id='confirm'  >
+            <div class='header'><span>Confirmar</span></div>
+            <div class='message'></div>
+            <div class='buttons'>
+                <div class='no simplemodal-close'>No</div><div class='yes'>S&iacute;</div>
+            </div>
+        </div>
+
+        <div class="docdig-wraper" id="detalles"> <!-- Detalles -->
+            <div class="criterio">
+                <div style=" background-color: #D3D3D3; border: 1px solid #686868; padding:5px 10px;margin-bottom: 5px;">
+                  <h2 style="margin-bottom:0px;">Inventario f&iacute;sico del Almac&eacute;n de producci&oacute;n para el cierre del mes</h2>
+                   de <em><strong>{{ mes }}</strong></em> de {{ year }}</br>
+                   
+                </div>
+            </div>
+            <div class="titleview2">
+                <span>&nbsp;</span>
+                <span class="right">
+                    <a href="{% url pdfcliente %}"><img src="/comerciax/media/img/pdf.png"></a>
+                    <a href="#" class="imprimir" ><img src="/comerciax/media/img/printer.png"></a>
+                </span>
+                <div class="line2"></div>
+            </div>
+            <div class="table">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th style="width:50%;">Medida</th>
+                            <th style="width:10%;">Almac&eacute;n</th>
+                            <th style="width:10%;">Producci&oacute;n T&eacute;rminada</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                       {% for filas in elementos %}
+                            <tr>
+                                <td>{{ filas.medida }}</td>
+                                <td>{{ filas.Produccion }}</td>
+                                <td>{{ filas.ProduccionT }}</td>
+                            </tr>
+                       {% endfor %}                          
+                    </tbody>
+                    <tbody>
+                       {% for filas in elementos1 %}
+                            <tr style="font-weight: bold";>
+                                <td >== T O T A L ==</td>
+                                <td>{{ filas.canti_p }}</td>
+                                <td>{{ filas.canti_pt }}</td>
+                            </tr>
+                       {% endfor %}                          
+                    </tbody>
+                    
+                </table>
+                <div class="botones">
+                    <ul>
+                        <li>
+                            <a href="#" class="cerrar"><span>Cerrar {{ mes }}</span></a>
+                        </li>
+                    </ul>
+            	</div>
+            </div>
+        </div>
+
+{% endblock %}

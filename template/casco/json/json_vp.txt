@@ -1,0 +1,18 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for vp in querySet %}
+    [
+    	"{{vp.doc_vulcaproduccion.id_doc}}",
+    	"{{vp.vulcaproduccion_nro}}",
+    	"{{vp.doc_vulcaproduccion.fecha_doc|date:"d/m/Y"}}"
+ 	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}
+

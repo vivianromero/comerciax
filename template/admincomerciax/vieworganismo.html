@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Organismo{% endblock %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.simplemodal.1.4.min.js"></script>
+{% endblock %}
+
+{% block js_code %}
+ $(document).ready(function() {
+  $('#confirm-dialog input.confirm, #confirm-dialog a.confirm, a.delete').click(function (e) {
+        e.preventDefault();
+
+        // example of calling the confirm function
+        // you must use a callback function to perform the "yes" action
+        confirm("Desea eliminar el organismo " + ' "' + "{{ organismo_name }}" + '"' , function () {
+            window.location.href = "{% url delorganismo idorg=organismo_id %}";
+        });
+    }); 
+    
+    $('a.elimdet').live("click",function(e){
+        e.preventDefault();
+        ira = this.href 
+        confirm("Desea eliminar la uni&oacute;n ", function () {
+            $.ajax({
+            url:ira,
+            dataType:'json',
+            success: function(data) {
+               if(typeof(data.error) == "undefined")
+               {
+                   $("#union tbody tr").remove() //limpiar todas las filas de la tabla
+                   $.each(data, function(key, val) { 
+                        // val is { pk, model, {fields}}
+                         var urldel = "{% url delunion2 %}" + "{{organismo_id}}/"+ val.pk ;
+                        $("#union tbody").append(
+                                "<tr>\n" +
+                                    "<td>\n" +
+                                            "<div class='ui-corner-all' id='acciones'>\n"+
+                                                "<a href='" + urldel + "' title='Eliminar' class='right elimdet'><span class='ui-icon ui-icon-trash'></span></a>\n"+
+                                            "</div>\n"+
+                                    "</td>\n" +
+                                    "<td>" + val.fields.descripcion +"</td>\n" +
+                         "</tr>\n");                          
+                    });
+               }
+               else
+               {
+                    //mostrar error mandado del servidor
+                    alert(data.message);
+               } 
+              } 
+            }); //llamada ajax
+            
+        });
+      });
+    
+   
+ });
+ 
+function confirm(message, callback) {
+    $('#confirm').modal({
+        closeHTML: "<a href='#' title='Close' class='modal-close'>x</a>",
+        position: ["20%",],
+        overlayId: 'confirm-overlay',
+        containerId: 'confirm-container', 
+        onShow: function (dialog) {
+            $('.message', dialog.data[0]).append(message);
+
+            // if the user clicks "yes"
+            $('.yes', dialog.data[0]).click(function () {
+                // call the callback
+                if ($.isFunction(callback)) {
+                    callback.apply();
+                }
+                // close the dialog
+                $.modal.close();
+            });
+        }
+    });
+}
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/confirm.css">
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+{% endblock %}
+
+{% block controller-name %}Organismo{% endblock %}
+
+{% block side-menu %}
+    <ul>
+        <li><a href="{% url organismo %}">Index</a></li>
+        <li><a href="{% url editorganismo idorg=organismo_id %}">Editar</a></li>
+        <li><a href="#" class="delete">Eliminar</a></li>
+    </ul>
+{% endblock %}
+
+{% block main-content %}
+        <div id='confirm'>
+            <div class='header'><span>Confirmar</span></div>
+            <div class='message'></div>
+            <div class='buttons'>
+                <div class='no simplemodal-close'>No</div><div class='yes'>S&iacute;</div>
+            </div>
+        </div>
+
+    <div class="botones">
+            <ul>
+                <li>
+                    <a href="{% url editorganismo idorg=organismo_id %}"><span>Editar</span></a>
+                </li>
+                <li>
+                    <a href="#" class="delete"><span>Eliminar</span></a>
+                </li>
+                <li>
+                    <a href="{% url organismo %}" ><span>Regresar</span></a>
+                </li>
+            </ul>
+    </div>
+    
+    {% if error2 %}
+        <div class="ui-state-error">
+           <ul>
+                <li>{{ error2 }}</li>
+            </ul> 
+        </div>
+    {% endif %}
+    
+<div style="width:100%;">
+    <!-- Content Here -->
+        <div class="data">
+            <div class="data-wraper"> <!-- DATOS GENERALES -->
+                <div class="data-center">
+                    <div class="item">
+                        <span class="label">C&oacute;digo:</span>
+                        <span class="value">{{ organismo_code }}</span>
+                    </div>
+                    <div class="item">
+                        <span class="label">Siglas:</span>
+                        <span class="value">{{ organismo_name }}</span>
+                    </div>
+                </div>
+            </div>
+        </div> 
+        
+        <div class="docdig-wraper"> <!-- Detalles -->
+            <div class="titleview2">
+                <span>Uniones</span>
+                    <span><a href="{% url unionadd idorg=organismo_id %}">+adicionar</a></span>
+                <div class="line2"></div>
+            </div>
+            <div class="table">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="union">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Uni&oacute;n</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                       {% for fila in uniones %}
+                            <tr>
+                                <td>
+                                    <div class='ui-corner-all' id='acciones'>
+                                         <a href="{%url delunion idorg=organismo_id idunion=fila.id %}" title='Eliminar' class='right elimdet'><span class='ui-icon ui-icon-trash'></span></a>
+                                    </div>
+                                </td>
+                                <td>{{ fila.descripcion }}</td>
+                            </tr>
+                        {% endfor %}                         
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    <!-- End Content -->
+</div>
+
+{% endblock %}

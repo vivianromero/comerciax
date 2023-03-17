@@ -1,0 +1,19 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for cc in querySet %}
+    [
+    	"{{cc.doc_cc.id_doc}}",
+    	"{{cc.cc_nro}}",
+    	"{{cc.doc_cc.fecha_doc|date:"d/m/Y"}}"
+ 	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}
+
+

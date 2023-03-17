@@ -1,0 +1,62 @@
+{% extends "form/form_add.html" %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.validate.min.js"></script>
+{% endblock %}
+
+{% block js_code %}    
+ $(document).ready(function(){
+                              
+    $(".formulario").validate({
+            rules: {
+            nombre: {
+                required: true
+            },
+            apellidos: {
+                required: true
+            },
+            username: {
+                required: true
+            },
+            password: {
+                required: true,
+                minlength: 6
+            },
+            conpassword: {
+                required: true,
+                minlength: 6,
+                equalTo: "#id_password"
+            },
+            email: {
+                required: true,
+                email: true
+            }
+        },
+        messages: {
+            nombre: {
+                required: "Por favor introduzca un nombre",
+                minlength: "Su nombre debe contener al menos 2 caracteres"
+            },
+            apellidos: {
+                required: "Por favor introduzca un nombre",
+            },
+            username: {
+                required: "Por favor introduzca un nombre de usuario",
+                minlength: "Su nombre debe contener al menos 6 caracteres"
+            },
+            password: {
+                required: "Por favor introduzca una clave",
+                minlength: "Su clave debe ser de al menos 6 caracteres de largo"
+            },
+            conpassword: {
+                required: "Por favor introduzca una clave",
+                minlength: "Su clave debe ser de al menos 6 caracteres de largo",
+                equalTo: "Por favor introduzca la clave igual a la anterior"
+            },
+            email: "Por favor introduzca una direcci&oacute;n de correo valida",
+        }
+            });
+
+ }); 
+    
+{% endblock %}

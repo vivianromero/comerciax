@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Conciliacion por Cliente{% endblock %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.form.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-ui-1.8.7.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.ui.datepicker-es.js"></script>
+    
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+    <style>
+        .negritas{
+                  font-weight:bold;
+                  }
+        table{
+              margin-bottom:0px;
+              }
+        .leyenda{
+                 font-size: 11px;
+                 margin: 0 10px;
+                 }
+        
+        .fecha{
+               font-size: 11px;
+               text-align: right;
+               }
+        .fecha p{
+                 margin-bottom: 0;
+                 }
+        .itemfoot{
+                  float:left;
+                  padding:10px 40px;
+                }
+        .itemfoot span{
+                       display: block;
+                       }
+        .itemfoot p{
+                    font-weight:bold;
+                    }
+        @media print
+        {
+            .titleview2, #head, #main_content_top, .botones {
+                display:none;
+            }
+            body {
+                width:100% !important;
+                margin:0 !important;
+                padding:0 !important;
+                line-height: 1.4;
+                word-spacing:1.1pt;
+                letter-spacing:0.2pt; font-family: Garamond,"Times New Roman", serif; color: #000; background: none; font-size: 12pt;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block js_code %}
+ $(document).ready(function() {
+                               
+    $('.imprimir').click(function() {
+         window.print();
+        });
+                               
+   // Variables
+    var objMain = $('#main_content2');
+    
+    hideSidebar();
+    
+    // Hide sidebar
+    function hideSidebar(){
+    objMain.removeClass('use-sidebar');
+    }
+  
+ });
+{% endblock %}
+
+
+{% block controller-name %}Reporte{% endblock %}
+
+{% block main-content %}
+    
+<div style="width:100%;">
+    <!-- Content Here --> 
+        {% if error2 %}
+            <div class="ui-state-error">
+               <ul>
+                    {% for error in error2 %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+               </ul> 
+            </div>
+        {% endif %}      
+        <div class="docdig-wraper" id="detalles"> <!-- Detalles -->
+            <div class="criterio">
+                 <div class="fecha">
+                     <p>Fecha de emisi&oacute;n:  {% now "d/m/Y P" %}</p> 
+                </div>
+                <div style="padding:5px 10px;margin-bottom: 5px;">
+                  <img src="/comerciax/media/img/logo111.png" class="loguo" style="float: left;" />
+                  <div id="textencb" style="margin-left: 250px;">
+                      <h2 style="margin-bottom:0px;">Conciliaci&oacute;n con la Entidad</h2>
+                       Empresa <em><strong>{{ empresa }}</strong></em><br/>
+                       desde <em><strong>{{ desde }}</strong></em><br/>
+                       hasta <em><strong>{{ hasta }}</strong></em>
+                   </div>
+                </div>
+            </div>
+            <div class="titleview2">
+                <span>&nbsp;</span>
+                <span class="right">
+                    <a href="{% url pdfcliente %}" id="printer"><img src="/comerciax/media/img/pdf.png"></a>
+                    <a href="#" class="imprimir" ><img src="/comerciax/media/img/printer.png"></a>
+                </span>
+                <div class="line2"></div>
+            </div>
+            <div class="table">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th style="">Plan del A&ntilde;o</th>
+                            <th style="">Entregados</th>
+                            <th style="">Terminados</th>
+                            <th style="">Decomisados</th>
+                            <th style="">Facturados</th>
+                            <th style="">Inservibles</th>
+                            <th style="">En F&aacute;brica</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                            <tr>
+                                <td>{{ plan }}</td>
+                                <td>{{ resul.almc }}</td>
+                                <td>{{ resul.almpt }}</td>
+                                <td>{{ resul.decomisado }}</td>
+                                <td>{{ resul.facturado }}</td>
+                                <td>{{ resul.inservible }}</td>
+                                <td>{{ deuda }}</td>
+                            </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="footpage">
+                <div class="itemfoot">
+                    <span>__________________________</span>
+                    <p>Especialista Comercial</p>
+                </div>
+                <div class="itemfoot">
+                    <span>__________________________</span>
+                    <p>Director</p>
+                </div>
+                <div class="itemfoot">
+                    <span>__________________________</span>
+                    <p>Jefe &Aacute;rea Comercial</p>
+                </div>
+            </div>
+            </div>
+        </div>
+         
+    <!-- End Content -->
+</div>
+
+{% endblock %}

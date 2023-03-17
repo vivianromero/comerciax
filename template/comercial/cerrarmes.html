@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Cierre Mes{% endblock %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.simplemodal.1.4.min.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-ui-1.8.7.js"></script>
+{% endblock %}
+
+{% block js_code %}
+ 
+$(document).ready(function() {  
+
+	$('.imprimir').click(function() {
+         window.print();
+        });
+                               
+   // Variables
+    var objMain = $('#main_content2');
+    
+    hideSidebar();
+    
+    // Hide sidebar
+    function hideSidebar(){
+    objMain.removeClass('use-sidebar');
+    }   
+    
+    $('a.cerrar').click(function (e) {
+        e.preventDefault();
+        var btn = document.getElementById("btncerrar");
+        // example of calling the confirm function
+        // you must use a callback function to perform the "yes" action
+        confirm("&iquest;Est&aacute; seguro de realizar el cierre del mes de " + ' "' + "{{ newmes }}" + '"?' , function () {
+            document.getElementById('btncerrar').style.visibility = "hidden";
+            document.getElementById('msgcerrar').style.visibility = "visible";
+            window.location.href = "{% url cerrarmescomerc mes=newmes year=newyear %}";
+        });
+    });
+ });
+
+function confirm(message, callback) {
+    $('#confirm').modal({
+        closeHTML: "<a href='#' title='Close' class='modal-close'>x</a>",
+        position: ["20%",],
+        overlayId: 'confirm-overlay',
+        containerId: 'confirm-container', 
+        onShow: function (dialog) {
+            $('.message', dialog.data[0]).append(message);
+
+            // if the user clicks "yes"
+            $('.yes', dialog.data[0]).click(function () {
+                // call the callback
+                if ($.isFunction(callback)) {
+                    callback.apply();
+                }
+                // close the dialog
+                $.modal.close();
+            });
+        }
+    });
+}
+
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/confirm.css">
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+    <style>
+        @media print
+        {
+            .titleview2, #head, #main_content_top, .botones {
+                display:none;
+            }
+            body {
+                width:100% !important;
+                margin:0 !important;
+                padding:0 !important;
+                line-height: 1.4;
+                word-spacing:1.1pt;
+                letter-spacing:0.2pt; font-family: Garamond,"Times New Roman", serif; color: #000; background: none; font-size: 12pt;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block controller-name %}Cierre de Mes{% endblock %}
+
+{% block main-content %}
+        <div id='confirm'  >
+            <div class='header'><span>Confirmar</span></div>
+            <div class='message'></div>
+            <div class='buttons'>
+                <div class='no simplemodal-close'>No</div><div class='yes'>S&iacute;</div>
+            </div>
+        </div>
+
+<div class="docdig-wraper" id="detalles"> <!-- Detalles -->
+            <div class="criterio">
+                <div style=" background-color: #D3D3D3; border: 1px solid #686868; padding:5px 10px;margin-bottom: 5px;">
+                  <h2 style="margin-bottom:0px;">Cierre de Comercial del mes </h2>
+                   de <em><strong>{{ newmes }}</strong></em> del {{ newyear }}</br>
+                </div>
+            </div>
+            <div class="menscerrar" >
+                <div style="background-color: red  ; padding:5px 10px;margin-bottom: 5px; visibility:hidden" id='msgcerrar'>
+                  <h2 style="margin-bottom:0px;">Cerrando comercial. Espere ... Puede tardar varios minutos </h2>
+                </div>
+            </div>
+            <div class="table">
+            {% if mesage == 0 %}
+                <div class="botones">
+                    <ul>
+                        <li>
+                            <a href="#" id="btncerrar" class="cerrar"><span>Cerrar {{ newmes }}</span></a>
+                        </li>
+                    </ul>
+            	</div>
+            {% endif %}
+            </div>
+        </div>
+
+{% endblock %}

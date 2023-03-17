@@ -1,0 +1,104 @@
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-1.4.2.min.js"></script>
+{% endblock %}
+
+<script type="application/javascript" >
+    $(document).ready(function() {
+                                  
+        //window.print();                           
+        $('.imprimir').click(function() {
+             window.print();
+        });                                   
+     });
+</script>
+<style>
+    @media print
+    {
+        #top_btns {
+            display:none;
+        }
+    }
+
+</style>
+ 
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/fact.css">
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/print.css">
+{% endblock %}
+
+
+{% block main-content %}
+    
+<div style="width:100%;">
+    <!-- Content Here --> 
+          <div class="content">
+        <div id="top_btns" class="row">
+            <div class="titleview2">
+            <span>Vista previa de: Cascos para la Venta en PT</span>
+                        <span class="right">
+                            <a href="#" target="_new" class="imprimir" ><img src="/comerciax/media/img/printer.png"></a>
+                        </span>
+                <div class="line2"></div>
+            </div>
+        </div>
+        {% if error2 %}
+            <div class="ui-state-error">
+               <ul>
+                    {% for error in error2 %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+               </ul> 
+            </div>
+        {% endif %}      
+        <div class="docdig-wraper" id="detalles"> <!-- Detalles -->
+            <div class="criterio">
+                <div class="fecha">
+                     <p>Fecha de emisi&oacute;n:   {% now "d/m/Y P" %}</p> 
+                </div>
+                <div style="padding:5px 10px;margin-bottom: 5px;">
+                  <img src="/comerciax/media/img/logo111.png" class="loguo" style="float: left;" />
+                  <div id="textencb" style="margin-left: 250px;">
+                      <h2 style="margin-bottom:0px;">Cascos para la venta en PT </h2>
+                      
+                   </div>
+                </div>
+            </div>
+            <div class="titleview2">
+                <span>&nbsp;</span>
+                            <div class="line2"></div>
+            </div>
+            
+                <div class="table">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example" style="width:100%;">
+                <thead>
+                        <tr>
+                            <th style="" >Medida</th>
+                            <th style="" >Nro. Casco</th>
+                            <th style="" >Cliente</th>
+                        </tr>
+                        
+                    </thead>
+                </div>
+            
+                    <tbody>
+                    
+                        {% for fila in resultado %}
+                            <tr>
+                                <td>{{ fila.casco.producto }}</td>
+                                <td>{{ fila.casco.casco_nro }}</td>
+                                <td>{{ fila.rc.cliente.nombre }}</td>
+                            </tr>
+                        {% endfor %}
+                            
+                    </tbody>
+                </table>
+            </div>
+           
+            </div>
+        </div>
+         
+    <!-- End Content -->
+</div>
+
+{% endblock %}

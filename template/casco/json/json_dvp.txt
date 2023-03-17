@@ -1,0 +1,18 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for dvp in querySet %}
+    [
+    	"{{dvp.doc_dvp.id_doc}}",
+    	"{{dvp.nro_dvp}}",
+    	"{{dvp.doc_dvp.fecha_doc|date:"d/m/Y"}}"
+ 	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}
+

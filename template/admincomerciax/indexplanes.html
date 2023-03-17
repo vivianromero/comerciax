@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Clientes{% endblock %}
+{% block js_include %}
+    <script type="text/javascript" src="/comerciax/media/js/jquery.dataTables.min.js"></script>  
+{% endblock %}
+
+{% block js_code %}
+ $(document).ready(function() {
+                      
+	$('#countries-table').dataTable({
+		'sPaginationType': 'full_numbers', 
+		"bServerSide": true, 
+		"sAjaxSource": "{% url get_planes_list %}",
+		"oLanguage": {
+								"sLengthMenu": "Mostrar _MENU_ registros por pagina",
+								"sZeroRecords": "No hay registro - lo siento",
+								"sInfo": "Mostrando _START_ a _END_ de _TOTAL_ registros",
+								"sInfoEmtpy": "Mostrando 0 a 0 de 0 registros",
+								"sInfoFiltered": "(Filtrado desde _MAX_ total de registro)",
+								"oPaginate":{
+											"sFirst":"Primero",
+											"sLast":"&Uacute;ltimo",
+											"sNext":"Siguiente",
+											"sPrevious":"Anterior"
+											},
+								"sSearch":"Buscar:"
+							 }
+		,"aoColumns": [
+                                {"bVisible": 0,"sWidth": "2%" },
+								{"sWidth": "5%" },
+                                {"sWidth": "45%" },
+                                {"sWidth": "5%" },
+                                {"sWidth": "5%" },
+                                {"fnRender": function ( oObj ) {
+                                    var url = "{% url viewplan2 %}" + oObj.aData[7]; 
+									return "<a href="+ url +">"+oObj.aData[5] +'</a>';
+								   },
+								 "sWidth": "5%" },
+                                {"sWidth": "35%" },
+                                {"bVisible": 0,"sWidth": "1%" },
+							  ]
+	});
+ });
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/datatables.css">
+{% endblock %}
+
+{% block controller-name %}Cliente{% endblock %}
+
+{% block side-menu %}
+    
+{% endblock %}
+
+{% block main-content %}
+    <div class="botones">
+           
+    </div>
+<div style="width:100%;">
+<table id="countries-table" class="display" style="width:100%;">
+	<thead>
+		<tr>
+            <th>
+                ID
+            </th>
+			<th>
+				C&oacute;digo
+			</th>
+            <th>
+                Nombre
+            </th>
+            <th>
+                Organismo
+            </th>
+            <th>
+                Provincia
+            </th>
+            <th>
+            	N&uacute;mero contrato
+            </th>
+            <th>
+                Plan Contratado {{ year_actual }}
+            </th>
+            <th>
+                idcont
+            </th>
+		</tr>
+	</thead>
+	<tbody>
+
+	</tbody>
+</table>
+</div>
+
+{% endblock %}

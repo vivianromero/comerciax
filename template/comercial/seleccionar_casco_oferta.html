@@ -1,0 +1,147 @@
+{% extends "form/form.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.validate.min.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-ui-1.8.7.js"></script>
+{% endblock %}
+
+{% block js_code %}
+
+$(document).ready(function() {
+                              
+    $(".formulario").validate();  
+    
+     $('#id_medidarec').change(function(e) {
+      e.preventDefault();
+      var med = $(this).val();
+      var url = "{% url detalleOferCliente_list2 %}" + med + "/{{ rc_id }}/" ;
+      var entre = 0;
+      $("#example tbody tr").remove();
+      document.getElementById('er').style.visibility = "hidden"; 
+      if (document.getElementById("medidasalida")){
+        document.getElementById("medidasalida").value=med;             
+       }
+           $.ajax({
+            url:url,
+            dataType:'json',
+            success: function(data) {
+               if(typeof(data.error) == "undefined")
+               {
+                   $("#example tbody tr").remove() //limpiar todas las filas de la tabla
+                   $.each(data, function(key, val) { 
+                        // val is { pk, model, {fields}}
+                        entre = 1;
+                        $("#example tbody").append(
+                                "<tr>\n" +
+                                    "<td>"+
+                                        "<div class='ui-corner-all' class='1'>"+
+                                            "<input name='" + val.pk + "' type='checkbox'>"+                                 
+                                        "</div>"+
+                                    "</td>\n"+
+                                    "<td>" + val.casco_nro +"</td>\n" +
+                                    "<td>" + val.medida +"</td>\n" +
+                                    "<td>" + val.medida_entrada +"</td>\n" +
+                                    "<td>" + val.cliente +"</td>\n" +
+                                    
+                         "</tr>\n");                          
+                    });
+                    if (entre == 1 || med == ""){
+                  		document.getElementById('er').style.visibility = "hidden"	
+              		}else{
+                 		document.getElementById('er').style.visibility = "visible";  
+              		}
+               }
+               else
+               {
+                    //mostrar error mandado del servidor
+                    alert(data.message);
+               } 
+              } 
+            }); //llamada ajax 
+    });
+  
+ });
+
+
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+{% endblock %}
+
+{% block controller-name %}{{ controlador }}{% endblock %}
+
+{% block side-menu %}
+    <ul>
+        <li><a href="{% url cascocc_index %}">Index</a></li>
+        <li><a href="{% url cascocc_edit idcp=rc_id %}">Editar</a></li>
+        <li><a href="#" class="delete">Eliminar</a></li>
+    </ul>
+{% endblock %}
+
+{% block form_form %}
+    <form class="formulario" action="{{ accion }}" method="post">
+        <div class="zend_form">
+            
+                <p class="element-group">
+                      <label for="medidarec">Medida Salida</label>
+                        <select id="id_medidarec" class="required medidachange"  name="medidarec">
+                            <option selected="selected" value="">---------</option>
+                            {% for optmedida in medidas %}
+                              <option value={{optmedida.id}}>{{optmedida.descripcion}} </option>
+                            {% endfor %}
+                        </select>
+                </p>
+            
+            <p class="element-group">
+                <div class="table">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
+                    <thead>
+                        <tr>
+                        <th></th>                                                                
+                            <th>N&uacute;mero</th>
+                            <th>Medida Salida</th>
+                            <th>Medida Entrada</th>
+                            <th>Cliente</th>
+                        </tr>
+                        
+                    </thead>
+                    
+              <tbody>
+                
+	                <div id="er" style="visibility:hidden;clear:both;color:#FF0000;display:block;float:none;font-size:1em;text-align:left;width:220px;">
+	               	No Existen datos para mostrar.
+	               	</div>
+	               	
+               	
+               {% for filas in elementos_detalle %}
+                   <tr>
+                   <td>
+                       <div class="ui-corner-all" id="1">
+                           <input name={{ filas.id_casco }} type='checkbox'  >                                 
+                       </div>
+                   </td>
+                   <td>{{ filas.casco_nro }}</td>
+                   <td>{{ filas.producto }}</td>
+                   <td>{{ filas.producto }}</td>
+                   <td>{{ filas.get_cliente }}</td>
+                   </tr>
+               {% endfor %}
+                
+                 </tbody>
+              
+             </table>
+             
+         </div>
+      </p>
+                <p class="submit-group">
+                    <input type="submit" name="submit" id="submit" class="submit" value="Salvar">
+                    <input type="submit" name="submit1" id="submit1" class="submit" value="Salvar y Continuar" >
+                    <span class="element-canel-link"><a href= {{ cancelbtn }}>Cancelar</a></span>
+                </p>
+        </div>
+    </form>
+{% endblock %}
+

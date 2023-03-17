@@ -1,0 +1,52 @@
+{% extends "form/form_edit.html" %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.maskedinput-1.3.min.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.validate.min.js"></script>
+{% endblock %}
+
+{% block js_code %}    
+ $(document).ready(function(){
+    $("#id_codigo").mask("999.9.?********");
+    $(".formulario").validate();
+    
+    $("#id_organismo").change(function(e){
+        e.preventDefault();
+        var idorg = $(this).val();
+        if(idorg == "" || idorg == null)
+        {
+          $("#id_union").empty();
+          $("#id_union").attr('disabled','disabled');
+          $("#id_union").removeClass('required');
+        }
+        else
+        {
+            var ira = "{% url get_uniones2 %}" + idorg +"/" ;
+            $.ajax({
+                url:ira,
+                dataType:'json',
+                success: function(data) {
+                   if(data.length > 0)
+                   {
+                       $("#id_union").addClass('required');
+                       $("#id_union").removeAttr('disabled');
+                       var op = '<option value="">---------</option>';
+                       $.each(data, function(key, val) { 
+                            // val is { pk, model, {fields}}
+                            op += '<option value="' + val.pk +'">' + val.fields.descripcion +'</option>'; 
+                        });
+                        $("#id_union").html(op);
+                   }
+                   else
+                   {
+                        $("#id_union").empty();
+                        $("#id_union").attr('disabled','disabled');
+                        $("#id_union").removeClass('required');
+                   } 
+                  } 
+            }); //llamada ajax
+        } //else
+    })
+ }); 
+    
+{% endblock %}

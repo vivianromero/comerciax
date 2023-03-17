@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil{% endblock %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.simplemodal.1.4.min.js"></script>
+{% endblock %}
+
+{% block js_code %}
+ $(document).ready(function() {
+      
+    
+ });
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+{% endblock %}
+
+{% block controller-name %}Perfil{% endblock %}
+
+{% block side-menu %}
+    <ul>
+        <li><a href="#">Index</a></li>
+       <!-- <li><a href="#">Editar</a></li>
+        <li><a href="#" class="delete">Eliminar</a></li> -->
+    </ul>
+{% endblock %}
+
+{% block main-content %}
+    <div class="botones">
+            <ul>
+                <li>
+                    <a href="{% url editperfil idusuario=pk %}"><span>Editar</span></a>
+                </li>
+                <li>
+                    <a href="{% url changepassperfil idusuario=pk %}" ><span>Cambiar clave</span></a>
+                </li>
+            </ul>
+    </div>
+    
+    {% if error2 %}
+        <div class="ui-state-error">
+           <ul>
+                <li>{{ error2 }}</li>
+           </ul> 
+        </div>
+    {% endif %}
+       
+<div style="width:100%;">
+    <!-- Content Here -->
+        <div class="data">
+            <div class="data-wraper"> <!-- DATOS GENERALES -->
+                <div class="data-left">
+                    <div class="item">
+                        <span class="label">Nombre:</span>
+                        <span class="value">{{ nombre }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Apellidos:</span>
+                        <span class="value">{{ apellidos }}</span>
+                     </div>
+                </div>
+                 <div class="data-rigth">
+                    <div class="item">
+                        <span class="label">Usuario:</span>
+                        <span class="value">{{ username }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Email:</span>
+                        <span class="value">{{ email }}</span>
+                     </div>
+                </div>
+            </div>
+        </div>
+    <!-- End Content -->
+</div>
+
+{% endblock %}

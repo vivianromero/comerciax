@@ -1,0 +1,138 @@
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-1.4.2.min.js"></script>
+{% endblock %}
+
+<script type="application/javascript" >
+    $(document).ready(function() {
+                                  
+        //window.print();                           
+        $('.imprimir').click(function() {
+             window.print();
+        });                                   
+     });
+</script>
+<style>
+    @media print
+    {
+        #top_btns {
+            display:none;
+        }
+    }
+
+</style>
+ 
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/fact.css">
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/print.css">
+{% endblock %}
+
+{% block main-content %}
+    
+<div style="width:100%;">
+    <!-- Content Here --> 
+      <div class="content">
+        <div id="top_btns" class="row">
+            <div class="titleview2">
+            <span>Vista previa de: Transferencias</span>
+                        <span class="right">
+                            <a href="#" target="_new" class="imprimir" ><img src="/comerciax/media/img/printer.png"></a>
+                        </span>
+                <div class="line2"></div>
+            </div>
+        </div>
+        {% if error2 %}
+            <div class="ui-state-error">
+               <ul>
+                    {% for error in error2 %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+               </ul> 
+            </div>
+        {% endif %}      
+        <div class="docdig-wraper" id="detalles"> <!-- Detalles -->
+            <div class="criterio">
+                <div class="fecha">
+                     <p>Fecha de emisi&oacute;n:   {% now "d/m/Y P" %}</p> 
+                </div>
+                <div style="padding:5px 10px;margin-bottom: 5px;">
+                  <img src="/comerciax/media/img/logo111.png" class="loguo" style="float: left;" />
+                  <div id="textencb" style="margin-left: 250px;">
+                      <h2 style="margin-bottom:0px;">Transferencias</h2>
+                      <div class="leyenda">
+                        <p> 
+                            Filtro:
+                            </br>
+                            {% for filt in filtro %}
+                            {{ filt }}
+                            </br>
+                            {% endfor %}
+                        </p>
+                        </p>
+                     </div>
+                   </div>
+                </div>
+            </div>
+            <div class="titleview2">
+                <span>&nbsp;</span>             
+                <div class="line2"></div>
+            </div>
+            
+                <div class="table">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example" style="width:100%;">
+                <thead>
+                        <tr>
+                            <th style="" >Cliente</th>
+                            <th style="" >Medida</th>
+                            <th style="" >Transferidas</th>
+                            <th style="" >Procesadas</th>
+                            <th style="" >Dev. sin Proc.</th>
+                            <th style="" >Dev. Inserv.</th>
+                            <th style="" >Pendientes</th>
+                        </tr>
+                        
+                    </thead>
+                </div>
+            
+                    <tbody>
+                    
+                        {% for fila in resultado %}
+                            <tr>
+                                {% if fila.cliente == "= T O T A L =" %}
+                               	   <td style="font-weight: bold";>{{ fila.cliente}}</td>
+	                                <td style="font-weight: bold";>{{ fila.medida}}</td>
+	                                <td style="font-weight: bold";>{{ fila.transferidas }}</td>
+	                                <td style="font-weight: bold";>{{ fila.procesadas}}</td>
+	                                <td style="font-weight: bold";>{{ fila.noprocesadas }}</td>
+	                                <td style="font-weight: bold";>{{ fila.inservibles }}</td>
+	                                <td style="font-weight: bold";>{{ fila.pendientes }}</td>
+	                             {% else %}
+	                                <td >{{ fila.cliente}}</td>
+	                                <td >{{ fila.medida}}</td>
+	                                <td>{{ fila.transferidas }}</td>
+	                                <td>{{ fila.procesadas }}</td>
+	                                <td>{{ fila.noprocesadas }}</td>
+	                                <td>{{ fila.inservibles }}</td>
+	                                <td>{{ fila.pendientes }}</td>
+	                              {% endif %}
+	                                
+	                             
+                            </tr>
+                        {% endfor %}
+                            
+                    </tbody>
+                </table>
+            </div>
+           
+            </div>
+            <div>
+               <p></p> 
+               
+            </div>
+        </div>
+         
+    <!-- End Content -->
+</div>
+</div>
+
+{% endblock %}

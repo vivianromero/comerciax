@@ -1,0 +1,31 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for recepcioncliente in querySet %}
+    [
+    	"{{recepcioncliente.doc_recepcioncliente.id_doc}}",
+    	"{{recepcioncliente.recepcioncliente_nro}}",
+    	"{{recepcioncliente.doc_recepcioncliente.fecha_doc|date:"d/m/Y"}}",
+    	"{{recepcioncliente.cliente.nombre}}",
+        {% if recepcioncliente.recepcioncliente_tipo == "A" %}
+           "Ajuste"
+        {% else %}
+    		{% if recepcioncliente.recepcioncliente_tipo == "O" %}
+                "Otro"
+         	{% else %}
+         	  {% if recepcioncliente.recepcioncliente_tipo == "K" %}
+           		"Vulca"
+           	  {% else %}
+           		"Venta"
+           	  {% endif %}
+    	 	{% endif %}
+    	 {% endif %}
+	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}

@@ -1,0 +1,16 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for provincia in querySet %}
+    [
+    	"{{provincia.codigo_provincia}}",
+    	"{{provincia.descripcion_provincia}}"
+	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}

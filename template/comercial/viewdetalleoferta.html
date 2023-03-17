@@ -1,0 +1,54 @@
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="/comerciax/media/css/viewlevant.css">
+        <style>
+        table{
+            min-width: 50%;
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+        table thead th {
+            border-bottom:1px solid black;
+            font-weight:bold;
+            padding:3px 18px 3px 10px;
+            color:#464646;
+            text-align: left;
+        }
+        table tbody td {
+            font-size:12px;
+            border-bottom:1px solid #cccccc;
+            padding:3px 10px;
+        }
+        </style>
+    </head>
+    <body>
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
+                    <thead>
+                        <tr>
+                            <th>N&uacute;mero</th>
+                            <th>Medida</th>
+                            <th>Precio CUP</th>
+                            <th>Precio MLC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    
+                           {% for filas in elementos_detalle %}
+                                <tr>
+                                
+                                    <td>{{ filas.casco.casco_nro }}</td>
+                                    <td>{{ filas.casco.producto_salida }}</td>
+                                    <td>{{ filas.format_precio_mn }}</td>
+                                    <td>{{ filas.format_precio_cuc }}</td>
+                                </tr>
+                            
+                                {% endfor %}                         
+
+                        
+                    </tbody>
+                </table>
+    </body>
+</html>
+    <!-- End Content -->
+
+
