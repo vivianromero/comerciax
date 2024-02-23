@@ -1,4 +1,6 @@
 #-*- coding: utf-8 -*-
+from decimal import Decimal
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
@@ -10,16 +12,11 @@ from comerciax.casco.forms import *
 from comerciax.casco.models import *
 from comerciax.admincomerciax.models import *
 from comerciax.admincomerciax.forms import *
-from comerciax.utils import redondeo 
 import datetime
-from time import  strftime, gmtime
-#from datetime import  datetime
 from uuid import uuid4
 from django.http import HttpResponseRedirect, HttpRequest
 from django.db import transaction
-import json
 from django.utils import simplejson
-from django.core import serializers
 from comerciax.comercial.models import *
 from comerciax.comercial.forms import *
 from comerciax.casco.views import actualiza_traza,add_trazabilidad
@@ -27,10 +24,7 @@ import hashlib
 from django.db.models import Count,Max
 from comerciax import utils
 from django.db import connection
-from calendar import Calendar
 from collections import OrderedDict
-#from django.db.models import F
-import unicodedata
 from django.db.models import Q
 
 
@@ -48,6 +42,10 @@ import base64
 # Imports para pdfs
 #===============================================================================
 from comerciax.reportes import report_class
+
+from comercial.models import FacturasProdAlter, DetalleFacturaProdAlter
+
+tipo_entrada = {'O':'Otro', 'A':'Ajuste', 'K':'Vulca', 'V':'Venta', 'R':'Regrabable'}
 
 #############################################################
 #                              REPORTES                     #
@@ -325,9 +323,6 @@ def concixorgprov(request,desde,hasta,org):
         totales['casco_x_prod'] += dataitem['casco_x_prod']
         
         listtemp.append(dataitem)
-        #dataprov = {provitem.descripcion_provincia:listtemp}
-        
-        #data.append(dataprov)
         dataprov[provitem.descripcion_provincia] = listtemp
         
     aux =[]
@@ -397,12 +392,10 @@ def formconcixcliente(request):
             for cont in contrato:
                 plan = cont.contrato.get_plan_contratado(desde.year)
              
-            #resul = concixcliente(request, desde, hasta, '2b2be6ef-e82e-4eaa-b4b5-7ba04e38eda4')               
             resul = concixcliente(request, desde, hasta, client2)
             deuda = resul['almc'] - resul['facturado'] - resul['inservible'] - resul['decomisado']
             queryset.append({'plan':plan,'inv_ini':a,'entregados':resul['almc'],'deuda':deuda,'inservible':resul['inservible'],'facturado':resul['facturado'],
                              'decomisado':resul['decomisado'],'terminados':resul['almpt']})
-#            return render_to_response("report/conciliacionxcliente.html",locals(),context_instance = RequestContext(request))
             if not request.POST.__contains__('submit2') and not request.POST.__contains__('submit3'):
                 return render_to_response("report/conciliacionxcliente.html",locals(),context_instance = RequestContext(request))
             else:
@@ -553,7 +546,6 @@ def formorgfarmin(request):
             orgs = []
             for item in org:
                 orgs.append(item.__str__())
-                #orgs = ['SIME','MINFAR','MININT']
             resul = recapfarmin(request, mess, years, orgs)
             cantorg = orgs.__len__()
             
@@ -616,7 +608,6 @@ def recapfarmin(request,mes,year,orgs):
     
     mesaux = mes #9
     yearaux = year #2011
-    #data = {'SIME':[],'MINFAR':[],'MININT':[]} 
     data = {}
     l = []
     for orgitem in orgs:
@@ -656,7 +647,6 @@ def recapfarmin(request,mes,year,orgs):
         
         if fact.get_confirmada() == 'S':
             #crear lista
-            #list_aux = [fact.cliente.codigo,fact.factura_nro,fact.cliente,fact.get_importecuc(1),fact.get_importecup(1)]
             list_aux = {'codigo':fact.cliente.codigo,
                         'nro':fact.factura_nro,
                         'cliente':fact.cliente.nombre,
@@ -791,13 +781,20 @@ def cerrarmes(request):
                                       doc_factura__fecha_doc__year = years).count()
     if canti_no!=0:
         mesage = 1
-        mensage += "Existen facturas a Clientes sin Confirmar. \n" 
+        mensage += "Existen facturas a Clientes sin Confirmar. \n"
     
     canti_no=FacturasParticular.objects.select_related().filter(confirmar=False,doc_factura__fecha_doc__month = newmes_,
                                       doc_factura__fecha_doc__year = newyear).count()
     if canti_no!=0:
         mesage = 1
-        mensage += "Existen facturas a Particulares sin Confirmar. \n" 
+        mensage += "Existen facturas a Particulares sin Confirmar. \n"
+
+    canti_no = FacturasServicios.objects.select_related().filter(confirmar=False, doc_factura__fecha_doc__month=newmes_,
+                                                        doc_factura__fecha_doc__year=years).count()
+
+    if canti_no!=0:
+        mesage = 1
+        mensage += "Existen servicios a clientes sin Confirmar. \n"
     
     if mesage==1:
         mensage +="\n\n No se puede realizar el cierre en Comercial."
@@ -839,7 +836,7 @@ def cerrarmes1(request):
                                       doc_factura__fecha_doc__year = years).count()
     if canti_no!=0:
         cerrado = False
-        mensaje = "Existen facturas a Clientes sin Confirmar " 
+        mensaje = "Existen facturas a Clientes sin Confirmar2 "
         mesg.append(mensaje)
         
     
@@ -849,6 +846,13 @@ def cerrarmes1(request):
         cerrado = False
         mensaje = "Existen facturas a Particulares sin Confirmar " 
         mesg.append(mensaje)
+
+    canti_no = FacturasServicios.objects.select_related().filter(confirmar=False, doc_factura__fecha_doc__month=newmes_,
+                                                                 doc_factura__fecha_doc__year=years).count()
+
+    if canti_no != 0:
+        mesage = 1
+        mensage += "Existen servicios a clientes sin Confirmar. \n"
     
     '''
     cierre = Fechacierre.objects.filter(mes=Meses.meses_no[newmes], year=newyear).all()
@@ -1817,6 +1821,7 @@ def oferta_view(request,idof):
         rc_tipo='Ajuste'
     elif ofer.oferta_tipo == 'K':
         rc_tipo='Vulca'
+
     
     elementos_detalle=[]
     id1=''
@@ -2149,6 +2154,7 @@ def verfactura(request,idfactura,haycup,haycuc,cantcascos):
     contrato_sucursal_cuc = contrato.contrato.sucursal_usd
     contrato_cuenta_mn = contrato.contrato.cuenta_mn
     contrato_cuenta_cuc = contrato.contrato.cuenta_usd
+    contrato_nro = contrato.contrato.contrato_nro
     
     transportador = factura.transportador
     transportador_nombre = transportador.nombre
@@ -2156,12 +2162,16 @@ def verfactura(request,idfactura,haycup,haycuc,cantcascos):
     #transportador_licencia = transportador.licencia
     transportador_chapa = factura.chapa 
     transportador_licencia = factura.licencia
-    
+    vulca = False
+    regrabable = False
     if factura.cancelada==True:
         cancelada=True
     else:
+        regrabable = factura.tipo=='R'
         if factura.tipo=='A':
             ajuste=True
+        elif factura.tipo == 'K':
+            vulca = True
     
     importetotalcup=factura.get_importetotalcup()
     importetotalcuc=factura.get_importecuc()
@@ -2172,6 +2182,7 @@ def verfactura(request,idfactura,haycup,haycuc,cantcascos):
     
     
     observaciones=factura.doc_factura.observaciones
+    declaracion = True
     
     
          
@@ -2941,11 +2952,15 @@ def get_fact_list(request):
     else:
         querySet = Facturas.objects.select_related().filter(cliente__externo=False,doc_factura__fecha_doc__gte=fecha_desde.fecha)
     #querySet = querySet.filter(doc__fecha_doc__year=2010)
- 
-    columnIndexNameMap = {0:'-doc_factura__fecha_doc',1:'factura_nro',2:'admincomerciax_cliente.nombre',3:'doc_factura__fecha_doc',4:'tipo',5:'cancelada',6:'confirmar'}
+
+    columnIndexNameMap = {0:'-doc_factura__fecha_doc',1:'factura_nro',2:'admincomerciax_cliente.nombre',
+                          3:'doc_factura__fecha_doc',
+                          4:'tipo',5:'cancelada',6:'confirmar'}
+
+    # columnIndexNameMap = {}
     #{0: 'oferta_nro',1: 'oferta_nro',2:'admincomerciax_cliente.nombre',3:'doc_oferta__fecha_oferta',4:'oferta_tipo'}
 
-    searchableColumns = ['factura_nro','cliente__nombre','confirmar','doc_factura__fecha_doc']
+    searchableColumns = ['confirmar', 'cancelada', 'factura_nro','cliente__nombre','doc_factura__fecha_doc']
     #path to template used to generate json
     jsonTemplatePath = 'comercial/json/json_factura.txt'
 
@@ -2972,15 +2987,11 @@ def factura_add(request):
     controlador_form='Facturas'
     accion_form='/comerciax/comercial/factura/add'
     cancelbtn_form='/comerciax/comercial/factura/index'
-#    fecha_cierre=datetime.date.today().strftime("%d/%m/%Y")
-#    fecham=Cierre.objects.all()
     fecha_hoy=datetime.date.today().strftime("%d/%m/%Y")
     fecha_cierre=Fechacierre.objects.get(almacen='cm').fechaminima()
     fecha_maxima=Fechacierre.objects.get(almacen='cm').fechamaxima()
     c=None
     l=[]
-#    for a in fecham:
-#        fecha_cierre=a.fechacierre.strftime("%d/%m/%Y")
     if request.method == 'POST':
         form = FacturaForm(request.POST)
         if form.is_valid():
@@ -3117,6 +3128,8 @@ def factura_edit(request,idfa):
             rc_tipo='Ajuste'
         elif fact.tipo == 'K':
             rc_tipo='Vulca'
+        elif fact.tipo == 'R':
+            rc_tipo='Regrabable'
         rc_transportador=fact.transportador.nombre
         rc_chapa=fact.chapa
         rc_licencia=fact.licencia
@@ -3310,6 +3323,8 @@ def factura_view(request,idfa):
         rc_tipo='Ajuste'
     elif fact.tipo == 'K':
         rc_tipo='Vulca'
+    elif fact.tipo == 'R':
+        rc_tipo = 'Regrabable'
     rc_transportador=fact.transportador.nombre
     rc_chapa=fact.chapa
     rc_licencia=fact.licencia
@@ -3406,6 +3421,8 @@ def factura_del(request,idfa):
             rc_tipo='Ajuste'
         elif fact.tipo == 'K':
             rc_tipo='Vulca'
+        elif fact.tipo == 'R':
+            rc_tipo='Regrabable'
         rc_transportador=fact.transportador.nombre
         rc_chapa=fact.chapa
         rc_licencia=fact.licencia
@@ -3501,6 +3518,8 @@ def factura_confirmar(request,idfa):
             rc_tipo='Ajuste'
         elif fact.tipo == 'K':
             rc_tipo='Vulca'
+        elif fact.tipo == 'R':
+            rc_tipo='Regrabable'
         rc_transportador=fact.transportador.nombre
         rc_chapa=fact.chapa
         rc_licencia=fact.licencia
@@ -3579,6 +3598,8 @@ def factura_imprimir(request,idfa):
             rc_tipo='Ajuste'
         elif fact.tipo == 'K':
             rc_tipo='Vulca'
+        elif fact.tipo == 'R':
+            rc_tipo='Regrabable'
         rc_transportador=fact.transportador.nombre
         rc_chapa=fact.chapa
         rc_licencia=fact.licencia
@@ -3635,6 +3656,8 @@ def factura_cancelar(request,idfa):
             rc_tipo='Ajuste'
         elif fact.tipo == 'K':
             rc_tipo='Vulca'
+        elif fact.tipo == 'R':
+            rc_tipo='Regrabable'
         rc_transportador=fact.transportador.nombre
         rc_chapa=fact.chapa
         rc_licencia=fact.licencia
@@ -3683,6 +3706,8 @@ def factura_cancelar(request,idfa):
             rc_tipo='Ajuste'
         elif fact.tipo == 'K':
             rc_tipo='Vulca'
+        elif fact.tipo == 'R':
+            rc_tipo='Regrabable'
         
         filas = DetalleFactura.objects.select_related().filter(factura=idfa).order_by('casco_casco.casco_nro')
         pmn=ClienteContrato.objects.select_related().get(cliente=fact.cliente.id,cerrado=False)
@@ -3725,15 +3750,18 @@ def detalleFactCliente_list(request,idprod,idfa):
    
     fact=Facturas.objects.get(pk=idfa)
     filas1=None
-    filas=DetalleRC.objects.select_related().filter(rc__cliente=fact.cliente,rc__recepcioncliente_tipo=fact.tipo,casco__estado_actual="PT",casco__producto_salida_id=idprod).order_by('casco_casco.casco_nro')
+    filas=DetalleRC.objects.select_related().filter(rc__cliente=fact.cliente,rc__recepcioncliente_tipo=fact.tipo,casco__estado_actual__in=["PT"],casco__producto_salida_id=idprod).order_by('casco_casco.casco_nro')
     if fact.cliente.comercializadora==True:
         filas1=DetalleRC.objects.select_related().\
-              filter(rc__cliente__provincia=fact.cliente.provincia,rc__cliente__organismo=fact.cliente.organismo,rc__recepcioncliente_tipo=fact.tipo,casco__estado_actual="PT",casco__producto_salida_id=idprod).\
+              filter(rc__cliente__provincia=fact.cliente.provincia,rc__cliente__organismo=fact.cliente.organismo,
+                     rc__recepcioncliente_tipo=fact.tipo,casco__estado_actual="PT",casco__producto_salida_id=idprod).\
               exclude(rc__cliente=fact.cliente).order_by('casco_casco.casco_nro')
-    
-    cascos=Casco.objects.select_related().filter(estado_actual="DC",producto_salida_id=idprod).order_by('admincomerciax_producto.descripcion','casco_nro')
-    cascos_ventas=Casco.objects.select_related().filter(estado_actual="PT",producto_salida_id=idprod,venta=True).order_by('admincomerciax_producto.descripcion','casco_nro')
-    
+
+    cascos = Casco.objects.select_related().filter(estado_actual="DC", producto_salida_id=idprod).order_by(
+        'admincomerciax_producto.descripcion', 'casco_nro')
+    cascos_ventas = Casco.objects.select_related().filter(estado_actual="PT", producto_salida_id=idprod,
+                                                          venta=True).order_by('admincomerciax_producto.descripcion',
+                                                                               'casco_nro')
     lista_valores=[]
     for detalles in filas:
         lista_valores=lista_valores+[{"casco_nro":detalles.casco.casco_nro,"pk":detalles.casco.id_casco,
@@ -3750,12 +3778,10 @@ def detalleFactCliente_list(request,idprod,idfa):
                                       "medida":detalles.producto_salida.descripcion,"cliente":detalles.get_cliente(),
                                       "medida_entrada":detalles.producto.descripcion}]
     for detalles in cascos_ventas:
-        lista_valores=lista_valores+[{"casco_nro":detalles.casco_nro,"pk":detalles.id_casco,
+        lista_valores=lista_valores+[{"casco_nro":str(detalles.casco_nro)+'(V)',"pk":detalles.id_casco,
                                       "medida":detalles.producto_salida.descripcion,"cliente":detalles.get_cliente(),
                                       "medida_entrada":detalles.producto.descripcion}]
-    
-    
-    
+
     return HttpResponse(simplejson.dumps(lista_valores),content_type = 'application/javascript; charset=utf8')
 
 @login_required
@@ -3764,41 +3790,34 @@ def detalleFactPart_list(request,idprod,idfa):
     fact=FacturasParticular.objects.get(pk=idfa)
     nombre_fact=fact.nombre
     ci_fact=fact.ci
-    
-    filas1=None
-#    filas = DetalleFacturaPart.objects.select_related().filter(factura=idfa).order_by('casco_casco.casco_nro')
-#    if fact.cliente.comercializadora==True:
-#        filas1=DetalleRC.objects.select_related().\
-#              filter(rc__cliente__provincia=fact.cliente.provincia,rc__cliente__organismo=fact.cliente.organismo,rc__recepcioncliente_tipo=fact.tipo,casco__estado_actual="PT",casco__producto_salida_id=idprod).\
-#              exclude(rc__cliente=fact.cliente).order_by('casco_casco.casco_nro')
-    
-    cascos=Casco.objects.select_related().filter(estado_actual="DC",producto_salida_id=idprod).order_by('admincomerciax_producto.descripcion','casco_nro')
-    cascos_ventas=Casco.objects.select_related().filter(estado_actual="PT",producto_salida_id=idprod,venta=True).order_by('admincomerciax_producto.descripcion','casco_nro')
-    filas=DetalleRP.objects.select_related().\
-              filter(rp__nombre=nombre_fact,rp__ci=ci_fact,casco__estado_actual="PT",casco__producto_salida_id=idprod).\
-              order_by('casco_casco.casco_nro')
-    lista_valores=[]
+
+    filas = DetalleRP.objects.select_related(). \
+        filter(rp__nombre=nombre_fact, rp__ci=ci_fact, casco__estado_actual="PT", casco__producto_salida_id=idprod). \
+        order_by('casco_casco.casco_nro')
+
+    cascos = Casco.objects.select_related().filter(estado_actual="DC", producto_salida_id=idprod).order_by(
+        'admincomerciax_producto.descripcion', 'casco_nro')
+    cascos_ventas = Casco.objects.select_related().filter(estado_actual="PT", producto_salida_id=idprod,
+                                                          venta=True).order_by('admincomerciax_producto.descripcion',
+                                                                               'casco_nro')
+    lista_valores = []
+
     for detalles in filas:
-        lista_valores=lista_valores+[{"casco_nro":detalles.casco.casco_nro,"pk":detalles.casco.id_casco,
-                                      "medida":detalles.casco.producto_salida.descripcion,"cliente":detalles.casco.get_cliente(),
-                                      "medida_entrada":detalles.casco.producto.descripcion}]
-#    if filas1!=None:
-#        for detalles in filas1:
-#            lista_valores=lista_valores+[{"casco_nro":detalles.casco.casco_nro,"pk":detalles.casco.id_casco,
-#                                      "medida":detalles.casco.producto_salida.descripcion,"cliente":detalles.casco.get_cliente(),
-#                                      "medida_entrada":detalles.casco.producto.descripcion}]
-        
+        lista_valores = lista_valores + [{"casco_nro": detalles.casco.casco_nro, "pk": detalles.casco.id_casco,
+                                          "medida": detalles.casco.producto_salida.descripcion,
+                                          "cliente": detalles.casco.get_cliente(),
+                                          "medida_entrada": detalles.casco.producto.descripcion}]
     for detalles in cascos:
-        lista_valores=lista_valores+[{"casco_nro":detalles.casco_nro,"pk":detalles.id_casco,
-                                      "medida":detalles.producto_salida.descripcion,"cliente":detalles.get_cliente(),
-                                      "medida_entrada":detalles.producto.descripcion}]
+        lista_valores = lista_valores + [{"casco_nro": detalles.casco_nro, "pk": detalles.id_casco,
+                                          "medida": detalles.producto_salida.descripcion,
+                                          "cliente": detalles.get_cliente(),
+                                          "medida_entrada": detalles.producto.descripcion}]
     for detalles in cascos_ventas:
-        lista_valores=lista_valores+[{"casco_nro":detalles.casco_nro,"pk":detalles.id_casco,
-                                      "medida":detalles.producto_salida.descripcion,"cliente":detalles.get_cliente(),
-                                      "medida_entrada":detalles.producto.descripcion}]
-    
-    
-    
+        lista_valores = lista_valores + [{"casco_nro": str(detalles.casco_nro)+'(V)', "pk": detalles.id_casco,
+                                          "medida": detalles.producto_salida.descripcion,
+                                          "cliente": detalles.get_cliente(),
+                                          "medida_entrada": detalles.producto.descripcion}]
+
     return HttpResponse(simplejson.dumps(lista_valores),content_type = 'application/javascript; charset=utf8')
 
 @login_required
@@ -3848,6 +3867,8 @@ def detalleFactura_add(request,idfa):
             rc_tipo='Ajuste'
         elif fact.tipo == 'K':
             rc_tipo='Vulca'
+        elif fact.tipo == 'R':
+            rc_tipo='Regrabable'
         rc_transportador=fact.transportador.nombre
         rc_chapa=fact.chapa
         rc_licencia=fact.licencia
@@ -3912,6 +3933,8 @@ def detalleFactura_add(request,idfa):
                 if (mn==True):
                     if fact.tipo=='K':
                         detalle.precio_mn=detalle.casco.producto_salida.precio_vulca
+                    elif fact.tipo=='R':
+                        detalle.precio_mn = detalle.casco.producto_salida.precio_regrabable
                     else:
                         detalle.precio_mn=detalle.casco.producto_salida.precio_mn
                 elif (mnext==True):
@@ -4003,6 +4026,7 @@ def verfacturapart(request,idfactura,haycup,haycuc,cantcascos):
     operador_=User.objects.get(pk=user_doc.id)
 #    operador_=User.objects.get(pk=Doc.objects.get(pk=Facturas.objects.get(pk=idfactura).doc_factura).operador)
     confeccionado=operador_.first_name+" "+operador_.last_name
+    declaracion = True
         
 #    detallesFact4 = DetalleFactura.objects.select_related().filter(factura=idfactura,casco__producto_salida__codigo='"625.9.01.2205"')
     detallesFact = DetalleFacturaPart.objects.select_related().filter(factura=idfactura).values('factura','precio_particular','casco__producto_salida',\
@@ -4017,18 +4041,23 @@ def verfacturapart(request,idfactura,haycup,haycuc,cantcascos):
     cliente_codigo = factura.ci
     cliente_nombre = factura.nombre
     fecha_confeccionado = factura.doc_factura.fecha_doc
-    
+    importecup = factura.get_importetotalcup()
     observaciones=factura.doc_factura.observaciones
 
     transportador_nombre = factura.nombre
     transportador_ci = factura.ci
 
     cancelada=factura.cancelada
-    importetotalcup=factura.get_importe
-#    importetotalcuc=factura.get_importecuc
-    
-         
-    #return render_to_response("report/reporte1.html",locals(),context_instance = RequestContext(request))
+    importetotalcup=factura.get_importe()
+
+    if factura.recargo > 0.0:
+        recargo = float(factura.recargo)
+        importe_ = float(importetotalcup.replace(' ', '').replace(',', '').replace('$', ''))
+        val = utils.redondeo((importe_ * recargo)/100, 2)
+        importetotalcup_ = utils.redondeo(importe_ + val,2)
+        importetotalcup_ = '$' + '{:20,.2f}'.format(importetotalcup_)
+
+
     return render_to_response("report/factura.html",locals(),context_instance = RequestContext(request))
 
 def obtener_particular(request, idcl):
@@ -4036,7 +4065,7 @@ def obtener_particular(request, idcl):
     data=[]
     por_pagar=0
     if idcl.__len__()!=0:
-        trans=RecepcionParticular.objects.filter(ci = idcl)
+        trans=RecepcionParticular.objects.filter(ci = idcl).distinct('nombre').order_by('nombre')
         elementos=FacturasParticular.objects.filter(ci = idcl,confirmar=True,cancelada=False).all()
         for a1 in elementos:
             if a1.get_porpagar(2)>0.0:
@@ -4100,6 +4129,7 @@ def facturapart_add(request):
             fact.factura_nro=random.randint(1,1000) 
             fact.ci=form.data['ci']
             fact.tipo=tipo
+            fact.recargo=form.cleaned_data['recargo']
             fact.nombre=RecepcionParticular.objects.get(pk=form.cleaned_data['nombre']).nombre
             fact.confirmada=hashlib.sha1(pk_doc.__str__()+'NO').hexdigest()
 #         
@@ -4155,9 +4185,11 @@ def facturapart_edit(request,idfa):
         rc_cliente=fact.nombre
         rc_ci=fact.ci
         rc_nro=fact.factura_nro
+        rc_recarga=fact.recargo
 
-        importecup=FacturasParticular.objects.get(pk=idfa).get_importetotalcup()
-                    
+        # importecup=FacturasParticular.objects.get(pk=idfa).get_importetotalcup()
+        importecup=fact.get_importetotalcup()
+
         rc_observaciones=fact.doc_factura.observaciones
         filas = DetalleFacturaPart.objects.select_related().filter(factura=idfa).order_by('casco_casco.casco_nro')
         rc_tipo='De Venta'
@@ -4167,6 +4199,8 @@ def facturapart_edit(request,idfa):
             rc_tipo='Ajuste'
         elif fact.tipo == 'K':
             rc_tipo='Vulca'
+        elif fact.tipo == 'R':
+            rc_tipo='Regrabable'
         
     # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
     #editar=editar_documento(filas,idfa)
@@ -4205,8 +4239,10 @@ def facturapart_edit(request,idfa):
         #rajuste = form.cleaned_data['ajuste']
         if form.is_valid():
             ci=form.data['ci']
-            nombre=form.data['nombre']
+            nombre=RecepcionParticular.objects.get(pk=form.cleaned_data['nombre']).nombre
             tipo=form.cleaned_data['tipo']  
+            recarga=form.cleaned_data['recargo']
+            recarga = 0.0 if str(recarga).__len__() == 0 else recarga
             if  form.cleaned_data['tipo']=='De Venta':
                 tipo='V'
             elif form.cleaned_data['tipo']=='De Ajuste':
@@ -4218,17 +4254,18 @@ def facturapart_edit(request,idfa):
                 
             pk_user=User.objects.get(pk=request.user.id)
             
-            fact=FacturasParticular.objects.get(pk=idfa)
+            # fact=FacturasParticular.objects.get(pk=idfa)
             doc=Doc.objects.get(pk=idfa)
             
             fact.factura_nro=random.randint(1,100000) 
             doc.fecha_doc=form.cleaned_data['fecha']
             doc.operador=pk_user
+            doc.operador=pk_user
             doc.doc_operacion=datetime.date.today()
             doc.observaciones=form.cleaned_data['observaciones']         
-#            fact.nombre=RecepcionParticular.objects.get(pk=form.cleaned_data['nombre']).nombre
             fact.ci=ci
             fact.tipo=tipo
+            fact.recargo=recarga
             fact.nombre=nombre
          
             try:
@@ -4260,7 +4297,8 @@ def facturapart_edit(request,idfa):
         tipo=fact.tipo
         if detalles==0:
             form = FacturaPartForm(initial={'tipo':fact.tipo,'nro':fact.factura_nro,'fecha':fact.doc_factura.fecha_doc,
-                                            'ci':fact.ci,'nombre':fact.nombre,'observaciones':fact.doc_factura.observaciones})
+                                            'ci':fact.ci,'nombre':fact.nombre,'observaciones':fact.doc_factura.observaciones,
+                                            'recargo':fact.recargo})
         elif tipo=='V':
             a1=fact.nombre
             form = FacturaPartForm1(initial={'ci':fact.ci,
@@ -4274,7 +4312,8 @@ def facturapart_edit(request,idfa):
             if fact.tipo == 'O':
                 rc_tipo='Otra'
             form = FacturaPartForm1(initial={'ci':fact.ci,'tipo':rc_tipo,'nro':fact.factura_nro,'fecha':fact.doc_factura.fecha_doc,
-                                            'nombre':fact.nombre,'observaciones':fact.doc_factura.observaciones})
+                                            'nombre':fact.nombre,'observaciones':fact.doc_factura.observaciones,
+                                             'recargo':fact.recargo})
         
     return render_to_response('comercial/facturaedit.html',  {'form': form, 'form_name':nombre_form,'form_description':descripcion_form,
                                                        'accion':accion_form,'titulo':titulo_form,'controlador':controlador_form,
@@ -4307,10 +4346,10 @@ def facturapart_view(request,idfa):
     rc_cliente=fact.nombre
     rc_ci=fact.ci
     rc_nro=fact.factura_nro
-    importecup=FacturasParticular.objects.get(pk=idfa).get_importe()
-    cant_cascos=FacturasParticular.objects.get(pk=idfa).cantidad_casco() 
-    crenglones=FacturasParticular.objects.get(pk=idfa).get_renglones()
-    importecasco=FacturasParticular.objects.get(pk=idfa).get_importe_venta()         
+    importecup=fact.get_importe()
+    cant_cascos=fact.cantidad_casco()
+    crenglones=fact.get_renglones()
+    importecasco=fact.get_importe_venta()
     rc_observaciones=fact.doc_factura.observaciones
     filas = DetalleFacturaPart.objects.select_related().filter(factura=idfa).order_by('casco__producto_salida__descripcion','casco_casco.casco_nro')
     rc_tipo='De Venta'
@@ -4320,6 +4359,8 @@ def facturapart_view(request,idfa):
         rc_tipo='Ajuste'
     elif fact.tipo == 'K':
         rc_tipo='Vulca'
+    elif fact.tipo == 'R':
+        rc_tipo = 'Regrabable'
     for a in filas:
         z=a.format_precio_particular()
         
@@ -4330,7 +4371,8 @@ def facturapart_view(request,idfa):
     t_preciocuc=0.0
     t_preciocup=0.0  
     t_preciocasco=0.0  
-    
+    recargo = fact.recargo
+    totalpagar = fact.get_importe_total(recargo)
     for a1 in filas:
         if k!=0:
             if id1!=a1.casco.producto_salida.id:
@@ -4359,7 +4401,7 @@ def facturapart_view(request,idfa):
                                                             'tipo':rc_tipo,'rc_nro':rc_nro,'fecha':rc_fecha,'cliente':rc_cliente,
                                                             'observaciones':rc_observaciones,'rc_id':idfa,'elementos_detalle':elementos_detalle,
                                                             'cant_cascos':cant_cascos, 'importecasco':importecasco,
-                                                            'error2':l},context_instance = RequestContext(request))
+                                                            'error2':l, 'recargo': recargo, 'totalpagar': totalpagar},context_instance = RequestContext(request))
 
 @login_required
 @transaction.commit_on_success()
@@ -4394,6 +4436,8 @@ def facturapart_del(request,idfa):
             rc_tipo='Ajuste'
         elif fact.tipo == 'K':
             rc_tipo='Vulca'
+        elif fact.tipo == 'R':
+            rc_tipo='Regrabable'
     # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
     #editar=editar_documento(filas,idfa)
     
@@ -4473,6 +4517,8 @@ def facturapart_confirmar(request,idfa):
             rc_tipo='Ajuste'
         elif fact.tipo == 'K':
             rc_tipo='Vulca'
+        elif fact.tipo == 'R':
+            rc_tipo='Regrabable'
         for a in filas:
             z=a.format_precio_particular()
             
@@ -4573,6 +4619,8 @@ def facturapart_imprimir(request,idfa):
             rc_tipo='Ajuste'
         elif fact.tipo == 'K':
             rc_tipo='Vulca'
+        elif fact.tipo == 'R':
+            rc_tipo='Regrabable'
         rc_transportador=fact.transportador.nombre
         rc_chapa=fact.chapa
         rc_licencia=fact.licencia
@@ -4619,6 +4667,8 @@ def facturapart_cancelar(request,idfa):
             rc_tipo='Ajuste'
         elif fact.tipo == 'K':
             rc_tipo='Vulca'
+        elif fact.tipo == 'R':
+            rc_tipo='Regrabable'
     # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
     #editar=editar_documento(filas,idfa)
         return render_to_response('comercial/viewfacturapart.html',{'ci':rc_ci,'eliminar':0,'editar':1,'cancelar':0,'confirmar':0,
@@ -4657,6 +4707,8 @@ def facturapart_cancelar(request,idfa):
             rc_tipo='Ajuste'
         elif fact.tipo == 'K':
             rc_tipo='Vulca'
+        elif fact.tipo == 'R':
+            rc_tipo='Regrabable'
         
         filas = DetalleFacturaPart.objects.select_related().filter(factura=idfa).order_by('casco_casco.casco_nro')
   
@@ -4717,6 +4769,8 @@ def detalleFacturapart_add(request,idfa):
             rc_tipo='Ajuste'
         elif fact.tipo == 'K':
             rc_tipo='Vulca'
+        elif fact.tipo == 'R':
+            rc_tipo='Regrabable'
         return render_to_response('comercial/viewfacturapart.html',{'eliminar':0,'editar':1,'cancelar':0,'confirmar':0,
                                                             'importecup':importecup,
                                                             'tipo':rc_tipo,'rc_nro':rc_nro,'fecha':rc_fecha,'cliente':rc_cliente,
@@ -4725,7 +4779,7 @@ def detalleFacturapart_add(request,idfa):
 
     titulo_form='Facturas' 
     controlador_form='Facturas'
-    descripcion_form='Seleccionar cascos para la factura'
+    descripcion_form='Seleccionar cascos para la factura2'
     
     accion_form='detalleFacturapart_add'
     cancelbtn_form='/comerciax/comercial/facturapart/view/'+idfa
@@ -4847,6 +4901,8 @@ def detalleFacturapart_delete(request,idfa,idcasco):
             rc_tipo='Ajuste'
         elif fact.tipo == 'K':
             rc_tipo='Vulca'
+        elif fact.tipo == 'R':
+            rc_tipo='Regrabable'
     # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
     #editar=editar_documento(filas,idfa)
         return render_to_response('comercial/viewfacturapart.html',{'editar':1,'cancelar':0,'confirmar':0,
@@ -4882,15 +4938,19 @@ def detalleFacturapart_delete(request,idfa,idcasco):
                 t_preciocup=0.0 
                 t_preciocasco=0.0
                 k2=0
-        if k==0: 
+        if k==0:
             importetotalcup=a1.factura.get_importe_venta()
             importetotalcasco=a1.factura.get_importe()
-            
+            recargo = a1.factura.recargo
+            total_pagar = a1.factura.get_importe_total(recargo)
             elementos_detalle+=[{'total_casco':total_casco,'cant_renglones':cant_renglones,'id_doc':a1.factura.doc_factura.id_doc,
                                  'importetotalcup':importetotalcup,'casco_id':a1.casco.id_casco,
+                                 'recargo': str(recargo), 'total_pagar': total_pagar,
                              'casco_nro':a1.casco.casco_nro,'productosalida':a1.casco.producto_salida.descripcion,
-                             'productoid':a1.casco.producto.id,'precio_cup':a1.format_precio_particular(),'importetotalcasco':importetotalcasco,
-                             'precio_casco':a1.format_precio_casco()}]
+                             'productoid':a1.casco.producto.id,'precio_cup':a1.format_precio_particular(),
+                             'importetotalcasco':importetotalcasco,
+                             'precio_casco':a1.format_precio_casco()
+                                 }]
         else:
             elementos_detalle+=[{'id_doc':a1.factura.doc_factura.id_doc,'casco_id':a1.casco.id_casco,
                              'casco_nro':a1.casco.casco_nro,'productosalida':a1.casco.producto_salida.descripcion,
@@ -4902,9 +4962,10 @@ def detalleFacturapart_delete(request,idfa,idcasco):
         t_preciocasco+=float(a1.precio_casco)
         id1=a1.casco.producto_salida.id  
     if k!=0:
-        elementos_detalle[k-1]['cantidad'] = k2    
+        elementos_detalle[k-1]['cantidad'] = k2
         elementos_detalle[k-1]['t_preciocup'] = '{:20,.2f}'.format(t_preciocup)
         elementos_detalle[k-1]['t_preciocasco'] = '{:20,.2f}'.format(t_preciocasco)
+
     return HttpResponse(simplejson.dumps(elementos_detalle),content_type = 'application/javascript; charset=utf8')
 #        
 #    json_serializer = serializers.get_serializer("json")()
@@ -5037,6 +5098,8 @@ def detalleFactura_addofer(request,idfa):
             rc_tipo='Ajuste'
         elif fact.tipo == 'K':
             rc_tipo='Vulca'
+        elif fact.tipo == 'R':
+            rc_tipo='Regrabable'
         rc_transportador=fact.transportador.nombre
         rc_chapa=fact.chapa
         rc_licencia=fact.licencia
@@ -5279,13 +5342,7 @@ def detalleFactura_delete(request,idfa,idcasco):
         elementos_detalle[k-1]['t_preciocup'] = '{:20,.2f}'.format(t_preciocup)
         elementos_detalle[k-1]['t_preciocasco'] = '{:20,.2f}'.format(t_preciocasco)
     return HttpResponse(simplejson.dumps(elementos_detalle),content_type = 'application/javascript; charset=utf8')
-    
-    
-    
-#    for a1 in detalleofe:
-#        data+=[{'cant_renglones':str(cant_renglones),'pk':a1.id_detalle,'factura':idfa,'precio_mn':str(a1.precio_mn),'precio_casco':str(a1.precio_casco),'precio_cuc':str(a1.precio_cuc),'id_casco':str(a1.casco.id_casco),'casco_nro':str(a1.casco.casco_nro),'medida':(a1.casco.producto_salida.descripcion)}]
-#        
-#    return HttpResponse(simplejson.dumps(data),content_type = 'application/javascript; charset=utf8')     
+
 
 #############################################################
 #                  PAGOS EN EFECTIVO PARTICULARES           #
@@ -6677,7 +6734,7 @@ def cascosxcliente(request):
                               admincomerciax_cliente.id,
                               casco_doc.fecha_doc,
                               casco_recepcioncliente.recepcioncliente_nro,
-                              casco_recepcionparticular.recepcionparticular_nro
+                              casco_recepcioncliente.recepcioncliente_tipo as tipo
                             FROM
                               casco_casco
                               INNER JOIN admincomerciax_producto ON (casco_casco.producto_salida_id = admincomerciax_producto.id)
@@ -6711,7 +6768,8 @@ def cascosxcliente(request):
                           concat('**',casco_recepcionparticular.nombre) as cliente_nombre,
                           casco_recepcionparticular.ci as cliente_codigo,
                           casco_doc.fecha_doc,
-                          casco_recepcionparticular.recepcionparticular_nro as recepcioncliente_nro
+                          casco_recepcionparticular.recepcionparticular_nro as recepcioncliente_nro,
+                          casco_recepcionparticular.recepcionparticular_tipo as tipo
                         FROM
                           casco_casco
                           INNER JOIN admincomerciax_producto ON (casco_casco.producto_salida_id = admincomerciax_producto.id)
@@ -6735,28 +6793,12 @@ def cascosxcliente(request):
                 cnro=a['recepcioncliente_nro'] 
                 
                 estado=a["estado_actual"]
-                resultado=resultado+[{"fecha_doc":a["fecha_doc"].strftime("%d/%m/%Y"),"ministerio":sorg,"provincia":prov,"nombre":cnom,"codigo":ccod,"recepcioncliente_nro":cnro,"casco_nro":a["casco_nro"],"descripcion":a["producto_descripcion"],"estado_actual":unicode(Estados.estados[estado],'utf-8') if Estados.estados.has_key(estado) else estado}]
+                resultado=resultado+[{"fecha_doc":a["fecha_doc"].strftime("%d/%m/%Y"),"ministerio":sorg,
+                                      "provincia":prov,"nombre":cnom,"codigo":ccod,"recepcioncliente_nro":cnro,
+                                      "casco_nro":a["casco_nro"] if a["tipo"] == 'O' else str(a["casco_nro"])+"("+a["tipo"]+")",
+                                      "descripcion":a["producto_descripcion"],
+                                      "estado_actual":unicode(Estados.estados[estado],'utf-8') if Estados.estados.has_key(estado) else estado}]
 
-#                if organismo == sorg:
-#                    orga=""
-#                else:
-#                    orga=sorg
-#                    organismo=sorg
-#                
-#                if provincia== prov:
-#                    provi=""
-#                else:
-#                    provi=prov
-#                    provincia= prov
-#                nombre_c= cnom
-#                ccodigo=ccod
-#                
-#                n_doc=cnro
-#                if nombre == nombre_c:
-#                    resultado=resultado+[{"fecha_doc":a["fecha_doc"].strftime("%d/%m/%Y"),"ministerio":orga,"provincia":provi,"nombre":"","codigo":"","recepcioncliente_nro":n_doc,"casco_nro":a["casco_nro"],"descripcion":a["producto_descripcion"],"estado_actual":unicode(Estados.estados[estado],'utf-8') if Estados.estados.has_key(estado) else estado}]
-#                else:
-#                    resultado=resultado+[{"fecha_doc":a["fecha_doc"].strftime("%d/%m/%Y"),"ministerio":orga,"provincia":provi,"nombre":nombre_c,"codigo":ccodigo,"recepcioncliente_nro":n_doc,"casco_nro":a["casco_nro"],"descripcion":a["producto_descripcion"],"estado_actual":unicode(Estados.estados[estado],'utf-8') if Estados.estados.has_key(estado) else estado}]
-#                    nombre=nombre_c
             if resultado.__len__()==0:
                 form = Rep_CascosCliente()
                 mesg=mesg+['No existe información para mostrar']
@@ -6883,7 +6925,8 @@ def cascostraza(request):
                 iddoc=a.doc.id_doc
 #                tipodoc=a["tipo_doc"]
                 if tipodoc=='1' or tipodoc=='3': # Recepcion cliente y recep. cliente ext.
-                    nrodoc=RecepcionCliente.objects.get(doc_recepcioncliente=iddoc).recepcioncliente_nro
+                    obj=RecepcionCliente.objects.get(doc_recepcioncliente=iddoc)
+                    nrodoc= str(obj.recepcioncliente_nro) + ' (' + tipo_entrada[str(obj.recepcioncliente_tipo)]+')' if str(obj.recepcioncliente_tipo) != 'O' else str(obj.recepcioncliente_nro)
                 elif tipodoc=='2':
                     nrodoc=CC.objects.get(doc_cc=iddoc).cc_nro
                 elif tipodoc=='4':
@@ -6907,13 +6950,18 @@ def cascostraza(request):
                 elif tipodoc=='15':
                     nrodoc=""
                 elif tipodoc=='16':
-                    nrodoc=RecepcionParticular.objects.get(doc_recepcionparticular=iddoc).recepcionparticular_nro
+                    obj=RecepcionParticular.objects.get(doc_recepcionparticular=iddoc)
+                    # nrodoc=str(obj.recepcionparticular_nro) + ' (' + tipo_entrada[str(obj.recepcioncliente_tipo)]+')'
+                    nrodoc = str(obj.recepcionparticular_nro) + ' (' + tipo_entrada[
+                        str(obj.recepcionparticular_tipo)] + ')' if str(obj.recepcionparticular_tipo) != 'O' else str(
+                        obj.recepcionparticular_nro)
                 elif tipodoc=='17':
                     nrodoc=FacturasParticular.objects.get(doc_factura=iddoc).factura_nro
                 elif tipodoc=='18':
                     nrodoc=RecepCascoExt.objects.get(doc_recepcascoext=iddoc).recepcascoext_nro
                     
-                resultado=resultado+[{"fecha_doc":a.doc.fecha_doc,"nombre":nombrec,"codigo":codigoc,"casco_nro":a.casco.casco_nro,
+                resultado=resultado+[{"fecha_doc":a.doc.fecha_doc,"nombre":nombrec,"codigo":codigoc,
+                                      "casco_nro":a.casco.get_nro_tipo(),
                                       "estado":unicode(Estados.estados[estado],'utf-8')+ocioso,"nrodoc":nrodoc,"descripcion":descripcion}]
             if request.POST.__contains__('submit1'):
                 if resultado.__len__():    
@@ -6972,7 +7020,9 @@ def cascosventa(request):
             if request.POST.__contains__('submit1'):
                 if resultado.__len__():    
                     for a in resultado:
-                        queryset.append({'producto':a.casco.producto.descripcion,'casco_nro':a.casco.casco_nro,'nombre':a.rc.cliente.nombre})
+                        queryset.append({'producto':a.casco.producto.descripcion,
+                                         'casco_nro':a.casco.casco_nro if a.rc.recepcioncliente_tipo=='O' else str(a.casco.casco_nro)+'('+a.rc.recepcioncliente_tipo+')',
+                                         'nombre':a.rc.cliente.nombre})
                     pdf_file_name=os.path.join(comerciax.settings.ADMIN_MEDIA_PDF,"Cascos para la Venta en PT.pdf")
                     if report_class.Reportes.GenerarRep(report_class.Reportes() , queryset, "cascos_venta",pdf_file_name,[])==0:
                         mesg=mesg+['Debe cerrar el documento Cascos para la Venta en PT.pdf']
@@ -7152,7 +7202,6 @@ def cascosestado(request):
             filtro=[]
             where=[]
             
-#            resultado=Casco.objects.select_related().all().order_by('estado_actual','admincomerciax_producto.descripcion')
             if cliente!=None:
                 where.append("cliente_id='"+cliente.id+"'")
                 filtro.append('Cliente: '+cliente.nombre)
@@ -7197,6 +7246,7 @@ def cascosestado(request):
                 if venta:
                     opt = opt+" and casco_casco.venta = True and casco_casco.decomisado=False "
                 order = """ ORDER BY estado_actual, producto_descripcion, cliente_nombre, casco_nro """ if orden == 'Medida' else """ ORDER BY estado_actual, cliente_nombre, producto_descripcion"""
+
                 resultado1 = query_to_dicts("""
                            SELECT 
                               casco_casco.venta,
@@ -7302,7 +7352,8 @@ def cascosestado(request):
                                 inner join casco_cascodecomiso on casco_cascodecomiso.doc_decomiso_id = casco_detalle_dc.doc_decomiso_id
                                 inner join casco_doc on casco_cascodecomiso.doc_decomiso_id = casco_doc.id_doc
                                 where casco_detalle_dc.casco_id = casco_casco.id_casco)
-                             else 0 end as dias
+                             else 0 end as dias,
+                             casco_recepcioncliente.recepcioncliente_tipo as tipo
                             FROM
                               casco_casco
                               INNER JOIN admincomerciax_producto ON (casco_casco.producto_salida_id = admincomerciax_producto.id)
@@ -7418,7 +7469,8 @@ def cascosestado(request):
                         inner join casco_cascodecomiso on casco_cascodecomiso.doc_decomiso_id = casco_detalle_dc.doc_decomiso_id
                         inner join casco_doc on casco_cascodecomiso.doc_decomiso_id = casco_doc.id_doc
                         where casco_detalle_dc.casco_id = casco_casco.id_casco)
-                     else 0 end as dias
+                     else 0 end as dias,
+                     casco_recepcionparticular.recepcionparticular_tipo as tipo
                     FROM
                       casco_casco
                       INNER JOIN admincomerciax_producto ON (casco_casco.producto_salida_id = admincomerciax_producto.id)
@@ -7510,10 +7562,10 @@ def cascosestado(request):
                     else:
                         ccliente1=""   
                         canti_cliente += 1
-    
+                    casco_nro_ = str(datos['casco_nro']) if datos['tipo'] == 'O' else str(datos['casco_nro'])+'('+datos['tipo']+')'
                     resultado=resultado+[{'estado_actual':unicode(Estados.estados[estado1],'utf-8')+estadoocioso if Estados.estados.has_key(estado1) else "", 
                                            'medida': datos['producto_descripcion'], 
-                                           'casco_nro': str(datos['casco_nro'])+"**" if datos['venta']==True and datos['decomisado']==False else str(datos['casco_nro']), 
+                                           'casco_nro': casco_nro_+"**" if datos['venta']==True and datos['decomisado']==False else casco_nro_,
                                            'cliente':ccliente1,
                                            'dias': str(int(datos['dias'])) if datos['dias'] != 0 else "", 
                                            'destino':"" if not datos.has_key('destino') else datos['destino']
@@ -7937,7 +7989,7 @@ def factcliente(request):
             hasta=form.cleaned_data['fecha_hasta']
             filtro=[]
             queryset=[]
-            resultado=Facturas.objects.select_related().filter(doc_factura__fecha_doc__gte=desde,doc_factura__fecha_doc__lte=hasta,confirmar=True)
+            resultado=Facturas.objects.select_related().filter(doc_factura__fecha_doc__gte=desde,doc_factura__fecha_doc__lte=hasta,confirmar=True).order_by('cancelada', 'cliente__nombre')
             filtro.append('Facturas emitidas entre el '+desde.strftime("%d/%m/%Y")+' y el '+hasta.strftime("%d/%m/%Y"))
             if organismo!=None and resultado.__len__()!=0:
                 filtro.append('Organimso: '+organismo.siglas_organismo)
@@ -7963,17 +8015,28 @@ def factcliente(request):
                 return render_to_response("comercial/reporteindex.html",{'form':form,'title':titulo_form, 'form_name':nombre_form,'form_description':descripcion_form,
                                                                 'controlador':controlador_form,'accion':accion_form,'error2':mesg,'email':1},context_instance = RequestContext(request))
             else:
-                resultado=resultado.order_by('admincomerciax_cliente.nombre','factura_nro')
+                sumas = DetalleFactura.objects.filter(factura__confirmar=True, factura__doc_factura__fecha_doc__gte=desde,
+                                              factura__doc_factura__fecha_doc__lte=hasta,
+                                              factura__cancelada=False).aggregate(Sum('precio_mn'), Sum('precio_cuc'), Sum('precio_casco'))
+                total_cuc = '$'+'{:20,.2f}'.format(sumas['precio_cuc__sum'])
+                total_mn = '$'+'{:20,.2f}'.format(sumas['precio_mn__sum']+sumas['precio_casco__sum'])
+
+                resultado=resultado.order_by('cancelada','admincomerciax_cliente.nombre','factura_nro')
                 if not request.POST.__contains__('submit1') and not request.POST.__contains__('submit2'):
-                    return render_to_response("report/facturas_clientes.html",{'filtro':filtro,'fecha_hoy':fecha_hoy(),'resultado':resultado,'error2':mesg,'email':1},context_instance = RequestContext(request))
+                    return render_to_response("report/facturas_clientes.html",{'filtro':filtro,'fecha_hoy':fecha_hoy(),
+                                                                               'resultado':resultado,'error2':mesg,'email':1,
+                                                                               'total_mn':total_mn,
+                                                                               'total_cuc':total_cuc},context_instance = RequestContext(request))
                 else:
                     esta=0
                     if cliente!=None:
                         esta=1
                     for fila in resultado:
                         queryset.append({'nombre':fila.cliente.nombre,'codigo':fila.cliente.codigo ,'factura_nro':str(fila.factura_nro),
-                                      'fecha_doc':fila.doc_factura.fecha_doc,'importetotalcup':fila.get_importetotalcup,
-                                      'importecuc':fila.get_importecuc,'cancelada':'No' if fila.cancelada==False else 'Si'
+                                      'fecha_doc':fila.doc_factura.fecha_doc,
+                                      'importetotalcup':fila.get_importetotalcup(1) if not fila.cancelada else 0.00,
+                                      'importecuc':fila.get_importecuc(1) if not fila.cancelada else 0.00,
+                                         'cancelada':'No' if fila.cancelada==False else 'Si'
                                       })  
                     pdf_file_name=os.path.join(comerciax.settings.ADMIN_MEDIA_PDF,"Facturas por Cliente.pdf")
                     if esta==0:
@@ -8050,7 +8113,7 @@ def regfacturas(request):
             resultado=Facturas.objects.select_related().filter(doc_factura__fecha_doc__gte=desde,doc_factura__fecha_doc__lte=hasta,confirmar=True).order_by('factura_nro')
 #            resultado_externo=Facturas.objects.select_related().filter(doc_factura__fecha_doc__gte=desde,doc_factura__fecha_doc__lte=hasta,cliente__externo=True,confirmar=True).order_by('factura_nro')
             resultado_particulares=FacturasParticular.objects.select_related().filter(doc_factura__fecha_doc__gte=desde,doc_factura__fecha_doc__lte=hasta,confirmar=True).order_by('factura_nro')
-            
+            resultado = resultado.order_by('factura_nro')
             if resultado.__len__()==0 and resultado_particulares==0:                              
                 mesg=mesg+['No existe información para mostrar']
                 return render_to_response("comercial/reporteindex.html",{'form':form,'title':titulo_form, 'form_name':nombre_form,'form_description':descripcion_form,
@@ -8061,14 +8124,16 @@ def regfacturas(request):
                 total_cascocliente=0
                 for k in range(resultado.__len__()):
                     if resultado[k].get_confirmada() == 'S':
-                        if str(resultado[k].factura_nro)=='1702':
-                            kk=3
-                        queryset.append({'nombre':resultado[k].cliente.nombre,'tipo':'Clientes','codigo':resultado[k].cliente.codigo ,
+                        val_cup = Decimal('0.00') if resultado[k].cancelada==True or resultado[k].tipo=='A' else resultado[k].get_importetotalcup(1)
+                        val_cuc = Decimal('0.00') if resultado[k].cancelada==True or resultado[k].tipo=='A' else resultado[k].get_importecuc(1)
+                        queryset.append({'nombre':resultado[k].cliente.nombre,
+                                         'tipo':'Clientes',
+                                         'codigo':resultado[k].cliente.codigo ,
                                          'factura_nro':str(resultado[k].factura_nro),
                                       'fecha_doc':resultado[k].get_fecha(),
                                       'cascos': resultado[k].cantidad_casco() if not resultado[k].cancelada and resultado[k].tipo!='A' else 0,
-                                      'importetotalcup':resultado[k].get_importetotalcup(1) if resultado[k].tipo!='A' else 0.00,
-                                      'importecuc':resultado[k].get_importecuc(1) if not resultado[k].cancelada and resultado[k].tipo!='A' else 0,
+                                      'importetotalcup':val_cup, #if resultado[k].tipo!='A' else '0.00',
+                                      'importecuc':val_cuc, #if not resultado[k].cancelada and resultado[k].tipo!='A' else '0.00',
                                       'cancelada':'Cancelada' if resultado[k].cancelada==True else 'Ajuste' if resultado[k].tipo=='A' else ''
                                       })
                     if resultado[k].cancelada == False and resultado[k].tipo!='A':
@@ -8080,20 +8145,28 @@ def regfacturas(request):
                 total_importecup3=0
                 total_importecuc3=0
                 total_cascopart=0
+                resultado_particulares = resultado_particulares.order_by('cancelada', 'factura_nro')
                 for k in range(resultado_particulares.__len__()):
                     if resultado_particulares[k].get_confirmada() == 'S':
+                        val_cup = Decimal('0.00') if resultado_particulares[k].cancelada == True or resultado_particulares[k].tipo == 'A' else \
+                        resultado_particulares[k].get_importe_total_value(1)
+
                         queryset.append({'nombre':resultado_particulares[k].nombre,
-                                         'tipo':'Particulares','codigo':resultado_particulares[k].ci ,'factura_nro':str(resultado_particulares[k].factura_nro),
+                                         'tipo':'Particulares',
+                                         'codigo':resultado_particulares[k].ci,
+                                         'factura_nro':str(resultado_particulares[k].factura_nro),
                                       'fecha_doc':resultado_particulares[k].get_fecha(),
-                                      'cascos':resultado_particulares[k].cantidad_casco() if not resultado_particulares[k].cancelada and resultado_particulares[k].tipo!='A' else 0,
-                                      'importetotalcup':resultado_particulares[k].get_importetotalcup(1) if not resultado_particulares[k].cancelada and resultado_particulares[k].tipo!='A' else 0,
-                                      'importecuc':0.0,
-                                      'cancelada':'Cancelada' if resultado[k].cancelada==True else 'Ajuste' if resultado[k].tipo=='A' else ''
+                                      'cascos': 0 if resultado_particulares[k].cancelada == True or resultado_particulares[k].tipo == 'A' else resultado_particulares[k].cantidad_casco(),
+                                      'importetotalcup':val_cup,
+                                      'importecuc':Decimal('0.00'),
+                                      'cancelada':'Cancelada' if resultado_particulares[k].cancelada==True else 'Ajuste' if resultado_particulares[k].tipo=='A' else ''
                                       })
-                    if resultado_particulares[k].cancelada == False and resultado[k].tipo!='A':
+
+                    if resultado_particulares[k].cancelada == False and resultado_particulares[k].tipo!='A':
                         total_cascopart+=resultado_particulares[k].cantidad_casco()
-                        total_importecup3+=resultado_particulares[k].get_importetotalcup(1)
-                total_cup= total_importecup1+total_importecup3
+                        total_importecup3+=float(resultado_particulares[k].get_importe_total().replace(' ','').replace('$','').replace(',',''))
+
+                total_cup= float(total_importecup1)+float(total_importecup3)
                 total_cuc= total_importecuc1+total_importecuc3 
                 total_cascototal=total_cascopart+total_cascocliente
                 
@@ -8120,7 +8193,7 @@ def regfacturas(request):
         
                 else:
                     pdf_file_name=os.path.join(comerciax.settings.ADMIN_MEDIA_PDF,"Registro de Facturas.pdf")
-                    if report_class.Reportes.GenerarRep(report_class.Reportes() , queryset, "registro_fac",pdf_file_name,filtro)==0:
+                    if report_class.Reportes.GenerarRep(report_class.Reportes(), queryset, "registro_fac",pdf_file_name,filtro)==0:
                         mesg=mesg+['Debe cerrar el documento Registro de Facturas.pdf']
                         return render_to_response("comercial/reporteindex.html",{'filtro':filtro,'resultado':resultado_particulares,'form':form,'title':titulo_form, 'form_name':nombre_form,'form_description':descripcion_form,
                                                         'controlador':controlador_form,'accion':accion_form,'error2':mesg},context_instance = RequestContext(request))
@@ -9694,7 +9767,31 @@ def cascosptcantidad(request):
 
 @login_required
 def conciliacion(request):
-    
+    # sql = query_to_dicts(""" TODO ESTO ES PARA PONER EL CLIENTE EN CASCO EL QUE LE DIO ENTRADA
+    #     SELECT
+	# 	      casco_casco.id_casco,
+	# 	      casco_recepcioncliente.cliente_id as rc_id_cliente,
+    #                   (select casco_recepcioncliente.cliente_id from casco_detallerc
+	# 		 inner join casco_recepcioncliente on casco_recepcioncliente.doc_recepcioncliente_id = casco_detallerc.rc_id
+	# 		 where casco_id=casco_casco.id_casco) as cliente_recepcion
+    #                 FROM
+    #                   public.casco_casco
+    #                 inner join public.casco_detallerc on casco_detallerc.casco_id = casco_casco.id_casco
+    #                 left outer join public.casco_recepcioncliente on casco_recepcioncliente.cliente_id = casco_casco.id_cliente_id
+    #                 inner join admincomerciax_cliente on casco_casco.id_cliente_id=admincomerciax_cliente.id
+    #                 inner join admincomerciax_organismo on admincomerciax_organismo.id=admincomerciax_cliente.organismo_id
+    #                 inner join admincomerciax_provincias on admincomerciax_provincias.codigo_provincia=admincomerciax_cliente.provincia_id
+    #                 WHERE
+    #                    casco_casco.estado_actual in ('Casco','Produccion','PT','Transferencia','DVP','DIP','ER','REE')
+    #                    and casco_recepcioncliente.cliente_id is null
+    #                 order by admincomerciax_organismo.siglas_organismo,admincomerciax_provincias.descripcion_provincia,
+    #                 admincomerciax_cliente.nombre
+    # """)
+    # for k in sql:
+    #     c = Casco.objects.get(id_casco=k['id_casco'])
+    #     c.id_cliente_id=k['cliente_recepcion']
+    #     c.save()
+
     nombre_form='Reportes'
     descripcion_form='Conciliación'
     titulo_form='Conciliación' 
@@ -9910,9 +10007,7 @@ def conciliacion(request):
                 if datos['estado_actual'] == 'PT':
                     estado = 'PTer'  
                 else:
-                    estado = datos['estado_actual'] 
-                if datos['id_cliente_id'] =='cfc7f9b5-dc5b-472c-bba8-880022c3306a': 
-                    a1=2 
+                    estado = datos['estado_actual']
                 dic_cli[datos['id_cliente_id']][estado]+=int(datos['canti'])
            
             resultado=[]
@@ -9920,28 +10015,15 @@ def conciliacion(request):
                 dic_cli[lista_cli[a1]]['Devoluc']= dic_cli[lista_cli[a1]]['DCC']+dic_cli[lista_cli[a1]]['ECR']
                 dic_cli[lista_cli[a1]]['Inserv']= dic_cli[lista_cli[a1]]['DIP']+dic_cli[lista_cli[a1]]['ER']++dic_cli[lista_cli[a1]]['REE']
                 resultado.append(dic_cli[lista_cli[a1]])
-            ############    
-#            fd = open("D:\\actualiza cierre.sql", "w+")
-#            lista_no_coincide={}
-#            for a1 in range(lista_cli.__len__()):
-#                saldo=dic_cli[lista_cli[a1]]['Inicio']+dic_cli[lista_cli[a1]]['Entregados']-(dic_cli[lista_cli[a1]]['Deco']+dic_cli[lista_cli[a1]]['Factura']+dic_cli[lista_cli[a1]]['ECR']+dic_cli[lista_cli[a1]]['DCC'])
-#                existencia=dic_cli[lista_cli[a1]]['Casco']+dic_cli[lista_cli[a1]]['Produccion']+dic_cli[lista_cli[a1]]['PTer']+dic_cli[lista_cli[a1]]['Transferencia']+dic_cli[lista_cli[a1]]['DVP']+dic_cli[lista_cli[a1]]['DIP']+dic_cli[lista_cli[a1]]['ER']+dic_cli[lista_cli[a1]]['REE']
-#                if saldo!=existencia:
-#                   opera="-"
-#                   if saldo-existencia<0:
-#                       opera="+" 
-#                   lista_no_coincide[lista_cli[a1]]=abs(saldo-existencia)
-#                   cade="update comercial_invcliente set cantidad=cantidad"+opera+str(abs(saldo-existencia))+" where cliente_id='"+lista_cli[a1] + "';"   
-#                   fd.write(cade + "\n")
-#            
-#            fd.close()
-#            llaves=lista_no_coincide.keys()
-#            for x1 in range(llaves.__len__()):
-#                print llaves[x1]+"\n"
-            ################
+
+            # rr = [] TODO ESTO ES PARA LOS QUE DESCUADRAN
+            # for k in resultado:
+            #     if k['Inicio']-k['Deco']+k['Entregados']-k['Factura']-k['Devoluc'] != k['Casco']+k['Produccion']+k['PTer']+k['Transferencia']+k['DVP']+k['Inserv']:
+            #         rr.append(k)
+            # resultado = rr
             if request.POST.__contains__('submit1') or request.POST.__contains__('submit2'):  
                     
-                    if resultado.__len__():                        
+                    if resultado.__len__():
                         pdf_file_name=os.path.join(comerciax.settings.ADMIN_MEDIA_PDF,"Cociliacion.pdf")
                         if report_class.Reportes.Conciliacion(report_class.Reportes() , resultado, "Conciliación",pdf_file_name,filtro)==0:
                             mesg.append('Debe cerrar el fichero Conciliacion.pdf')
@@ -10877,7 +10959,6 @@ def plazosfabricaall_pdf(request):
     messes = ultimo_mes_anyo.mes + 1 
     pdf_file_name=os.path.join(comerciax.settings.ADMIN_MEDIA_PDF,"Plazos en Fabrica.pdf")
     filtro=[]
-#    filtro=['Del mes de '+mes+ ' del '+str(year)]
     mesg=[]
     if report_class.Reportes.GenerarRep(report_class.Reportes() , elementos, "plazos_fabrica",pdf_file_name,filtro)==0:
         mesg.append('Debe cerrar el fichero Plazos en Fabrica.pdf')
@@ -10892,3 +10973,1763 @@ def plazosfabricaall_pdf(request):
         response['Content-Disposition'] = 'attachment; filename=%s'%(pdf_file_name)
         response.write(buffer.getvalue())
         return response
+
+
+# ===============================================================================
+# FACTURA SERVICIOS ENTIDADES
+# ===============================================================================
+@login_required
+def get_fact_servicios_list(request):
+    # prepare the params
+    try:
+        fecha_desde = Fecha_Ver.objects.get()
+    except Exception, e:
+        fecha_desde = None
+    if fecha_desde == None:
+        querySet = FacturasServicios.objects.select_related().filter(cliente__externo=False)
+    else:
+        querySet = FacturasServicios.objects.select_related().filter(cliente__externo=False,
+                                                            doc_factura__fecha_doc__gte=fecha_desde.fecha)
+
+    columnIndexNameMap = {0: '-doc_factura__fecha_doc', 1: 'factura_nro', 2: 'admincomerciax_cliente.nombre',
+                          3: 'doc_factura__fecha_doc',
+                          4: 'cancelada', 5: 'confirmar'}
+
+    searchableColumns = ['confirmar', 'cancelada', 'factura_nro', 'cliente__nombre', 'doc_factura__fecha_doc']
+    # path to template used to generate json
+    jsonTemplatePath = 'comercial/json/json_factura_servicios.txt'
+
+    # call to generic function from utils
+    return get_datatables_records(request, querySet, columnIndexNameMap, searchableColumns, jsonTemplatePath)
+
+
+@login_required
+def factura_servicios_index(request):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+    return render_to_response('comercial/facturaserviciosindex.html', locals(), context_instance=RequestContext(request))
+
+
+@login_required
+@transaction.commit_on_success()
+def factura_servicios_add(request):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    nombre_form = 'Servicios'
+    descripcion_form = 'Realizar Factura de Servicios'
+    titulo_form = 'Servicios'
+    controlador_form = 'Servicios'
+    accion_form = '/comerciax/comercial/factura_servicios/add'
+    cancelbtn_form = '/comerciax/comercial/factura_servicios/index'
+    fecha_hoy = datetime.date.today().strftime("%d/%m/%Y")
+    fecha_cierre = Fechacierre.objects.get(almacen='cm').fechaminima()
+    fecha_maxima = Fechacierre.objects.get(almacen='cm').fechamaxima()
+    c = None
+    l = []
+    if request.method == 'POST':
+        form = FacturaServiciosForm(request.POST)
+        if form.is_valid():
+            obj_cliente = Cliente.objects.get(pk=form.data['cliente1'])
+            try:
+                tipoc = obj_cliente.get_contrato_tipo()
+            except Exception, e:
+                tipoc = None
+
+            if tipoc == None:
+                l = ['Este cliente no tiene contrato por lo que no se puede realizar la factura']
+                return render_to_response('comercial/facturaadd.html', {'form': form, 'form_name': nombre_form,
+                                                                        'form_description': descripcion_form,
+                                                                        'accion': accion_form,
+                                                                        'titulo': titulo_form,
+                                                                        'controlador': controlador_form,
+                                                                        'cancelbtn': cancelbtn_form,
+                                                                        'fecha_minima': fecha_cierre,
+                                                                        'fecha_maxima': fecha_maxima,
+                                                                        'error2': l},
+                                          context_instance=RequestContext(request))
+
+            pk_user = User.objects.get(pk=request.user.id)
+
+            fact = FacturasServicios()
+
+            pk_doc = uuid4()
+            obj_doc = Doc()
+
+            obj_doc.id_doc = pk_doc
+            obj_doc.tipo_doc = '20'
+            obj_doc.fecha_doc = form.cleaned_data['fecha']
+            obj_doc.operador = pk_user
+            obj_doc.fecha_operacion = datetime.date.today()
+            obj_doc.observaciones = form.cleaned_data['observaciones']
+
+            fact.doc_factura = obj_doc
+            fact.factura_nro = str(random.randint(1, 100000)) + "S/C"
+            fact.cliente = Cliente.objects.get(pk=form.data['cliente1'])
+            fact.confirmada = hashlib.sha1(pk_doc.__str__() + 'NO').hexdigest()
+
+            fact.chapa = form.cleaned_data['chapa']
+            fact.licencia = form.cleaned_data['licencia']
+            fact.transportador = Transpotador.objects.get(pk=form.data['transportador'])
+
+            try:
+                obj_doc.save()
+                fact.save()
+                #                nume.save()
+                return HttpResponseRedirect('/comerciax/comercial/factura_servicios/view/' + pk_doc.__str__())
+            except Exception, e:
+                exc_info = e.__str__()  # sys.exc_info()[:1]
+                c = exc_info.find("DETAIL:")
+
+                if c < 0:
+                    l = l + ["Error Fatal."]
+                else:
+                    c = exc_info[c + 7:]
+                    l = l + [c]
+
+                transaction.rollback()
+                form = FacturaServiciosForm(request.POST)
+                return render_to_response('comercial/facturaserviciosadd.html',
+                                          {'form': form, 'form_name': nombre_form, 'form_description': descripcion_form,
+                                           'accion': accion_form, 'titulo': titulo_form,
+                                           'controlador': controlador_form,
+                                           'cancelbtn': cancelbtn_form, 'fecha_minima': fecha_cierre,
+                                           'fecha_maxima': fecha_maxima, 'error2': l},
+                                          context_instance=RequestContext(request))
+            else:
+                transaction.commit()
+    else:
+        meshoy = int(fecha_hoy.split('/')[1])
+        mescierre = int(fecha_cierre.split('/')[1])
+
+        if meshoy == mescierre:
+            fecha_cierre = fecha_hoy
+        form = FacturaServiciosForm(initial={'fecha': fecha_cierre})
+
+    return render_to_response('comercial/facturaserviciosadd.html',
+                              {'form': form, 'form_name': nombre_form, 'form_description': descripcion_form,
+                               'accion': accion_form, 'titulo': titulo_form, 'controlador': controlador_form,
+                               'cancelbtn': cancelbtn_form, 'fecha_minima': fecha_cierre, 'fecha_maxima': fecha_maxima,
+                               'error2': c}, context_instance=RequestContext(request))
+
+
+@login_required
+def factura_servicios_view(request, idfa):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    l = []
+    cancelar = 0
+    fact = FacturasServicios.objects.select_related().get(pk=idfa)
+    if fact.cancelada == True:
+        cancelar = 1
+    confir = fact.get_confirmada()
+    confirmar = 2
+    if confir == 'N':
+        confirmar = 0
+    elif confir == 'S':
+        confirmar = 1
+
+    eliminar = 1
+    editar = 1
+    if confirmar == 2 or confirmar == 1:
+        eliminar = 0
+        editar = 0
+
+    rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+    rc_cliente = fact.cliente.nombre
+    rc_nro = fact.factura_nro
+    importecup = fact.get_importetotalcup()
+    cant_servicios = fact.cantidad_servicios()
+    cant_renglones = fact.get_renglones()
+
+    precio_CUP = "Precio CUP"
+
+    rc_observaciones = fact.doc_factura.observaciones
+    filas = DetalleFacturaServicios.objects.select_related().filter(factura=idfa).order_by('servicio__descripcion')
+
+    rc_transportador = fact.transportador.nombre
+    rc_chapa = fact.chapa
+    rc_licencia = fact.licencia
+    hay_cup = 1
+
+    elementos_detalle = []
+    id1 = ''
+    k = 0
+    k2 = 0
+    t_preciocup = 0.0
+
+    for a1 in filas:
+        if k != 0:
+            if id1 != a1.servicio.id:
+                elementos_detalle[k - 1]['cantidad'] = k2
+                elementos_detalle[k - 1]['t_preciocup'] = t_preciocup
+                t_preciocuc = 0.0
+                t_preciocup = 0.0
+                k2 = 0
+        elementos_detalle += [{'servicio_id': a1.servicio.id,
+                               'codigo': a1.servicio.codigo,
+                               'servicio': a1.servicio.descripcion,
+                               'precio_cup': a1.format_precio_mn()
+                               }]
+        k += 1
+        k2 += 1
+        t_preciocup += float(a1.precio_mn)
+        id1 = a1.servicio.id
+    if k != 0:
+        elementos_detalle[k - 1]['cantidad'] = k2
+        elementos_detalle[k - 1]['t_preciocup'] = t_preciocup
+    return render_to_response('comercial/viewfacturaservicios.html', {'total_servicios': k, 'hay_cup': hay_cup,
+                                                                      'hay_cuc': 0,
+                                                             'eliminar': eliminar, 'editar': editar,
+                                                             'cancelar': cancelar,
+                                                             'confirmar': confirmar, 'transportador': rc_transportador,
+                                                             'chapa': rc_chapa,
+                                                             # 'importecasco': importecasco,
+                                                             'transportador': rc_transportador, 'licencia': rc_licencia,
+                                                             'precio_CUP': precio_CUP,
+                                                             'importecup': importecup,
+                                                             'fecha': rc_fecha,
+                                                             'rc_nro': rc_nro,
+                                                             'cliente': rc_cliente,
+                                                             'observaciones': rc_observaciones, 'rc_id': idfa,
+                                                             'elementos_detalle': elementos_detalle,
+                                                             'error2': l, 'cant_servicios': cant_servicios,
+                                                             'cant_renglones': cant_renglones},
+                              context_instance=RequestContext(request))
+
+
+def verfacturaservicios(request, idfactura, haycup, haycuc, cantservicios):
+    empresaobj1 = Empresa.objects.all()
+    hay_cup = int(haycup)
+    hay_cuc = int(haycuc)
+    es_servicios=1
+    for empresaobj in empresaobj1:
+        titular_name = empresaobj.nombre
+        titular_dir = empresaobj.direccion
+        titular_codigo = empresaobj.codigo
+        titular_email = empresaobj.email
+        titular_phone = empresaobj.telefono
+        titular_fax = empresaobj.fax
+        titular_cuenta_mn = empresaobj.cuenta_mn
+        titular_cuenta_cuc = empresaobj.cuenta_usd
+        titular_sucursal_mn = empresaobj.sucursal_mn
+        titular_sucursal_cuc = empresaobj.sucursal_usd
+
+    factura = FacturasServicios.objects.select_related().get(doc_factura=idfactura)
+    pk_user = User.objects.get(pk=request.user.id)
+    vendedor = pk_user.first_name + " " + pk_user.last_name
+
+    user_doc = Doc.objects.get(id_doc=factura.doc_factura.id_doc).operador
+    operador_ = User.objects.get(pk=user_doc.id)
+    confeccionado = operador_.first_name + " " + operador_.last_name
+
+    detallesFact = DetalleFacturaServicios.objects.select_related().filter(factura=idfactura).values('factura','precio_mn',
+                                                                                                'servicio__codigo',
+                                                                                                'servicio__descripcion', \
+                                                                                                'servicio__um__descripcion') \
+        .annotate(cantidad=Count('servicio__descripcion'))
+    for a1 in range(detallesFact.__len__()):
+        detallesFact[a1]['importecup'] = detallesFact[a1]['precio_mn'] * detallesFact[a1]['cantidad']
+        detallesFact[a1]['precio_mn'] = str(detallesFact[a1]['precio_mn'])
+
+    cliente = factura.cliente
+    fecha_confeccionado = factura.doc_factura.fecha_doc
+
+    cliente_codigo = cliente.codigo
+    cliente_nombre = cliente.nombre
+    cliente_dir = cliente.direccion
+    cliente_phone = cliente.telefono
+    cliente_email = cliente.email
+    cliente_fax = cliente.fax
+
+    contrato = ClienteContrato.objects.select_related().get(cliente=cliente.id, cerrado=False)
+    contrato_sucursal_mn = contrato.contrato.sucursal_mn
+    contrato_sucursal_cuc = contrato.contrato.sucursal_usd
+    contrato_cuenta_mn = contrato.contrato.cuenta_mn
+    contrato_cuenta_cuc = contrato.contrato.cuenta_usd
+    contrato_nro = contrato.contrato.contrato_nro
+
+    transportador = factura.transportador
+    transportador_nombre = transportador.nombre
+    transportador_ci = transportador.ci
+    transportador_chapa = factura.chapa
+    transportador_licencia = factura.licencia
+
+    cancelada = factura.cancelada
+
+    importetotalcup = factura.get_importetotalcup()
+    importecup = factura.get_importecup()
+
+    observaciones = factura.doc_factura.observaciones
+
+    return render_to_response("report/factura.html", locals(), context_instance=RequestContext(request))
+
+
+@login_required
+@transaction.commit_on_success()
+def factura_servicios_del(request, idfa):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    l = []
+    fact = FacturasServicios.objects.get(pk=idfa)
+    noelim = 0
+    if fact.confirmada == hashlib.sha1(fact.pk.__str__() + 'YES').hexdigest():
+        mensa = "No se puede eliminar la factura Nro. " + fact.factura_nro + " porque ya está confirmada"
+        noelim = 1
+    elif fact.confirmada != hashlib.sha1(fact.pk.__str__() + 'NO').hexdigest():
+        mensa = "No se puede eliminar la factura Nro. " + fact.factura_nro + " porque está corrupta"
+        noelim = 1
+    if noelim == 1:
+        l = [mensa]
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_nro = fact.factura_nro
+        importecup = FacturasServicios.objects.get(pk=idfa).get_importetotalcup()
+
+        pmn = ClienteContrato.objects.select_related().get(cliente=fact.cliente.id, cerrado=False)
+
+        precio_CUP = "Precio CUP"
+
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = DetalleFacturaServicios.objects.select_related().filter(factura=idfa).order_by('casco_casco.casco_nro')
+
+        rc_transportador = fact.transportador.nombre
+        rc_chapa = fact.chapa
+        rc_licencia = fact.licencia
+        hay_cup = 1
+        # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
+
+        return render_to_response('comercial/viewfacturaservicios.html',
+                                  {'hay_cup': hay_cup, 'eliminar': 0, 'editar': 1, 'cancelar': 0,
+                                   'confirmar': 0, 'transportador': rc_transportador, 'chapa': rc_chapa,
+                                   'licencia': fact.licencia, 'transportador': rc_transportador, 'chapa': rc_chapa,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'cliente': rc_cliente,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa, 'elementos_detalle': filas,
+                                   'error2': l}, context_instance=RequestContext(request))
+    try:
+        Doc.objects.select_related().get(pk=idfa).delete()
+
+        return HttpResponseRedirect('/comerciax/comercial/factura_servicios/index')
+        # return render_to_response("casco/recepcionclienteindex.html",locals(),context_instance = RequestContext(request))
+    except Exception, e:
+        transaction.rollback()
+        l = ['Error al eliminar el documento']
+        fact = FacturasServicios.objects.select_related().get(pk=idfa)
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_nro = fact.factura_nro
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = DetalleFacturaServicios.objects.select_related().filter(factura=idfa).order_by('servicios.descripcion')
+
+        return render_to_response('comercial/viewfacturaservicios.html',
+                                  {'hay_cup': hay_cup, 'rc_nro': rc_nro, 'fecha': rc_fecha,
+                                   'cliente': rc_cliente, 'observaciones': rc_observaciones, 'rc_id': idfa,
+                                   'elementos_detalle': filas, 'error2': l}, context_instance=RequestContext(request))
+    else:
+        transaction.commit()
+
+    return 0
+
+
+@login_required
+@transaction.commit_on_success()
+def factura_servicios_edit(request, idfa):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    fact = FacturasServicios.objects.select_related().get(pk=idfa)
+    noedit = 0
+    if fact.confirmada == hashlib.sha1(fact.pk.__str__() + 'YES').hexdigest():
+        mensa = "No se puede editar la factura Nro. " + fact.factura_nro + " porque ya está confirmada"
+        noedit = 1
+    elif fact.confirmada != hashlib.sha1(fact.pk.__str__() + 'NO').hexdigest():
+        mensa = "No se puede editar la factura Nro. " + fact.factura_nro + " porque está corrupta"
+        noedit = 1
+    if noedit == 1:
+        l = [mensa]
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_nro = fact.factura_nro
+
+        importecup = FacturasServicios.objects.get(pk=idfa).get_importecup()
+
+        pmn = ClienteContrato.objects.select_related().get(cliente=fact.cliente.id, cerrado=False)
+
+        precio_CUP = "Precio CUP"
+
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = DetalleFacturaServicios.objects.select_related().filter(factura=idfa).order_by('casco_casco.casco_nro')
+
+        rc_transportador = fact.transportador.nombre
+        rc_chapa = fact.chapa
+        rc_licencia = fact.licencia
+        hay_cup = 0
+
+        # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
+        return render_to_response('comercial/viewfacturaservicios.html',
+                                  {'hay_cup': hay_cup, 'eliminar': 0, 'editar': 1, 'cancelar': 0,
+                                   'confirmar': 0, 'transportador': rc_transportador, 'chapa': rc_chapa,
+                                   'transportador': rc_transportador, 'licencia': rc_licencia,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'cliente': rc_cliente,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa, 'elementos_detalle': filas,
+                                   'error2': l}, context_instance=RequestContext(request))
+
+    nombre_form = 'Facturas Servicios'
+    descripcion_form = 'Realizar Factura de Servicios a Clientes'
+    titulo_form = 'Facturas Servicios'
+    controlador_form = 'Facturas Servicios'
+    accion_form = '/comerciax/comercial/factura_servicios/edit/' + idfa + '/'
+    cancelbtn_form = '/comerciax/comercial/factura_servicios/view/' + idfa + '/'
+    fecha_cierre = Fechacierre.objects.get(almacen='cm').fechaminima()
+    fecha_maxima = Fechacierre.objects.get(almacen='cm').fechamaxima()
+    c = None
+
+    l = []
+
+    detalles = DetalleFacturaServicios.objects.filter(factura=idfa).count()
+
+    if request.method == 'POST':
+        if detalles == 0:
+            form = FacturaServiciosForm(request.POST)
+        else:
+            form = FacturaServiciosForm2(request.POST)
+        if form.is_valid():
+            if detalles == 0:
+                cc = form.data['cliente1']
+            else:
+                cc = form.data['cliente']
+            if (cc.find("|") < 0):
+                obj_cliente = Cliente.objects.get(pk=cc)
+            else:
+                obj_cliente = Cliente.objects.get(pk=fact.cliente.id)
+            try:
+                tipoc = obj_cliente.get_contrato_tipo()
+            except Exception, e:
+                tipoc = None
+
+            if tipoc == None:
+                l = ['Este cliente no tiene contrato por lo que no se puede realizar la factura']
+                return render_to_response('form/form_adddetalle.html',
+                                          {'tipocliente': '0', 'form': form, 'form_name': nombre_form,
+                                           'form_description': descripcion_form, 'accion': accion_form,
+                                           'titulo': titulo_form, 'controlador': controlador_form,
+                                           'cancelbtn': cancelbtn_form, 'fecha_minima': fecha_cierre,
+                                           'fecha_maxima': fecha_maxima,
+                                           'error2': l}, context_instance=RequestContext(request))
+
+            pk_user = User.objects.get(pk=request.user.id)
+
+            fact = FacturasServicios.objects.get(pk=idfa)
+            doc = Doc.objects.get(pk=idfa)
+
+            doc.fecha_doc = form.cleaned_data['fecha']
+            doc.operador = pk_user
+            doc.doc_operacion = datetime.date.today()
+            doc.observaciones = form.cleaned_data['observaciones']
+            fact.cliente = obj_cliente
+            fact.transportador = Transpotador.objects.get(pk=form.data['transportador'])
+            fact.chapa = form.cleaned_data['chapa']
+            fact.licencia = form.cleaned_data['licencia']
+
+            try:
+                doc.save()
+                fact.save()
+
+                return HttpResponseRedirect('/comerciax/comercial/factura_servicios/view/' + idfa)
+
+            except Exception, e:
+                exc_info = e.__str__()  # sys.exc_info()[:1]
+                c = exc_info.find("DETAIL:")
+
+                if c < 0:
+                    l = l + ["Error Fatal."]
+                else:
+                    c = exc_info[c + 7:]
+                    l = l + [c]
+
+                transaction.rollback()
+
+                form = FacturaServiciosForm(request.POST)
+                return render_to_response('form/form_adddetalle.html',
+                                          {'tipocliente': '0', 'form': form, 'form_name': nombre_form,
+                                           'form_description': descripcion_form,
+                                           'accion': accion_form, 'titulo': titulo_form,
+                                           'controlador': controlador_form,
+                                           'cancelbtn': cancelbtn_form, 'fecha_minima': fecha_cierre,
+                                           'fecha_maxima': fecha_maxima, 'error2': l},
+                                          context_instance=RequestContext(request))
+            else:
+                transaction.commit()
+    else:
+        if detalles == 0:
+            form = FacturaServiciosForm(
+                initial={'transportador': fact.transportador, 'chapa': fact.chapa, 'licencia': fact.licencia,
+                         'nro': fact.factura_nro, 'fecha': fact.doc_factura.fecha_doc,
+                         'cliente1': fact.cliente, 'observaciones': fact.doc_factura.observaciones})
+        else:
+
+            form = FacturaServiciosForm2(initial={'transportador': fact.transportador,
+                                         'licencia': fact.licencia,
+                                         'chapa': fact.chapa, 'nro': fact.factura_nro,
+                                         'fecha': fact.doc_factura.fecha_doc,
+                                         'cliente': fact.cliente,
+                                         'transportador': fact.transportador,
+                                         'observaciones': fact.doc_factura.observaciones})
+
+    return render_to_response('comercial/facturaserviciosedit.html',
+                              {'form': form, 'form_name': nombre_form, 'form_description': descripcion_form,
+                               'accion': accion_form, 'titulo': titulo_form, 'controlador': controlador_form,
+                               'cancelbtn': cancelbtn_form, 'fecha_minima': fecha_cierre, 'fecha_maxima': fecha_maxima},
+                              context_instance=RequestContext(request))
+
+
+@login_required
+@transaction.commit_on_success()
+def factura_servicios_confirmar(request, idfa):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    l = []
+    fact = FacturasServicios.objects.get(pk=idfa)
+    if fact.get_renglones() > 30:
+        l = []
+        cancelar = 0
+        fact = FacturasServicios.objects.select_related().get(pk=idfa)
+        if fact.cancelada == True:
+            cancelar = 1
+        confir = fact.get_confirmada()
+        confirmar = 2
+        if confir == 'N':
+            confirmar = 0
+        elif confir == 'S':
+            confirmar = 1
+
+        eliminar = 1
+        editar = 1
+        if confirmar == 2 or confirmar == 1:
+            eliminar = 0
+            editar = 0
+
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_nro = fact.factura_nro
+        importecup = fact.get_importetotalcup()
+        importecuc = fact.get_importecuc()
+        cant_renglones = fact.get_renglones()
+        pmn = ClienteContrato.objects.select_related().get(cliente=fact.cliente.id, cerrado=False)
+        mncosto = pmn.contrato.preciocostomn
+        cuccosto = pmn.contrato.preciocostocuc
+
+        precio_CUP = "Precio CUP"
+
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = DetalleFacturaServicios.objects.select_related().filter(factura=idfa).order_by(
+            'servicio__descripcion')
+
+        rc_transportador = fact.transportador.nombre
+        rc_chapa = fact.chapa
+        rc_licencia = fact.licencia
+        hay_cup = 1
+        l = ["La factura excede los 30 renglones, no se puede confirmar"]
+        return render_to_response('comercial/viewfacturaservicios.html',
+                                  {'hay_cup': hay_cup, 'eliminar': eliminar, 'editar': editar,
+                                   'cancelar': cancelar, 'confirmar': confirmar, 'transportador': rc_transportador,
+                                   'chapa': rc_chapa,
+                                   'transportador': rc_transportador, 'licencia': rc_licencia,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'cliente': rc_cliente,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa, 'elementos_detalle': filas,
+                                   'error2': l, 'cant_renglones': cant_renglones},
+                                  context_instance=RequestContext(request))
+
+    else:
+
+        pk_user = User.objects.get(pk=request.user.id)
+        nrodoc = 1
+        if NumeroDoc.objects.count() != 0:
+            nrodoc = NumeroDoc.objects.get().nro_factura_servicios + 1
+        nume = NumeroDoc()
+        if NumeroDoc.objects.count() == 0:
+            nume.id_numerodoc = uuid4()
+        else:
+            nume = NumeroDoc.objects.get()
+        nume.nro_factura_servicios = nrodoc
+        nume.save()
+        Doc.objects.filter(pk=FacturasServicios.objects.get(pk=idfa).doc_factura).update(operador=pk_user)
+        FacturasServicios.objects.filter(pk=idfa).update(confirmada=hashlib.sha1(idfa.__str__() + 'YES').hexdigest(),
+                                                factura_nro=nrodoc, confirmar=True)
+        return HttpResponseRedirect('/comerciax/comercial/factura_servicios/view/' + idfa)
+
+@login_required
+@transaction.commit_on_success()
+def factura_servicios_imprimir(request, idfa):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    l = []
+    fact = FacturasServicios.objects.get(pk=idfa)
+    if fact.confirmada != hashlib.sha1(fact.pk.__str__() + 'YES').hexdigest():
+        mensa = "No se puede imprimir la factura Nro. " + fact.factura_nro + " porque no está confirmada"
+        l = [mensa]
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_nro = fact.factura_nro
+        importetotalcup = fact.get_importetotalcup()
+        importecup = fact.get_importecup()
+
+        precio_CUP = "Precio CUP"
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = DetalleFacturaServicios.objects.select_related().filter(factura=idfa).order_by('servicios.descripcion')
+
+        if filas.__len__() == 0:
+            hay_venta = False
+
+        rc_transportador = fact.transportador.nombre
+        rc_chapa = fact.chapa
+        rc_licencia = fact.licencia
+        # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
+        hay_cup = 0
+        return render_to_response('comercial/viewfacturaservicios.html',
+                                  {'hay_cup': hay_cup, 'eliminar': 0, 'editar': 1, 'cancelar': 0,
+                                   'confirmar': 0, 'transportador': rc_transportador, 'chapa': rc_chapa,
+                                   'transportador': rc_transportador, 'chapa': rc_chapa, 'licencia': rc_licencia,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'importetotalcup': importetotalcup,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha,
+                                   'cliente': rc_cliente,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa, 'elementos_detalle': filas,
+                                   'error2': l}, context_instance=RequestContext(request))
+    return 0
+
+
+@login_required
+@transaction.commit_on_success()
+def factura_servicios_cancelar(request, idfa):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    l = []
+    fact = FacturasServicios.objects.get(pk=idfa)
+    # pagosfact = PagosFacturas.objects.filter(facturas=fact).count()
+    pagosfact = 0.0
+    if fact.confirmada != hashlib.sha1(fact.pk.__str__() + 'YES').hexdigest() or pagosfact != 0:
+        mensa = "No se puede cancelar la factura Nro. " + fact.factura_nro + " porque no está confirmada"
+        if pagosfact > 0:
+            mensa = "No se puede cancelar la factura Nro. " + fact.factura_nro + " porque se han realizado pagos"
+        l = [mensa]
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_nro = fact.factura_nro
+        importecup = fact.get_importetotalcup()
+
+        precio_CUP = "Precio CUP"
+
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = DetalleFacturaServicios.objects.select_related().filter(factura=idfa).order_by('servicio.descripcion')
+
+        rc_transportador = fact.transportador.nombre
+        rc_chapa = fact.chapa
+        rc_licencia = fact.licencia
+        # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
+        hay_cup = 1
+        return render_to_response('comercial/viewfacturaservicios.html',
+                                  {'hay_cup': hay_cup, 'eliminar': 0, 'editar': 1, 'cancelar': 0,
+                                   'confirmar': 0, 'transportador': rc_transportador, 'chapa': rc_chapa,
+                                   'licencia': rc_licencia, 'transportador': rc_transportador,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'cliente': rc_cliente,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa, 'elementos_detalle': filas,
+                                   'error2': l}, context_instance=RequestContext(request))
+
+    try:
+        hay_cup = 1
+
+        FacturasServicios.objects.filter(pk=idfa).update(cancelada=True)
+        pk_user = User.objects.get(pk=request.user.id)
+        Doc.objects.filter(pk=FacturasServicios.objects.get(pk=idfa).doc_factura).update(operador=pk_user)
+
+        return HttpResponseRedirect('/comerciax/comercial/factura_servicios/index')
+    except Exception, e:
+        transaction.rollback()
+        l = ['Error al cancelar factura']
+        fact = Facturas.objects.select_related().get(pk=idfa)
+        importecup = fact.get_importetotalcup()
+
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_transportador = fact.transportador.nombre
+        rc_nro = fact.factura_nro
+        rc_observaciones = fact.doc_factura.observaciones
+        rc_chapa = fact.chapa
+        rc_licencia = fact.licencia
+
+        precio_CUP = "Precio CUP"
+        return render_to_response('comercial/viewfacturaservicios.html',
+                                  {'hay_cup': hay_cup,  'transportador': rc_transportador,
+                                   'chapa': rc_chapa, 'licencia': rc_licencia, 'transportador': rc_transportador,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'cliente': rc_cliente,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa, 'elementos_detalle': filas,
+                                   'error2': l, 'cantcascos': '4'}, context_instance=RequestContext(request))
+    else:
+        transaction.commit()
+
+
+@login_required
+# @transaction.commit_on_success()
+def detalleFacturaServicios_add(request, idfa):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    l = []
+    fact = FacturasServicios.objects.prefetch_related('detallefacturaservicios_set').get(pk=idfa)
+    serv = [x.servicio.id for x in fact.detallefacturaservicios_set.all()]
+
+    servicios = Servicio.objects.all().exclude(pk__in=serv).order_by('descripcion')
+    noelim = 0
+    if fact.confirmada == hashlib.sha1(fact.pk.__str__() + 'YES').hexdigest():
+        mensa = "No se puede adicionar servicios a la factura Nro. " + fact.factura_nro + " porque ya está confirmada"
+        noelim = 1
+    elif fact.confirmada != hashlib.sha1(fact.pk.__str__() + 'NO').hexdigest():
+        mensa = "No se puede adcionar servicios a la factura Nro. " + fact.factura_nro + " porque está corrupta"
+        noelim = 1
+    if noelim == 1:
+        l = [mensa]
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_clientecomercializador = fact.cliente.comercializadora
+        rc_nro = fact.factura_nro
+        importecup = fact.get_importe_totalcup()
+
+        precio_CUP = "Precio CUP"
+
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = fact.detallefacturaservicios_set.all().order_by('servicio.descripcion')
+
+        rc_transportador = fact.transportador.nombre
+        rc_chapa = fact.chapa
+        rc_licencia = fact.licencia
+        # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
+        hay_cup = 1
+        return render_to_response('comercial/viewfactura.html',
+                                  {'hay_cup': hay_cup,  'eliminar': 0, 'editar': 1, 'cancelar': 0,
+                                   'confirmar': 0, 'transportador': rc_transportador, 'chapa': rc_chapa,
+                                   'transportador': rc_transportador, 'licencia': rc_licencia,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'cliente': rc_cliente,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa,
+                                   'elementos_detalle': filas,
+                                   'error2': l}, context_instance=RequestContext(request))
+
+    titulo_form = 'Facturas de Servicios'
+    controlador_form = 'Facturas de Servicios'
+    descripcion_form = 'Seleccionar servicio para la factura'
+
+    accion_form = 'detalleFacturaServicios_add'
+    cancelbtn_form = '/comerciax/comercial/factura_servicios/view/' + idfa
+
+    if request.method == 'POST':
+        pmn = ClienteContrato.objects.select_related().get(cliente=fact.cliente.id, cerrado=False)
+        mn = pmn.contrato.preciomn
+        seleccion = request.POST.keys()
+        if 'submit' in seleccion:
+            seleccion.remove('submit')
+        elif 'submit1' in seleccion:
+            seleccion.remove('submit1')
+        k = 0
+        ids = []
+        while True:
+            if k == seleccion.__len__():
+                break
+            servicio = Servicio.objects.filter(pk=seleccion[k])
+            if servicio.count() != 0:
+                ids.append(seleccion[k])
+                detalle = DetalleFacturaServicios()
+                serv=servicio[0] #Servicio.objects.get(pk=seleccion[k])
+                if DetalleFacturaServicios.objects.filter(factura=idfa, servicio=serv).count() != 0:
+                    detalle = DetalleFacturaServicios.objects.get(factura=idfa, servicio=serv)
+                else:
+                    detalle.id_detalle = uuid4()
+
+                detalle.factura = FacturasServicios.objects.get(pk=idfa)
+                detalle.servicio = serv
+                detalle.precio_mn = Decimal(serv.precio_mn)
+
+                detalle.save()
+
+            k = k + 1
+        servicios = servicios.exclude(pk__in=ids)
+        if request.POST.__contains__('submit1'):
+
+            return render_to_response('comercial/seleccionar_servicio.html',
+                                      {'title': titulo_form, 'controlador': controlador_form,
+                                       'accion': accion_form,
+                                       'servicios': servicios,
+                                       'cancelbtn': cancelbtn_form,
+                                       'nro': fact.factura_nro,
+                                       'form_description': descripcion_form,
+                                       'fecha': fact.doc_factura.fecha_doc.strftime("%d/%m/%Y"),
+                                       'observaciones': fact.doc_factura.observaciones,
+                                       'rc_id': idfa,
+                                       'dettransfe': True,
+                                       'elementos_detalle': servicios,
+                                       'nohay':servicios.__len__()==0}, context_instance=RequestContext(request))
+        else:
+            return HttpResponseRedirect('/comerciax/comercial/factura_servicios/view/' + idfa)
+
+    return render_to_response('comercial/seleccionar_servicio.html',
+                              {'title': titulo_form, 'controlador': controlador_form,
+                               'accion': accion_form,
+                               'servicios': servicios,
+                               'cancelbtn': cancelbtn_form,
+                               'nro': fact.factura_nro,
+                               'form_description': descripcion_form,
+                               'fecha': fact.doc_factura.fecha_doc.strftime("%d/%m/%Y"),
+                               'observaciones': fact.doc_factura.observaciones,
+                               'rc_id': idfa,
+                               'dettransfe': True,
+                               'elementos_detalle':servicios,
+                               'nohay':servicios.__len__()==0}, context_instance=RequestContext(request))
+
+
+@login_required
+def detalleFacturaServicio_delete(request, idfa, idservicio):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    fact = FacturasServicios.objects.get(pk=idfa)
+
+    l = []
+
+    DetalleFacturaServicios.objects.get(servicio=idservicio, factura=idfa).delete()
+    cant_renglones = str(FacturasServicios.objects.get(doc_factura=idfa).get_renglones())
+    data = []
+    filas = DetalleFacturaServicios.objects.select_related().filter(factura=idfa).order_by('servicio__descripcion')
+    total_servicio = str(filas.count())
+    elementos_detalle = []
+
+    for a1 in filas:
+
+        importetotalcup = a1.factura.get_importetotalcup()
+
+        elementos_detalle += [
+            {'total_servicios': total_servicio,
+             'cant_renglones': cant_renglones,
+             'id_doc': a1.factura.doc_factura.id_doc,
+             'servicio': a1.servicio.descripcion,
+             'codigo': a1.servicio.codigo,
+             'importetotalcup': importetotalcup,
+             'servicio_id': a1.servicio.id,
+             'precio_cup': a1.format_precio_mn()}]
+
+    return HttpResponse(simplejson.dumps(elementos_detalle), content_type='application/javascript; charset=utf8')
+
+
+@login_required
+def servfacturas(request):
+    nombre_form = 'Reportes'
+    descripcion_form = 'Registro de Facturas de Asistencia Técnica'
+    titulo_form = 'Registro de Facturas de Asistencia Técnica'
+    controlador_form = 'Reportes'
+    accion_form = '/comerciax/comercial/servfacturas/reporte'
+    mesg = []
+
+    if request.method == 'POST':
+        form = Rep_RegFacturas(request.POST)
+
+        if form.is_valid():
+            desde = form.cleaned_data['fecha_desde']
+            hasta = form.cleaned_data['fecha_hasta']
+            filtro = []
+            queryset = []
+            filtro.append(
+                'Facturas de Asistencia Técnica emitidas entre el ' + desde.strftime("%d/%m/%Y") + ' y el ' + hasta.strftime("%d/%m/%Y"))
+            resultado = FacturasServicios.objects.select_related().filter(doc_factura__fecha_doc__gte=desde,
+                                                                 doc_factura__fecha_doc__lte=hasta,
+                                                                 confirmar=True).order_by('factura_nro')
+
+
+            if resultado.__len__() == 0:
+                mesg = mesg + ['No existe información para mostrar']
+                return render_to_response("comercial/reporteindex.html",
+                                          {'form': form, 'title': titulo_form, 'form_name': nombre_form,
+                                           'form_description': descripcion_form,
+                                           'controlador': controlador_form, 'accion': accion_form, 'error2': mesg},
+                                          context_instance=RequestContext(request))
+            else:
+                total_importecup1 = 0
+                total_cascocliente = 0
+                for k in range(resultado.__len__()):
+                    if resultado[k].get_confirmada() == 'S':
+                        val = Decimal('0.00') if resultado[k].cancelada else resultado[k].get_importetotalcup(1)
+                        queryset.append({'nombre': resultado[k].cliente.nombre, 'tipo': 'Clientes',
+                                         'codigo': resultado[k].cliente.codigo,
+                                         'factura_nro': str(resultado[k].factura_nro),
+                                         'fecha_doc': resultado[k].get_fecha(),
+                                         'cascos': resultado[k].cantidad_servicios() if not resultado[k].cancelada else 0,
+                                         'importetotalcup': val,
+                                         'cancelada': 'Cancelada' if resultado[k].cancelada == True else ''
+                                         })
+                    if resultado[k].cancelada == False:
+                        total_cascocliente += resultado[k].cantidad_servicios()
+                        total_importecup1 += resultado[k].get_importetotalcup(1)
+
+                valor_cliente = total_importecup1
+                total_importecup3 = 0
+
+                total_cup = float(total_importecup1) + float(total_importecup3)
+                total_cascototal = total_cascocliente
+
+                total_cascototal = '{:20,.0f}'.format(total_cascototal)
+                total_cascocliente = '{:20,.0f}'.format(total_cascocliente)
+
+                total_importecup1 = 0 if total_importecup1 == 0 else '{:20,.2f}'.format(total_importecup1)
+                total_importecup3 = 0 if total_importecup3 == 0 else '{:20,.2f}'.format(total_importecup3)
+
+                if not request.POST.__contains__('submit1'):
+                    return render_to_response("report/registro_facturas_servicios.html",
+                                              {'filtro': filtro, 'fecha_hoy': fecha_hoy(), \
+                                               'resultado': resultado, \
+                                               'total_importecup1': total_importecup1,
+                                               'total_importecup3': total_importecup3, \
+                                               'total_cup': '{:20,.2f}'.format(total_cup),
+                                               'valor_cliente': valor_cliente, \
+                                               'total_cascototal': total_cascototal, \
+                                               'total_cascocliente': total_cascocliente, \
+                                               'error2': mesg}, context_instance=RequestContext(request))
+
+                else:
+                    pdf_file_name = os.path.join(comerciax.settings.ADMIN_MEDIA_PDF, "Registro de Facturas de Asistencia Técnica.pdf")
+                    if report_class.Reportes.GenerarRep(report_class.Reportes(), queryset, "registro_fac_serv",
+                                                        pdf_file_name, filtro) == 0:
+                        mesg = mesg + ['Debe cerrar el documento Registro de Facturas de Asistencia Técnica.pdf']
+                        return render_to_response("comercial/reporteindex.html",
+                                                  {'filtro': filtro, 'resultado': resultado, 'form': form,
+                                                   'title': titulo_form, 'form_name': nombre_form,
+                                                   'form_description': descripcion_form,
+                                                   'controlador': controlador_form, 'accion': accion_form,
+                                                   'error2': mesg}, context_instance=RequestContext(request))
+                    else:
+                        input = PdfFileReader(file(pdf_file_name, "rb"))
+                        output = PdfFileWriter()
+                        for page in input.pages:
+                            output.addPage(page)
+                        buffer = StringIO.StringIO()
+                        output.write(buffer)
+                        response = HttpResponse(mimetype='application/pdf')
+                        response['Content-Disposition'] = 'attachment; filename=%s' % (pdf_file_name)
+                        response.write(buffer.getvalue())
+                        return response
+
+    form = Rep_RegFacturas()
+
+    return render_to_response("comercial/reporteindex.html",
+                              {'form': form, 'title': titulo_form, 'form_name': nombre_form,
+                               'form_description': descripcion_form,
+                               'controlador': controlador_form, 'accion': accion_form, 'error2': mesg},
+                              context_instance=RequestContext(request))
+
+##################################################
+#   FACTURA PRODUCCIONES ALTERNATIVAS CLIENTES   #
+#################################################
+@login_required
+def get_fact_producciones_list(request):
+    # prepare the params
+    try:
+        fecha_desde = Fecha_Ver.objects.get()
+    except Exception, e:
+        fecha_desde = None
+    if fecha_desde == None:
+        querySet = FacturasProdAlter.objects.select_related().filter(cliente__externo=False)
+    else:
+        querySet = FacturasProdAlter.objects.select_related().filter(cliente__externo=False,
+                                                            doc_factura__fecha_doc__gte=fecha_desde.fecha)
+
+    columnIndexNameMap = {0: '-doc_factura__fecha_doc', 1: 'factura_nro', 2: 'admincomerciax_cliente.nombre',
+                          3: 'doc_factura__fecha_doc',
+                          4: 'cancelada', 5: 'confirmar'}
+
+    searchableColumns = ['confirmar', 'cancelada', 'factura_nro', 'cliente__nombre', 'doc_factura__fecha_doc']
+    # path to template used to generate json
+    jsonTemplatePath = 'comercial/json/json_factura_producciones.txt'
+
+    # call to generic function from utils
+    return get_datatables_records(request, querySet, columnIndexNameMap, searchableColumns, jsonTemplatePath)
+
+
+@login_required
+def factura_producciones_index(request):
+    if not request.user.has_perm('comercial.facturasprodalter'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+    return render_to_response('comercial/facturaproduccionesindex.html', locals(), context_instance=RequestContext(request))
+
+@login_required
+@transaction.commit_on_success()
+def factura_producciones_add(request):
+    if not request.user.has_perm('comercial.facturasprodalter'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    nombre_form = 'Producciones Alternativas'
+    descripcion_form = 'Realizar Factura de Producciones Alternativas'
+    titulo_form = 'Producciones Alternativas'
+    controlador_form = 'Producciones Alternativas'
+    accion_form = '/comerciax/comercial/factura_producciones/add'
+    cancelbtn_form = '/comerciax/comercial/factura_producciones/index'
+    fecha_hoy = datetime.date.today().strftime("%d/%m/%Y")
+    fecha_cierre = Fechacierre.objects.get(almacen='cm').fechaminima()
+    fecha_maxima = Fechacierre.objects.get(almacen='cm').fechamaxima()
+    c = None
+    l = []
+    if request.method == 'POST':
+        form = FacturaProduccionesForm(request.POST)
+        if form.is_valid():
+            obj_cliente = Cliente.objects.get(pk=form.data['cliente1'])
+            try:
+                tipoc = obj_cliente.get_contrato_tipo()
+            except Exception, e:
+                tipoc = None
+
+            if tipoc == None:
+                l = ['Este cliente no tiene contrato por lo que no se puede realizar la factura']
+                return render_to_response('comercial/facturaadd.html', {'form': form, 'form_name': nombre_form,
+                                                                        'form_description': descripcion_form,
+                                                                        'accion': accion_form,
+                                                                        'titulo': titulo_form,
+                                                                        'controlador': controlador_form,
+                                                                        'cancelbtn': cancelbtn_form,
+                                                                        'fecha_minima': fecha_cierre,
+                                                                        'fecha_maxima': fecha_maxima,
+                                                                        'error2': l},
+                                          context_instance=RequestContext(request))
+
+            pk_user = User.objects.get(pk=request.user.id)
+
+            fact = FacturasProdAlter()
+
+            pk_doc = uuid4()
+            obj_doc = Doc()
+
+            obj_doc.id_doc = pk_doc
+            obj_doc.tipo_doc = '21'
+            obj_doc.fecha_doc = form.cleaned_data['fecha']
+            obj_doc.operador = pk_user
+            obj_doc.fecha_operacion = datetime.date.today()
+            obj_doc.observaciones = form.cleaned_data['observaciones']
+
+            fact.doc_factura = obj_doc
+            fact.factura_nro = str(random.randint(1, 100000)) + "S/C"
+            fact.cliente = Cliente.objects.get(pk=form.data['cliente1'])
+            fact.confirmada = hashlib.sha1(pk_doc.__str__() + 'NO').hexdigest()
+
+            # fact.chapa = form.cleaned_data['chapa']
+            # fact.licencia = form.cleaned_data['licencia']
+            # fact.transportador = Transpotador.objects.get(pk=form.data['transportador'])
+
+            try:
+                obj_doc.save()
+                fact.save()
+                #                nume.save()
+                return HttpResponseRedirect('/comerciax/comercial/factura_producciones/view/' + pk_doc.__str__())
+            except Exception, e:
+                exc_info = e.__str__()  # sys.exc_info()[:1]
+                c = exc_info.find("DETAIL:")
+
+                if c < 0:
+                    l = l + ["Error Fatal."]
+                else:
+                    c = exc_info[c + 7:]
+                    l = l + [c]
+
+                transaction.rollback()
+                form = FacturaProduccionesForm(request.POST)
+                return render_to_response('comercial/facturaproduccionesadd.html',
+                                          {'form': form, 'form_name': nombre_form, 'form_description': descripcion_form,
+                                           'accion': accion_form, 'titulo': titulo_form,
+                                           'controlador': controlador_form,
+                                           'cancelbtn': cancelbtn_form, 'fecha_minima': fecha_cierre,
+                                           'fecha_maxima': fecha_maxima, 'error2': l},
+                                          context_instance=RequestContext(request))
+            else:
+                transaction.commit()
+    else:
+        meshoy = int(fecha_hoy.split('/')[1])
+        mescierre = int(fecha_cierre.split('/')[1])
+
+        if meshoy == mescierre:
+            fecha_cierre = fecha_hoy
+        form = FacturaProduccionesForm(initial={'fecha': fecha_cierre})
+
+    return render_to_response('comercial/facturaproduccionesadd.html',
+                              {'form': form, 'form_name': nombre_form, 'form_description': descripcion_form,
+                               'accion': accion_form, 'titulo': titulo_form, 'controlador': controlador_form,
+                               'cancelbtn': cancelbtn_form, 'fecha_minima': fecha_cierre, 'fecha_maxima': fecha_maxima,
+                               'error2': c}, context_instance=RequestContext(request))
+
+@login_required
+def factura_producciones_view(request, idfa):
+    if not request.user.has_perm('comercial.facturasprodalter'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    l = []
+    cancelar = 0
+    fact = FacturasProdAlter.objects.select_related().get(pk=idfa)
+    if fact.cancelada == True:
+        cancelar = 1
+    confir = fact.get_confirmada()
+    confirmar = 2
+    if confir == 'N':
+        confirmar = 0
+    elif confir == 'S':
+        confirmar = 1
+
+    eliminar = 1
+    editar = 1
+    if confirmar == 2 or confirmar == 1:
+        eliminar = 0
+        editar = 0
+
+    rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+    rc_cliente = fact.cliente.nombre
+    rc_nro = fact.factura_nro
+    importecup = fact.get_importetotalcup()
+    cant_producciones = fact.cantidad_producciones()
+    cant_renglones = fact.get_renglones()
+
+    precio_CUP = "Precio CUP"
+    importe_CUP = "Importe CUP"
+
+    rc_observaciones = fact.doc_factura.observaciones
+    filas = DetalleFacturaProdAlter.objects.select_related().filter(factura=idfa).all().order_by('produccionalter__descripcion')
+
+    hay_cup = 1
+
+    return render_to_response('comercial/viewfacturaproducciones.html', {'total_producciones': cant_producciones,
+                                                                         'hay_cup': hay_cup,
+                                                                      'hay_cuc': 0,
+                                                             'eliminar': eliminar, 'editar': editar,
+                                                             'cancelar': cancelar,
+                                                             'confirmar': confirmar,
+                                                             # 'importecasco': importecasco,
+                                                             'precio_CUP': precio_CUP,
+                                                             'importe_CUP': importe_CUP,
+                                                             'importecup': importecup,
+                                                             'fecha': rc_fecha,
+                                                             'rc_nro': rc_nro,
+                                                             'cliente': rc_cliente,
+                                                             'observaciones': rc_observaciones, 'rc_id': idfa,
+                                                             'elementos_detalle': filas,
+                                                             'error2': l, 'cant_producciones': cant_producciones,
+                                                             'cant_renglones': cant_renglones},
+                              context_instance=RequestContext(request))
+
+
+def verfacturaproducciones(request, idfactura, haycup, haycuc, cantproducciones):
+    empresaobj1 = Empresa.objects.all()
+    hay_cup = int(haycup)
+    hay_cuc = int(haycuc)
+    for empresaobj in empresaobj1:
+        titular_name = empresaobj.nombre
+        titular_dir = empresaobj.direccion
+        titular_codigo = empresaobj.codigo
+        titular_email = empresaobj.email
+        titular_phone = empresaobj.telefono
+        titular_fax = empresaobj.fax
+        titular_cuenta_mn = empresaobj.cuenta_mn
+        titular_cuenta_cuc = empresaobj.cuenta_usd
+        titular_sucursal_mn = empresaobj.sucursal_mn
+        titular_sucursal_cuc = empresaobj.sucursal_usd
+
+    factura = FacturasProdAlter.objects.select_related().get(doc_factura=idfactura)
+    pk_user = User.objects.get(pk=request.user.id)
+    # vendedor = pk_user.first_name + " " + pk_user.last_name
+
+    user_doc = Doc.objects.get(id_doc=factura.doc_factura.id_doc).operador
+    operador_ = User.objects.get(pk=user_doc.id)
+    confeccionado = operador_.first_name + " " + operador_.last_name
+
+    detallesFact = DetalleFacturaProdAlter.objects.select_related().filter(factura=idfactura).values('factura','precio_mn',
+                                                                                                'produccionalter__codigo',
+                                                                                                'produccionalter__descripcion', \
+                                                                                                'produccionalter__um__descripcion') \
+        .annotate(cantidad=Count('produccionalter__descripcion'))
+    for a1 in range(detallesFact.__len__()):
+        detallesFact[a1]['importecup'] = detallesFact[a1]['precio_mn'] * detallesFact[a1]['cantidad']
+        detallesFact[a1]['precio_mn'] = str(detallesFact[a1]['precio_mn'])
+
+    cliente = factura.cliente
+    fecha_confeccionado = factura.doc_factura.fecha_doc
+
+    cliente_codigo = cliente.codigo
+    cliente_nombre = cliente.nombre
+    cliente_dir = cliente.direccion
+    cliente_phone = cliente.telefono
+    cliente_email = cliente.email
+    cliente_fax = cliente.fax
+
+    contrato = ClienteContrato.objects.select_related().get(cliente=cliente.id, cerrado=False)
+    contrato_sucursal_mn = contrato.contrato.sucursal_mn
+    contrato_sucursal_cuc = contrato.contrato.sucursal_usd
+    contrato_cuenta_mn = contrato.contrato.cuenta_mn
+    contrato_cuenta_cuc = contrato.contrato.cuenta_usd
+    contrato_nro = contrato.contrato.contrato_nro
+
+    # transportador = factura.transportador
+    # transportador_nombre = transportador.nombre
+    # transportador_ci = transportador.ci
+    # transportador_chapa = factura.chapa
+    # transportador_licencia = factura.licencia
+
+    cancelada = factura.cancelada
+
+    importetotalcup = factura.get_importetotalcup()
+    importecup = factura.get_importecup()
+
+    observaciones = factura.doc_factura.observaciones
+
+    return render_to_response("report/factura.html", locals(), context_instance=RequestContext(request))
+
+@login_required
+@transaction.commit_on_success()
+def factura_producciones_del(request, idfa):
+    if not request.user.has_perm('comercial.facturasprodalter'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    l = []
+    fact = FacturasProdAlter.objects.get(pk=idfa)
+    noelim = 0
+    if fact.confirmada == hashlib.sha1(fact.pk.__str__() + 'YES').hexdigest():
+        mensa = "No se puede eliminar la factura Nro. " + fact.factura_nro + " porque ya está confirmada"
+        noelim = 1
+    elif fact.confirmada != hashlib.sha1(fact.pk.__str__() + 'NO').hexdigest():
+        mensa = "No se puede eliminar la factura Nro. " + fact.factura_nro + " porque está corrupta"
+        noelim = 1
+    if noelim == 1:
+        l = [mensa]
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_nro = fact.factura_nro
+        importecup = FacturasProdAlter.objects.get(pk=idfa).get_importetotalcup()
+
+        pmn = ClienteContrato.objects.select_related().get(cliente=fact.cliente.id, cerrado=False)
+
+        precio_CUP = "Precio CUP"
+
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = DetalleFacturaProdAlter.objects.select_related().filter(factura=idfa).order_by('produccionalter.descripcion')
+
+        # rc_transportador = fact.transportador.nombre
+        # rc_chapa = fact.chapa
+        # rc_licencia = fact.licencia
+        hay_cup = 1
+        # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
+
+        return render_to_response('comercial/viewfacturaproducciones.html',
+                                  {'hay_cup': hay_cup, 'eliminar': 0, 'editar': 1, 'cancelar': 0,
+                                   'confirmar': 0,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'cliente': rc_cliente,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa, 'elementos_detalle': filas,
+                                   'error2': l}, context_instance=RequestContext(request))
+    try:
+        Doc.objects.select_related().get(pk=idfa).delete()
+
+        return HttpResponseRedirect('/comerciax/comercial/factura_producciones/index')
+        # return render_to_response("casco/recepcionclienteindex.html",locals(),context_instance = RequestContext(request))
+    except Exception, e:
+        transaction.rollback()
+        l = ['Error al eliminar el documento']
+        fact = FacturasProdAlter.objects.select_related().get(pk=idfa)
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_nro = fact.factura_nro
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = DetalleFacturaProdAlter.objects.select_related().filter(factura=idfa).order_by('produccionalter.descripcion')
+
+        return render_to_response('comercial/viewfacturaproducciones.html',
+                                  {'hay_cup': hay_cup, 'rc_nro': rc_nro, 'fecha': rc_fecha,
+                                   'cliente': rc_cliente, 'observaciones': rc_observaciones, 'rc_id': idfa,
+                                   'elementos_detalle': filas, 'error2': l}, context_instance=RequestContext(request))
+    else:
+        transaction.commit()
+
+    return 0
+
+@login_required
+def detalleFacturaProduccion_delete(request, idfa, idproduccion):
+    if not request.user.has_perm('comercial.facturasprodalter'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    fact = FacturasProdAlter.objects.get(pk=idfa)
+
+    l = []
+
+    DetalleFacturaProdAlter.objects.get(produccionalter=idproduccion, factura=idfa).delete()
+    cant_renglones = str(FacturasProdAlter.objects.get(doc_factura=idfa).get_renglones())
+    data = []
+    filas = DetalleFacturaProdAlter.objects.select_related().filter(factura=idfa).order_by('produccionalter__descripcion')
+    total_produccion = str(filas.count())
+    elementos_detalle = []
+    importetotalcup = fact.get_importetotalcup()
+    for a1 in filas:
+
+        # importetotalcup = a1.factura.get_importetotalcup()
+
+        elementos_detalle += [
+            {
+             'cant_renglones': cant_renglones,
+             'id_doc': a1.factura.doc_factura.id_doc,
+             'produccionalter': a1.produccionalter.descripcion,
+             'codigo': a1.produccionalter.codigo,
+             'importetotalcup': importetotalcup,
+             'produccionalter_id': a1.produccionalter.id,
+             'precio_cup': a1.format_precio_mn(),
+             'um':a1.produccionalter.um.descripcion,
+             'importe_cup': a1.format_importe_mn(),
+             'cantidad': a1.format_cantidad()}]
+
+    return HttpResponse(simplejson.dumps(elementos_detalle), content_type='application/javascript; charset=utf8')
+
+
+@login_required
+@transaction.commit_on_success()
+def factura_producciones_edit(request, idfa):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    fact = FacturasProdAlter.objects.select_related().get(pk=idfa)
+    noedit = 0
+    if fact.confirmada == hashlib.sha1(fact.pk.__str__() + 'YES').hexdigest():
+        mensa = "No se puede editar la factura Nro. " + fact.factura_nro + " porque ya está confirmada"
+        noedit = 1
+    elif fact.confirmada != hashlib.sha1(fact.pk.__str__() + 'NO').hexdigest():
+        mensa = "No se puede editar la factura Nro. " + fact.factura_nro + " porque está corrupta"
+        noedit = 1
+    if noedit == 1:
+        l = [mensa]
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_nro = fact.factura_nro
+
+        importecup = FacturasProdAlter.objects.get(pk=idfa).get_importecup()
+
+        pmn = FacturasProdAlter.objects.select_related().get(cliente=fact.cliente.id, cerrado=False)
+
+        precio_CUP = "Precio CUP"
+        importe_CUP = "Importe CUP"
+
+
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = DetalleFacturaProdAlter.objects.select_related().filter(factura=idfa).order_by('produccionalter.descripcion')
+
+        # rc_transportador = fact.transportador.nombre
+        # rc_chapa = fact.chapa
+        # rc_licencia = fact.licencia
+        hay_cup = 0
+
+        # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
+        return render_to_response('comercial/viewfacturaproducciones.html',
+                                  {'hay_cup': hay_cup, 'eliminar': 0, 'editar': 1, 'cancelar': 0,
+                                   'confirmar': 0,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'importe_CUP': importe_CUP,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'cliente': rc_cliente,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa, 'elementos_detalle': filas,
+                                   'error2': l}, context_instance=RequestContext(request))
+
+    nombre_form = 'Facturas Producciones Alternativas'
+    descripcion_form = 'Realizar Factura de Producciones Alternativas a Clientes'
+    titulo_form = 'Facturas Producciones Alternativas'
+    controlador_form = 'Facturas Producciones Alternativas'
+    accion_form = '/comerciax/comercial/factura_producciones/edit/' + idfa + '/'
+    cancelbtn_form = '/comerciax/comercial/factura_producciones/view/' + idfa + '/'
+    fecha_cierre = Fechacierre.objects.get(almacen='cm').fechaminima()
+    fecha_maxima = Fechacierre.objects.get(almacen='cm').fechamaxima()
+    c = None
+
+    l = []
+
+    detalles = DetalleFacturaProdAlter.objects.filter(factura=idfa).count()
+
+    if request.method == 'POST':
+        if detalles == 0:
+            form = FacturaProduccionesForm(request.POST)
+        else:
+            form = FacturaProduccionesForm2(request.POST)
+        if form.is_valid():
+            if detalles == 0:
+                cc = form.data['cliente1']
+            else:
+                cc = form.data['cliente']
+            if (cc.find("|") < 0):
+                obj_cliente = Cliente.objects.get(pk=cc)
+            else:
+                obj_cliente = Cliente.objects.get(pk=fact.cliente.id)
+            try:
+                tipoc = obj_cliente.get_contrato_tipo()
+            except Exception, e:
+                tipoc = None
+
+            if tipoc == None:
+                l = ['Este cliente no tiene contrato por lo que no se puede realizar la factura']
+                return render_to_response('form/form_adddetalle.html',
+                                          {'tipocliente': '0', 'form': form, 'form_name': nombre_form,
+                                           'form_description': descripcion_form, 'accion': accion_form,
+                                           'titulo': titulo_form, 'controlador': controlador_form,
+                                           'cancelbtn': cancelbtn_form, 'fecha_minima': fecha_cierre,
+                                           'fecha_maxima': fecha_maxima,
+                                           'error2': l}, context_instance=RequestContext(request))
+
+            pk_user = User.objects.get(pk=request.user.id)
+
+            fact = FacturasProdAlter.objects.get(pk=idfa)
+            doc = Doc.objects.get(pk=idfa)
+
+            doc.fecha_doc = form.cleaned_data['fecha']
+            doc.operador = pk_user
+            doc.doc_operacion = datetime.date.today()
+            doc.observaciones = form.cleaned_data['observaciones']
+            fact.cliente = obj_cliente
+
+
+            try:
+                doc.save()
+                fact.save()
+
+                return HttpResponseRedirect('/comerciax/comercial/factura_producciones/view/' + idfa)
+
+            except Exception, e:
+                exc_info = e.__str__()  # sys.exc_info()[:1]
+                c = exc_info.find("DETAIL:")
+
+                if c < 0:
+                    l = l + ["Error Fatal."]
+                else:
+                    c = exc_info[c + 7:]
+                    l = l + [c]
+
+                transaction.rollback()
+
+                form = FacturaProduccionesForm(request.POST)
+                return render_to_response('form/form_adddetalle.html',
+                                          {'tipocliente': '0', 'form': form, 'form_name': nombre_form,
+                                           'form_description': descripcion_form,
+                                           'accion': accion_form, 'titulo': titulo_form,
+                                           'controlador': controlador_form,
+                                           'cancelbtn': cancelbtn_form, 'fecha_minima': fecha_cierre,
+                                           'fecha_maxima': fecha_maxima, 'error2': l},
+                                          context_instance=RequestContext(request))
+            else:
+                transaction.commit()
+    else:
+        if detalles == 0:
+            form = FacturaProduccionesForm(
+                initial={
+                         'nro': fact.factura_nro, 'fecha': fact.doc_factura.fecha_doc,
+                         'cliente1': fact.cliente, 'observaciones': fact.doc_factura.observaciones})
+        else:
+
+            form = FacturaProduccionesForm2(initial={
+                                         'fecha': fact.doc_factura.fecha_doc,
+                                         'cliente': fact.cliente,
+                                         'observaciones': fact.doc_factura.observaciones})
+
+    return render_to_response('comercial/facturaproduccionesedit.html',
+                              {'form': form, 'form_name': nombre_form, 'form_description': descripcion_form,
+                               'accion': accion_form, 'titulo': titulo_form, 'controlador': controlador_form,
+                               'cancelbtn': cancelbtn_form, 'fecha_minima': fecha_cierre, 'fecha_maxima': fecha_maxima},
+                              context_instance=RequestContext(request))
+
+@login_required
+@transaction.commit_on_success()
+def factura_producciones_confirmar(request, idfa):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    l = []
+    fact = FacturasProdAlter.objects.get(pk=idfa)
+    if fact.get_renglones() > 30:
+        l = []
+        cancelar = 0
+        fact = FacturasProdAlter.objects.select_related().get(pk=idfa)
+        if fact.cancelada == True:
+            cancelar = 1
+        confir = fact.get_confirmada()
+        confirmar = 2
+        if confir == 'N':
+            confirmar = 0
+        elif confir == 'S':
+            confirmar = 1
+
+        eliminar = 1
+        editar = 1
+        if confirmar == 2 or confirmar == 1:
+            eliminar = 0
+            editar = 0
+
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_nro = fact.factura_nro
+        importecup = fact.get_importetotalcup()
+        importecuc = fact.get_importecuc()
+        cant_renglones = fact.get_renglones()
+        pmn = ClienteContrato.objects.select_related().get(cliente=fact.cliente.id, cerrado=False)
+        mncosto = pmn.contrato.preciocostomn
+        cuccosto = pmn.contrato.preciocostocuc
+
+        precio_CUP = "Precio CUP"
+
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = DetalleFacturaProdAlter.objects.select_related().filter(factura=idfa).order_by(
+            'produccionalter__descripcion')
+
+
+        hay_cup = 1
+        l = ["La factura excede los 30 renglones, no se puede confirmar"]
+        return render_to_response('comercial/viewfacturaproducciones.html',
+                                  {'hay_cup': hay_cup, 'eliminar': eliminar, 'editar': editar,
+                                   'cancelar': cancelar, 'confirmar': confirmar,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'cliente': rc_cliente,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa, 'elementos_detalle': filas,
+                                   'error2': l, 'cant_renglones': cant_renglones},
+                                  context_instance=RequestContext(request))
+
+    else:
+
+        pk_user = User.objects.get(pk=request.user.id)
+        nrodoc = 1
+        if NumeroDoc.objects.count() != 0:
+            nrodoc = NumeroDoc.objects.get().nro_factura_prodalter + 1
+        nume = NumeroDoc()
+        if NumeroDoc.objects.count() == 0:
+            nume.id_numerodoc = uuid4()
+        else:
+            nume = NumeroDoc.objects.get()
+        nume.nro_factura_prodalter = nrodoc
+        nume.save()
+        Doc.objects.filter(pk=FacturasProdAlter.objects.get(pk=idfa).doc_factura).update(operador=pk_user)
+        FacturasProdAlter.objects.filter(pk=idfa).update(confirmada=hashlib.sha1(idfa.__str__() + 'YES').hexdigest(),
+                                                factura_nro=nrodoc, confirmar=True)
+        return HttpResponseRedirect('/comerciax/comercial/factura_producciones/view/' + idfa)
+
+@login_required
+@transaction.commit_on_success()
+def factura_producciones_cancelar(request, idfa):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    l = []
+    fact = FacturasProdAlter.objects.get(pk=idfa)
+    pagosfact = 0.0
+    if fact.confirmada != hashlib.sha1(fact.pk.__str__() + 'YES').hexdigest() or pagosfact != 0:
+        mensa = "No se puede cancelar la factura Nro. " + fact.factura_nro + " porque no está confirmada"
+        if pagosfact > 0:
+            mensa = "No se puede cancelar la factura Nro. " + fact.factura_nro + " porque se han realizado pagos"
+        l = [mensa]
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_nro = fact.factura_nro
+        importecup = fact.get_importetotalcup()
+
+        precio_CUP = "Precio CUP"
+
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = DetalleFacturaProdAlter.objects.select_related().filter(factura=idfa).order_by('produccionalter.descripcion')
+
+
+        # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
+        hay_cup = 1
+        return render_to_response('comercial/viewfacturaproducciones.html',
+                                  {'hay_cup': hay_cup, 'eliminar': 0, 'editar': 1, 'cancelar': 0,
+                                   'confirmar': 0,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'cliente': rc_cliente,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa, 'elementos_detalle': filas,
+                                   'error2': l}, context_instance=RequestContext(request))
+
+    try:
+        hay_cup = 1
+
+        FacturasProdAlter.objects.filter(pk=idfa).update(cancelada=True)
+        pk_user = User.objects.get(pk=request.user.id)
+        Doc.objects.filter(pk=FacturasProdAlter.objects.get(pk=idfa).doc_factura).update(operador=pk_user)
+
+        return HttpResponseRedirect('/comerciax/comercial/factura_producciones/index')
+    except Exception, e:
+        transaction.rollback()
+        l = ['Error al cancelar factura']
+        fact = FacturasProdAlter.objects.select_related().get(pk=idfa)
+        importecup = fact.get_importetotalcup()
+
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_nro = fact.factura_nro
+        rc_observaciones = fact.doc_factura.observaciones
+
+        precio_CUP = "Precio CUP"
+        return render_to_response('comercial/viewfacturaproducciones.html',
+                                  {'hay_cup': hay_cup,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'cliente': rc_cliente,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa, 'elementos_detalle': filas,
+                                   'error2': l, 'cantcascos': '4'}, context_instance=RequestContext(request))
+    else:
+        transaction.commit()
+
+
+@login_required
+# @transaction.commit_on_success()
+def detalleFacturaProducciones_add(request, idfa):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    l = []
+    fact = FacturasProdAlter.objects.prefetch_related('detallefacturaprodalter_set').get(pk=idfa)
+    producc = [x.produccionalter.id for x in fact.detallefacturaprodalter_set.all()]
+
+    producciones = ProdAlter.objects.all().exclude(pk__in=producc).order_by('descripcion')
+    noelim = 0
+    if fact.confirmada == hashlib.sha1(fact.pk.__str__() + 'YES').hexdigest():
+        mensa = "No se puede adicionar producciones a la factura Nro. " + fact.factura_nro + " porque ya está confirmada"
+        noelim = 1
+    elif fact.confirmada != hashlib.sha1(fact.pk.__str__() + 'NO').hexdigest():
+        mensa = "No se puede adcionar producciones a la factura Nro. " + fact.factura_nro + " porque está corrupta"
+        noelim = 1
+    if noelim == 1:
+        l = [mensa]
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_clientecomercializador = fact.cliente.comercializadora
+        rc_nro = fact.factura_nro
+        importecup = fact.get_importe_totalcup()
+
+        precio_CUP = "Precio CUP"
+
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = fact.detallefacturaprodalter_set.all().order_by('produccionalter.descripcion')
+
+
+        # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
+        hay_cup = 1
+        return render_to_response('comercial/viewfacturaproducciones.html',
+                                  {'hay_cup': hay_cup,  'eliminar': 0, 'editar': 1, 'cancelar': 0,
+                                   'confirmar': 0,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'cliente': rc_cliente,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa,
+                                   'elementos_detalle': filas,
+                                   'error2': l}, context_instance=RequestContext(request))
+
+    titulo_form = 'Facturas de Producciones Alternativas'
+    nombre_form = 'Facturas de Producciones Alternativas'
+    controlador_form = 'Facturas de Producciones Alternativas'
+    descripcion_form = 'Seleccionar Producción Alternativa para la factura'
+
+    accion_form = 'detalleFacturaProducciones_add'
+    cancelbtn_form = '/comerciax/comercial/factura_producciones/view/' + idfa
+
+    if request.method == 'POST':
+        # pmn = ClienteContrato.objects.select_related().get(cliente=fact.cliente.id, cerrado=False)
+        # mn = pmn.contrato.preciomn
+        form = DetalleFacturaProdAlterForm(request.POST)
+        if form.is_valid():
+            cantidad = form.cleaned_data['cantidad']
+            if Decimal(form.data['cantidad']) < 0.01:
+                l=['La cantidad debe ser mayor que 0.00']
+                return render_to_response('form/form_add.html',
+                                          {'form': form, 'form_name': nombre_form, 'form_description': descripcion_form,
+                                           'accion': accion_form, 'titulo': titulo_form, 'controlador': controlador_form,
+                                           'cancelbtn': cancelbtn_form, 'error2': l},
+                                          context_instance=RequestContext(request))
+            producto = form.cleaned_data['producto']
+            detalle = DetalleFacturaProdAlter.objects.filter(factura=idfa, produccionalter=producto)
+            if detalle:
+                detalle = DetalleFacturaProdAlter.objects.get(factura=idfa, produccionalter=producto)
+                detalle.cantidad = detalle.cantidad + cantidad
+                detalle.importe_mn = utils.redondeo(detalle.cantidad * detalle.precio_mn,2)
+            else:
+                detalle = DetalleFacturaProdAlter()
+                detalle.id_detalle = uuid4()
+                detalle.cantidad = cantidad
+                detalle.produccionalter = producto
+                detalle.precio_mn = producto.precio_mn
+                detalle.importe_mn = utils.redondeo(detalle.cantidad * detalle.precio_mn,2)
+                detalle.factura = fact
+            detalle.save()
+        if request.POST.__contains__('submit1'):
+            return HttpResponseRedirect('/comerciax/comercial/factura_producciones/view/' + idfa)
+
+    form = DetalleFacturaProdAlterForm()
+    return render_to_response('form/form_add.html',
+                              {'form': form, 'form_name': nombre_form, 'form_description': descripcion_form,
+                               'accion': accion_form, 'titulo': titulo_form, 'controlador': controlador_form,
+                               'cancelbtn': cancelbtn_form, 'error2': l}, context_instance=RequestContext(request))
+
+
+@login_required
+@transaction.commit_on_success()
+def detalleFacturaProduccion_edit(request, idfa, idproduccion):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    c = None
+    l = []
+
+    nombre_form = 'Editar Producción Alternativa Facturada'
+    descripcion_form = 'Editar Producción Alternativa Facturada'
+    titulo_form = 'Editar Producción Alternativa Facturada'
+    controlador_form = 'Editar Producción Alternativa Facturada'
+    accion_form = 'detalleFacturaProduccion_edit/' + idfa + '/' + idproduccion
+    cancelbtn_form = '/comerciax/comercial/factura_producciones/view/' + idfa + '/'
+
+    if request.method == 'POST':
+        form = DetalleFacturaProdAlterForm2(request.POST)
+
+        if form.is_valid():
+            fact = FacturasProdAlter.objects.select_related().get(pk=idfa)
+
+            prodsave = ProdAlter.objects.get(pk=idproduccion)
+            detalle = DetalleFacturaProdAlter.objects.get(produccionalter=prodsave, factura=fact)
+
+            try:
+
+                detalle.cantidad = form.data['cantidad']
+                detalle.precio_mn = prodsave.precio_mn
+                detalle.importe_mn = prodsave.precio_mn * Decimal(form.data['cantidad'])
+                detalle.save()
+                importecup = FacturasProdAlter.objects.get(pk=idfa).get_importetotalcup()
+                return factura_producciones_view(request, idfa)
+            except Exception, e:
+                exc_info = e.__str__()  # sys.exc_info()[:1]
+                c = exc_info.find("DETAIL:")
+                if c < 0:
+                    l = l + ["Error Fatal."]
+                else:
+                    c = exc_info[c + 7:]
+                    # l=l+[c]
+                    l = ['Error al cambiar la medida de salida del casco']
+                transaction.rollback()
+                form = DetalleFacturaProdAlterForm2(request.POST)
+                return render_to_response("form/form_edit.html",
+                                          {'tipocliente': '0', 'form': form, 'title': titulo_form,
+                                           'form_name': nombre_form, 'form_description': descripcion_form,
+                                           'controlador': controlador_form, 'accion': accion_form
+                                              , 'cancelbtn': cancelbtn_form, 'error2': l},
+                                          context_instance=RequestContext(request))
+            else:
+                transaction.commit()
+    else:
+        rp = ProdAlter.objects.select_related().get(pk=idproduccion)
+        fact = FacturasProdAlter.objects.select_related().get(pk=idfa)
+        detalle = DetalleFacturaProdAlter.objects.get(produccionalter=rp, factura=fact)
+        form = DetalleFacturaProdAlterForm2(initial={'producto': rp, 'cantidad':detalle.cantidad})
+        return render_to_response('form/form_edit.html', {'form': form, 'form_name': nombre_form,
+                                                          'form_description': descripcion_form, 'accion': accion_form,
+                                                          'titulo': titulo_form, 'controlador': controlador_form,
+                                                          'cancelbtn': cancelbtn_form},
+                                  context_instance=RequestContext(request))
+    return factura_producciones_view(request, idfa)

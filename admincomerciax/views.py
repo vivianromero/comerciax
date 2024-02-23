@@ -13,7 +13,7 @@ from comerciax.utils import get_datatables_records, write_pdf, Estados, query_to
 from uuid import uuid4
 import sys
 from string import find
-from django.db import transaction, connection
+from django.db import transaction, connection, DatabaseError
 import json
 from django.http import HttpResponse
 from django.core import serializers
@@ -32,6 +32,10 @@ from decimal import Decimal
 from comerciax.casco.models import DetalleDIP,DetalleDVP,DetalleTransferencia,DetalleCC,DetalleVP,DetallePT,DetallePTE,TrazabilidadCasco,Detalle_DC
 import base64
 import smtplib
+
+from admincomerciax.forms import FProducciones
+from admincomerciax.models import ProdAlter
+
 
 def createexcel(request):
     
@@ -1495,7 +1499,7 @@ def get_producto_list(request):
     querySet = Producto.objects.all().select_related()
     #columnIndexNameMap is required for correct sorting behavior
     columnIndexNameMap = { 0:'id', 1:'descripcion', 2:'codigo',3:'admincomerciax_umedida.descripcion', 4:'precio_mn', 5:'precio_cuc', 6:'precio_costo_mn', 
-                          7:'precio_costo_cuc',9:'precio_externo_cup',10:'precio_particular',11:'precio_casco', 12:'otro_precio_casco',13:'precio_vulca'}
+                          7:'precio_costo_cuc',9:'precio_externo_cup',10:'precio_particular',11:'precio_casco', 12:'precio_regrabable', 13:'otro_precio_casco',14:'precio_vulca'}
     #model fields listed in searchableColumns will be used for filtering (Search)
     searchableColumns = ['descripcion','codigo','precio_externo_cup']
     #path to template used to generate json
@@ -1503,7 +1507,8 @@ def get_producto_list(request):
     #call to generic function from utils
     return get_datatables_records(request, querySet, columnIndexNameMap, searchableColumns, jsonTemplatePath)
 
-@login_required    
+@login_required
+@transaction.commit_on_success
 def addproducto(request):
     if not request.user.has_perm('admincomerciax.producto'):
         return render_to_response("denegado.html",locals(),context_instance = RequestContext(request))
@@ -1523,6 +1528,7 @@ def addproducto(request):
             myproducto.um = Umedida.objects.get(pk = form.data['unidad_medida'])
             myproducto.precio_particular = form.cleaned_data['precio_particular']
             myproducto.precio_casco = form.cleaned_data['precio_casco']
+            myproducto.precio_regrabable = form.cleaned_data['precio_regrabable']
             myproducto.otro_precio_casco = form.cleaned_data['otro_precio_casco']
             myproducto.precio_externo_cup = form.cleaned_data['precio_externo']
             myproducto.precio_vulca = form.cleaned_data['precio_vulca']
@@ -1549,8 +1555,8 @@ def addproducto(request):
                 uri="/comerciax/admincom/producto/index" 
                 return render_to_response("form/form_add.html",{'form':form,'title':'Productos', 'form_name':'Insertar Producto','form_description':'Introducir un nuevo producto a la base de datos','controlador':'Productos','accion':'addproducto',
                                                     'cancelbtn':uri, 'error2':l},context_instance = RequestContext(request))
-            #else:
-                #transaction.commit()
+            else:
+                transaction.commit()
     else:
         form = FProducto()
     uri="/comerciax/admincom/producto/index" 
@@ -1563,19 +1569,24 @@ def viewproducto(request,idproducto):
         return render_to_response("denegado.html",locals(),context_instance = RequestContext(request))
     productoobj = Producto.objects.get(pk=idproducto)
     desc = productoobj.descripcion
-    return render_to_response("admincomerciax/viewproducto.html",{'producto_name':desc, 'producto_id':idproducto,"preciomn":productoobj.precio_mn,
+    return render_to_response("admincomerciax/viewproducto.html",
+                              {'producto_name':desc,
+                               'producto_id':idproducto,
+                               "preciomn":productoobj.precio_mn,
                                   "preciocuc":productoobj.precio_cuc,
                                   "codigo":productoobj.codigo,
                                   "preciocostocuc":productoobj.precio_costo_cuc,
                                   "preciocostomn":productoobj.precio_costo_mn,
                                   "precioparticular":productoobj.precio_particular,
                                   "preciocasco":productoobj.precio_casco,
+                                  "precioregrabable":productoobj.precio_regrabable,
                                   "otro_preciocasco":productoobj.otro_precio_casco,
                                   "precioexternocup":productoobj.precio_externo_cup,
                                   "preciovulca":productoobj.precio_vulca,
                                   "um":productoobj.um.descripcion,},context_instance = RequestContext(request))
 
 @login_required
+@transaction.autocommit
 def editproducto(request,idproducto):
     if not request.user.has_perm('admincomerciax.producto'):
         return render_to_response("denegado.html",locals(),context_instance = RequestContext(request))
@@ -1593,6 +1604,7 @@ def editproducto(request,idproducto):
             producto.precio_costo_cuc = form.cleaned_data['precio_costo_cuc']
             producto.precio_particular = form.cleaned_data['precio_particular']
             producto.precio_casco = form.cleaned_data['precio_casco']
+            producto.precio_regrabable = form.cleaned_data['precio_regrabable']
             producto.otro_precio_casco = form.cleaned_data['otro_precio_casco']
             producto.precio_externo_cup = form.cleaned_data['precio_externo']
             producto.um = Umedida.objects.get(pk = form.data['unidad_medida'])
@@ -1601,6 +1613,7 @@ def editproducto(request,idproducto):
                 producto.save()
                 return viewproducto(request, idproducto)
             except Exception, e:
+                transaction.rollback()
                 exc_info = e.__str__() # sys.exc_info()[:1]
                 c = exc_info.find("DETAIL:")
                 if c < 0:
@@ -1608,7 +1621,7 @@ def editproducto(request,idproducto):
                 else:
                     c = exc_info[c + 7:]
                     l=l+[c]
-                transaction.rollback()
+
                     
                 form = FProducto(request.POST)
                 uri="/comerciax/admincom/producto/view/" + idproducto 
@@ -1617,8 +1630,6 @@ def editproducto(request,idproducto):
                                                                  'form_name':'Editar producto','form_description':'Editar el producto seleccionado',
                                                                  'controlador':'Productos','accion':edituri,
                                                                  'cancelbtn':uri,'error2':l},context_instance = RequestContext(request))
-            else:
-                transaction.commit()
     else:
         productoobj = Producto.objects.get(pk=idproducto)
         form = FProducto(initial={"producto":productoobj.descripcion,
@@ -1631,7 +1642,8 @@ def editproducto(request,idproducto):
                                   "precio_externo":productoobj.precio_externo_cup,
                                   "otro_precio_casco":productoobj.otro_precio_casco, 
                                   "precio_casco":productoobj.precio_casco, 
-                                  "precio_vulca":productoobj.precio_vulca,                                 
+                                  "precio_regrabable":productoobj.precio_regrabable,
+                                  "precio_vulca":productoobj.precio_vulca,
                                   "unidad_medida":productoobj.um.id,})
         uri="/comerciax/admincom/producto/view/" + idproducto 
         edituri = "/comerciax/admincom/producto/edit/" + idproducto + "/"
@@ -1647,7 +1659,7 @@ def delproducto(request,idproducto):
         productoobj.delete()
         return HttpResponseRedirect('/comerciax/admincom/producto/index')
     except Exception, e:
-        c = "No se puede eliminar la producto, posibles causas este siendo utilizada por algún otro registro de la BD"
+        c = "No se puede eliminar el producto, posibles causas este siendo utilizada por algún otro registro de la BD"
         desc = productoobj.descripcion
         return render_to_response("admincomerciax/viewproducto.html",{'producto_name':desc, 'producto_id':idproducto, 'error2':c},context_instance = RequestContext(request))
     
@@ -3470,3 +3482,313 @@ def eliminar_ocioso(request):
     
     return render_to_response("admincomerciax/eliminar_casco.html",{'tipo':"O",'arrorganismo':arrorganismo,'arrprovincia':arrprovincia,'cancelbtn':cancelbtn,'title':titulo_form, 'form_name':nombre_form,'form_description':descripcion_form,
                                                                 'controlador':controlador_form,'accion':accion_form,'error2':mesg},context_instance = RequestContext(request))
+
+
+#############################################################
+#        Asistencia Técnica
+#############################################################
+@login_required
+def servicio(request):
+    if not request.user.has_perm('admincomerciax.servicio'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+    return render_to_response("admincomerciax/indexservicio.html", locals(), context_instance=RequestContext(request))
+
+
+def get_servicio_list(request):
+    # initial querySet
+    querySet = Servicio.objects.all().select_related()
+    # columnIndexNameMap is required for correct sorting behavior
+    columnIndexNameMap = {0: 'id', 1: 'codigo', 2: 'descripcion', 3: 'um',
+                          4: 'precio_mn'}
+    # model fields listed in searchableColumns will be used for filtering (Search)
+    searchableColumns = ['descripcion', 'codigo']
+    # path to template used to generate json
+    jsonTemplatePath = 'admincomerciax/json/json_servicio.txt'
+    # call to generic function from utils
+    return get_datatables_records(request, querySet, columnIndexNameMap, searchableColumns, jsonTemplatePath)
+
+
+@login_required
+@transaction.commit_on_success
+def addservicio(request):
+    if not request.user.has_perm('admincomerciax.servicio'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+    c = None
+    l = []
+    if request.method == 'POST':
+        form = FServicio(request.POST)
+        if form.is_valid():
+            myservicio = Servicio()
+            myservicio.id = uuid4()
+            myservicio.descripcion = form.cleaned_data['servicio']
+            myservicio.codigo = form.cleaned_data['codigo']
+            myservicio.precio_mn = form.cleaned_data['precio_mn']
+            myservicio.um = Umedida.objects.get(pk=form.data['unidad_medida'])
+            # myservicio.activo = 1
+            try:
+                myservicio.save()
+
+                if request.POST.__contains__('submit1'):
+                    return HttpResponseRedirect('/comerciax/admincom/servicio/view/' + myservicio.id.__str__())
+                else:
+                    form = FServicio()
+            except Exception, e:
+                transaction.rollback()
+                exc_info = e.__str__()  # sys.exc_info()[:1]
+                c = exc_info.find("DETAIL:")
+                if c < 0:
+                    l = l + ["Error Fatal."]
+                else:
+                    c = exc_info[c + 7:]
+                    l = l + [c]
+            else:
+                transaction.commit()
+    else:
+        form = FServicio()
+    uri = "/comerciax/admincom/servicio/index"
+    return render_to_response("form/form_add.html", {'form': form, 'title': 'Asistencia Técnica', 'form_name': 'Insertar Asistencia Técnica',
+                                                     'form_description': 'Introducir una nueva Asistencia Técnica a la base de datos',
+                                                     'controlador': 'Asistencia Técnica', 'accion': 'addservicio',
+                                                     'cancelbtn': uri, 'error2': l},
+                              context_instance=RequestContext(request))
+
+@login_required
+def viewservicio(request, idservicio):
+    if not request.user.has_perm('admincomerciax.servicio'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+    servicioobj = Servicio.objects.get(pk=idservicio)
+    desc = servicioobj.descripcion
+    return render_to_response("admincomerciax/viewservicio.html",
+                              {'servicio_name': desc,
+                               'servicio_id': idservicio,
+                               "preciomn": servicioobj.precio_mn,
+                               "codigo": servicioobj.codigo,
+                               "um": servicioobj.um.descripcion,
+                              }, context_instance=RequestContext(request))
+
+
+@login_required
+@transaction.commit_on_success
+def editservicio(request, idservicio):
+    if not request.user.has_perm('admincomerciax.servicio'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+    c = None
+    l = []
+    if request.method == 'POST':
+        form = FServicio(request.POST)
+        if form.is_valid():
+            servicio = Servicio.objects.get(pk=idservicio)
+            servicio.descripcion = form.cleaned_data['servicio']
+            servicio.codigo = form.cleaned_data['codigo']
+            servicio.precio_mn = form.cleaned_data['precio_mn']
+            servicio.um = Umedida.objects.get(pk=form.data['unidad_medida'])
+            try:
+                servicio.save()
+                return viewservicio(request, idservicio)
+            except Exception, e:
+                transaction.rollback()
+                exc_info = e.__str__()  # sys.exc_info()[:1]
+                c = exc_info.find("DETAIL:")
+                if c < 0:
+                    l = l + ["Error Fatal."]
+                else:
+                    c = exc_info[c + 7:]
+                    l = l + [c]
+
+                form = FServicio(request.POST)
+                uri = "/comerciax/admincom/servicio/view/" + idservicio
+                edituri = "/comerciax/admincom/servicio/edit/" + idservicio + "/"
+                return render_to_response("form/form_edit.html",
+                                          {'tipocliente': '2', 'form': form, 'title': 'Asistencia Técnica',
+                                           'form_name': 'Editar Asistencia Técnica',
+                                           'form_description': 'Editar la Asistencia Técnica seleccionada',
+                                           'controlador': 'Asistencia Técnica', 'accion': edituri,
+                                           'cancelbtn': uri, 'error2': l}, context_instance=RequestContext(request))
+    else:
+        servicioobj = Servicio.objects.get(pk=idservicio)
+        form = FServicio(initial={"servicio": servicioobj.descripcion,
+                                  "codigo": servicioobj.codigo,
+                                  "precio_mn": servicioobj.precio_mn,
+                                  "unidad_medida": servicioobj.um.id, })
+        uri = "/comerciax/admincom/servicio/view/" + idservicio
+        edituri = "/comerciax/admincom/servicio/edit/" + idservicio + "/"
+        return render_to_response("form/form_edit.html", {'tipocliente': '2', 'form': form, 'title': 'Asistencia Técnica',
+                                                          'form_name': 'Editar Asistencia Técnica',
+                                                          'form_description': 'Editar la Asistencia Técnica seleccionada',
+                                                          'controlador': 'Asistencia Técnica', 'accion': edituri,
+                                                          'cancelbtn': uri, 'error2': l}, context_instance=RequestContext(request))
+
+
+@login_required
+def delservicio(request, idservicio):
+    if not request.user.has_perm('admincomerciax.servicio'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+    servicioobj = Servicio.objects.get(pk=idservicio)
+    try:
+        servicioobj.delete()
+        return HttpResponseRedirect('/comerciax/admincom/servicio/index')
+    except Exception, e:
+        c = "No se puede eliminar el servicio, posibles causas este siendo utilizada por algún otro registro de la BD. Será desactivado"
+        desc = servicioobj.descripcion
+        return render_to_response("admincomerciax/viewservicio.html",
+                                  {'servicio_name': desc, 'servicio_id': idservicio, 'error2': c},
+                                  context_instance=RequestContext(request))
+
+#############################################################
+#        Producciones Alternativas
+#############################################################
+@login_required
+def producciones(request):
+    if not request.user.has_perm('admincomerciax.producciones'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+    return render_to_response("admincomerciax/indexproducciones.html", locals(), context_instance=RequestContext(request))
+
+
+def get_producciones_list(request):
+    # initial querySet
+    querySet = ProdAlter.objects.all().select_related()
+    # columnIndexNameMap is required for correct sorting behavior
+    columnIndexNameMap = {0: 'id', 1: 'codigo', 2: 'descripcion', 3: 'um',
+                          4: 'precio_mn', 5:'activo'}
+    # model fields listed in searchableColumns will be used for filtering (Search)
+    searchableColumns = ['descripcion', 'codigo']
+    # path to template used to generate json
+    jsonTemplatePath = 'admincomerciax/json/json_producciones.txt'
+    # call to generic function from utils
+    return get_datatables_records(request, querySet, columnIndexNameMap, searchableColumns, jsonTemplatePath)
+
+
+@login_required
+@transaction.commit_on_success
+def addproducciones(request):
+    if not request.user.has_perm('admincomerciax.producciones'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+    c = None
+    l = []
+    if request.method == 'POST':
+        form = FProducciones(request.POST)
+        if form.is_valid():
+            myproducciones = ProdAlter()
+            myproducciones.id = uuid4()
+            myproducciones.descripcion = form.cleaned_data['producciones']
+            myproducciones.codigo = form.cleaned_data['codigo']
+            myproducciones.precio_mn = form.cleaned_data['precio_mn']
+            myproducciones.um = Umedida.objects.get(pk=form.data['unidad_medida'])
+            myproducciones.activo = form.cleaned_data['activo']
+            try:
+                myproducciones.save()
+
+                if request.POST.__contains__('submit1'):
+                    return HttpResponseRedirect('/comerciax/admincom/producciones/view/' + myproducciones.id.__str__())
+                else:
+                    form = FProducciones(request.POST)
+            except Exception, e:
+                transaction.rollback()
+                exc_info = e.__str__()  # sys.exc_info()[:1]
+                c = exc_info.find("DETAIL:")
+                if c < 0:
+                    l = l + ["Error Fatal."]
+                else:
+                    c = exc_info[c + 7:]
+                    l = l + [c]
+            else:
+                transaction.commit()
+    else:
+        form = FProducciones()
+    uri = "/comerciax/admincom/producciones/index"
+    return render_to_response("form/form_add.html", {'form': form, 'title': 'Producción Alternativa', 'form_name': 'Insertar Producción Alternativa',
+                                                     'form_description': 'Introducir una nueva Producción Alternativa a la base de datos',
+                                                     'controlador': 'Producción Alternativa', 'accion': 'addproducciones',
+                                                     'cancelbtn': uri, 'error2': l},
+                              context_instance=RequestContext(request))
+
+@login_required
+def viewproducciones(request, idproducciones):
+    if not request.user.has_perm('admincomerciax.producciones'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+    produccionesobj = ProdAlter.objects.get(pk=idproducciones)
+    desc = produccionesobj.descripcion
+    return render_to_response("admincomerciax/viewproducciones.html",
+                              {'producciones_name': desc,
+                               'producciones_id': idproducciones,
+                               "preciomn": produccionesobj.precio_mn,
+                               "codigo": produccionesobj.codigo,
+                               "um": produccionesobj.um.descripcion,
+                               "activo": produccionesobj.activo,
+                              }, context_instance=RequestContext(request))
+
+
+@login_required
+@transaction.autocommit
+def editproducciones(request, idproducciones):
+    if not request.user.has_perm('admincomerciax.producciones'):
+        return render_to_response("denegado.html",locals(),context_instance = RequestContext(request))
+    c = None
+    l = []
+    if request.method == 'POST':
+        form = FProducciones(request.POST)
+        if form.is_valid():
+            um=Umedida.objects.get(pk=form.data['unidad_medida'])
+            producciones = ProdAlter.objects.get(pk=idproducciones)
+            producciones.descripcion = form.cleaned_data['producciones']
+            producciones.codigo = form.cleaned_data['codigo']
+            producciones.precio_mn = form.cleaned_data['precio_mn']
+            producciones.activo = form.cleaned_data['activo']
+            producciones.um = um
+            try:
+                producciones.save()
+                return viewproducciones(request, idproducciones)
+            except DatabaseError, e:
+                transaction.rollback()
+                exc_info = e.__str__()  # sys.exc_info()[:1]
+                c = exc_info.find("DETAIL:")
+                if c < 0:
+                    l = l + ["Error Fatal."]
+                else:
+                    c = exc_info[c + 7:]
+                    l = l + [c]
+
+                    uri="/comerciax/admincom/producciones/view/" + idproducciones
+                    edituri = "/comerciax/admincom/producciones/edit/" + idproducciones + "/"
+                    return render_to_response("form/form_edit.html",
+                                              {'tipocliente': '2', 'form': form, 'title': 'Producción Alternativa',
+                                               'form_name': 'Editar Producción Alternativa',
+                                               'form_description': 'Editar la Producción Alternativa seleccionada',
+                                               'controlador': 'Producción Alternativa', 'accion': edituri,
+                                               'cancelbtn': uri, 'error2': l},
+                                              context_instance = RequestContext(request))
+    else:
+        produccionesobj = ProdAlter.objects.get(pk=idproducciones)
+        form = FProducciones(initial={"producciones": produccionesobj.descripcion,
+                                      "codigo": produccionesobj.codigo,
+                                      "precio_mn": produccionesobj.precio_mn,
+                                      "unidad_medida": produccionesobj.um.id,
+                                      "activo":produccionesobj.activo})
+
+        uri="/comerciax/admincom/producciones/view/" + idproducciones
+        edituri = "/comerciax/admincom/producciones/edit/" + idproducciones + "/"
+        return render_to_response("form/form_edit.html",
+                                  {'tipocliente': '2', 'form': form, 'title': 'Producción Alternativa',
+                                   'form_name': 'Editar Producción Alternativa',
+                                   'form_description': 'Editar la Producción Alternativa seleccionada',
+                                   'controlador': 'Producción Alternativa', 'accion': edituri,
+                                   'cancelbtn': uri, 'error2': l},
+                                  context_instance = RequestContext(request))
+
+@login_required
+def delproducciones(request, idproducciones):
+    if not request.user.has_perm('admincomerciax.producciones'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+    produccionesobj = ProdAlter.objects.get(pk=idproducciones)
+    try:
+        produccionesobj.delete()
+        return HttpResponseRedirect('/comerciax/admincom/producciones/index')
+    except Exception, e:
+        c = "No se puede eliminar el producciones, posibles causas este siendo utilizada por algún otro registro de la BD. Será desactivado"
+        desc = produccionesobj.descripcion
+        produccionesobj.activo = False
+        produccionesobj.save()
+        return render_to_response("admincomerciax/viewproducciones.html",
+                                  {'producciones_name': desc, 'producciones_id': idproducciones, 'error2': c},
+                                  context_instance=RequestContext(request))
+

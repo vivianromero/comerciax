@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Producto{% endblock %}
+{% block title %}Asistencia Técnica{% endblock %}
 
 {% block js_include %}
     <script type="text/javascript" SRC="/comerciax/media/js/jquery.simplemodal.1.4.min.js"></script>
@@ -13,8 +13,8 @@
 
         // example of calling the confirm function
         // you must use a callback function to perform the "yes" action
-        confirm("Desea eliminar el producto " + ' "' + "{{ producto_name }}" + '"' , function () {
-            window.location.href = "{% url delproducto idproducto=producto_id %}";
+        confirm("Desea eliminar la asistencia técnica " + ' "' + "{{ servicio_name }}" + '"' , function () {
+            window.location.href = "{% url delservicio idservicio=servicio_id %}";
         });
     }); 
    
@@ -48,13 +48,13 @@ function confirm(message, callback) {
     <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
 {% endblock %}
 
-{% block controller-name %}Producto{% endblock %}
+{% block controller-name %}Asistencia Técnica{% endblock %}
 
 {% block side-menu %}
     <ul>
         <li><a href="{% url producto %}">Index</a></li>
-        {% if perms.admincomerciax.change_producto %}
-        <li><a href="{% url editproducto idproducto=producto_id %}">Editar</a></li>
+        {% if perms.admincomerciax.change_servicio %}
+        <li><a href="{% url editservicio idservicio=servicio_id %}">Editar</a></li>
         <li><a href="#" class="delete">Eliminar</a></li>
         {% endif %}
     </ul>
@@ -71,16 +71,16 @@ function confirm(message, callback) {
 
     <div class="botones">
             <ul>
-                {% if perms.admincomerciax.change_producto %}
+                {% if perms.admincomerciax.change_servicio %}
                 <li>                   
-                    <a href="{% url editproducto idproducto=producto_id %}"><span>Editar</span></a>
+                    <a href="{% url editservicio idservicio=servicio_id %}"><span>Editar</span></a>
                 </li>
                 <li>
                     <a href="#" class="delete"><span>Eliminar</span></a>
                 </li>
                 {% endif %}
                 <li>
-                    <a href="{% url producto %}" ><span>Regresar</span></a>
+                    <a href="{% url servicio %}" ><span>Regresar</span></a>
                 </li>
             </ul>
     </div>
@@ -99,60 +99,28 @@ function confirm(message, callback) {
             <div class="data-wraper"> <!-- DATOS GENERALES -->
                 <div class="data-left">
                     <div class="item">
-                        <span class="label">Producto:</span>
-                        <span class="value">{{ producto_name }}</span>
-                     </div>
-                    <div class="item">
                         <span class="label">C&oacute;digo:</span>
                         <span class="value">{{ codigo }}</span>
                      </div>
-                    <div class="item">
-                        <span class="label">Precio CUP:</span>
-                        <span class="value">{{ preciomn }}</span>
-                    </div>
-                    <div class="item">
-                        <span class="label">Precio MLC:</span>
-                        <span class="value">{{ preciocuc }}</span>
-                    </div> 
-                    
-                    <div class="item">
-                        <span class="label">Precio Entidades Ext.:</span>
-                        <span class="value">{{ precioexternocup }}</span>
-                    </div>
-                    <div class="item">
-                        <span class="label">Precio Particulares:</span>
-                        <span class="value">{{ precioparticular }}</span>
-                    </div>
-                    <div class="item">
-                        <span class="label">Precio Vulca:</span>
-                        <span class="value">{{ preciovulca }}</span>
-                    </div>
-
-                </div>
-                 <div class="data-rigth">
+                     <div class="item">
+                        <span class="label">Asistencia Técnica:</span>
+                        <span class="value">{{ servicio_name }}</span>
+                     </div>
                     <div class="item">
                         <span class="label">UM:</span>
                         <span class="value">{{ um }}</span>
-                    </div>   
+                    </div>
+                </div>
+                 <div class="data-rigth">
                      <div class="item">
-                        <span class="label large">Precio Costo MN:</span>
-                        <span class="value">{{ preciocostomn }}</span>
+                        <span class="label">Precio MN:</span>
+                        <span class="value">{{ preciomn }}</span>
                     </div>
-                    <div class="item">
-                        <span class="label large">Precio Costo MLC:</span>
-                        <span class="value">{{ preciocostocuc }}</span>
-                    </div>
-                    <div class="item">
-                        <span class="label large">Precio Casco:</span>
-                        <span class="value">{{ preciocasco }}</span>
-                    </div>
+                </div>
+                <div class="data-rigth">
                      <div class="item">
-                        <span class="label large">Precio Regrabable:</span>
-                        <span class="value">{{ precioregrabable }}</span>
-                    </div>
-                    <div class="item">
-                        <span class="label large">Otro Precio Casco:</span>
-                        <span class="value">{{ otro_preciocasco }}</span>
+                        <span class="label">Activo:</span>
+                        <span class="value">{{ activo|yesno:_("Si,No") }}</span>
                     </div>
                 </div>
             </div>

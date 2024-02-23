@@ -16,6 +16,7 @@
     	"{{producto.precio_externo_cup}}",
     	"{{producto.precio_particular}}",
     	"{{producto.precio_casco}}",
+    	"{{producto.precio_regrabable}}",
     	"{{producto.otro_precio_casco}}",
     	"{{producto.precio_vulca}}"
     	

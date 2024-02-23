@@ -373,7 +373,8 @@ class Producto(models.Model):
     precio_externo_cup=models.DecimalField(max_digits=7, decimal_places=2)
     precio_vulca=models.DecimalField(max_digits=7, decimal_places=2)
     otro_precio_casco=models.DecimalField(max_digits=7, decimal_places=2,default=0)
-    
+    precio_regrabable=models.DecimalField(max_digits=7, decimal_places=2,default=0)
+
     def natural_key(self):
         return (self.id,self.descripcion)
     def __unicode__(self):
@@ -491,5 +492,38 @@ class Config_SMTPEmail(models.Model):
     def set_password(self, raw_password):
         self.contrasena = base64.b64encode(raw_password)
 #        base64.b64decode(raw_password) para decodificar
+
+class Servicio(models.Model):
+    id=models.CharField(max_length=40, primary_key=True, unique=True)
+    descripcion=models.CharField(max_length=50, unique=True)
+    codigo = models.CharField(max_length=18, unique=True)
+    um = models.ForeignKey(Umedida, on_delete=models.PROTECT)
+    precio_mn=models.DecimalField(max_digits=18, decimal_places=2)
+    activo = models.BooleanField(default=1)
+
+    def __unicode__(self):
+        return self.descripcion
+
+    class Meta:
+        ordering = ['descripcion']
+        unique_together = (('id', 'descripcion'),)
+        permissions = (("servicio","servicio"),)
+
+
+class ProdAlter(models.Model):
+    id=models.CharField(max_length=40, primary_key=True, unique=True)
+    descripcion=models.CharField(max_length=50, unique=True)
+    codigo = models.CharField(max_length=18, unique=True)
+    um = models.ForeignKey(Umedida, on_delete=models.PROTECT)
+    precio_mn=models.DecimalField(max_digits=18, decimal_places=2)
+    activo = models.BooleanField(default=1)
+
+    def __unicode__(self):
+        return self.descripcion
+
+    class Meta:
+        ordering = ['descripcion']
+        # unique_together = (('id', 'descripcion'),)
+        permissions = (("producciones","producciones"),)
     
               

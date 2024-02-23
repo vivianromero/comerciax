@@ -86,7 +86,11 @@
                         {% for fila in resultado %}
                             <tr>
                                 <td>{{ fila.casco.producto }}</td>
-                                <td>{{ fila.casco.casco_nro }}</td>
+                                {% if fila.rc.recepcioncliente_tipo == 'O' %}
+                                    <td>{{ fila.casco.casco_nro }}</td>
+                                {% else %}
+                                    <td>{{ fila.casco.casco_nro }}({{fila.rc.recepcioncliente_tipo}})</td>
+                                {% endif %}
                                 <td>{{ fila.rc.cliente.nombre }}</td>
                             </tr>
                         {% endfor %}

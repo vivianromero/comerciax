@@ -67,13 +67,14 @@ class FMoneda(forms.Form):
 class FProducto(forms.Form):
     producto = forms.CharField(widget=forms.TextInput(attrs={'class':'required', 'maxlength':35}) )
     codigo = forms.CharField(label='Código',widget=forms.TextInput(attrs={'class':'required', 'maxlength':18}) )
-    precio_mn = forms.DecimalField(widget=forms.TextInput(attrs={'class':'required number', 'max_digits':7, 'decimal_places':2}) )
-    precio_cuc = forms.DecimalField(widget=forms.TextInput(attrs={'class':'required number','max_digits':7, 'decimal_places':2}) )
-    precio_costo_cuc = forms.DecimalField(widget=forms.TextInput(attrs={'class':'required number','max_digits':7, 'decimal_places':2}) )
-    precio_costo_mn = forms.DecimalField(widget=forms.TextInput(attrs={'class':'required number','max_digits':7, 'decimal_places':2}) )
+    precio_mn = forms.DecimalField(label='Precio CUP', widget=forms.TextInput(attrs={'class':'required number', 'max_digits':7, 'decimal_places':2}) )
+    precio_cuc = forms.DecimalField(label='Precio MLC', widget=forms.TextInput(attrs={'class':'required number','max_digits':7, 'decimal_places':2}) )
+    precio_costo_cuc = forms.DecimalField(label='Precio Costo MLC',widget=forms.TextInput(attrs={'class':'required number','max_digits':7, 'decimal_places':2}) )
+    precio_costo_mn = forms.DecimalField(label='Precio CUP',widget=forms.TextInput(attrs={'class':'required number','max_digits':7, 'decimal_places':2}) )
     precio_particular = forms.DecimalField(widget=forms.TextInput(attrs={'class':'required number','max_digits':7, 'decimal_places':2}) )
     precio_externo = forms.DecimalField(widget=forms.TextInput(attrs={'class':'required number','max_digits':7, 'decimal_places':2}) )
     precio_casco = forms.DecimalField(widget=forms.TextInput(attrs={'class':'required number','max_digits':7, 'decimal_places':2}) )
+    precio_regrabable = forms.DecimalField(widget=forms.TextInput(attrs={'class':'required number','max_digits':7, 'decimal_places':2}) )
     otro_precio_casco = forms.DecimalField(widget=forms.TextInput(attrs={'class':'required number', 'max_digits':7, 'decimal_places':2}))
 
     precio_vulca = forms.DecimalField(widget=forms.TextInput(attrs={'class':'required number','max_digits':7, 'decimal_places':2}) )
@@ -87,12 +88,12 @@ class FEmpresa(forms.Form):
     telefono = forms.CharField(label='Teléfono', widget=forms.TextInput(attrs={'class':'required', 'maxlength':50}) )
     fax = forms.CharField(required=False, widget=forms.TextInput(attrs={'maxlength':50}) )
     provincia = forms.ModelChoiceField(Provincias.objects.all(),widget=forms.Select(attrs={'class': 'required'}))
-    titular_mn = forms.CharField(widget=forms.TextInput(attrs={'class':'required', 'maxlength':35}) )
-    titular_usd = forms.CharField(widget=forms.TextInput(attrs={'class':'required', 'maxlength':35}) )
-    cuenta_mn = forms.CharField(widget=forms.TextInput(attrs={'class':'required', 'maxlength':19}) )
-    cuenta_usd = forms.CharField(widget=forms.TextInput(attrs={'class':'required', 'maxlength':19}) )
-    sucursal_mn = forms.ModelChoiceField(Sucursales.objects.all(),widget=forms.Select(attrs={'class': 'required'}))
-    sucursal_usd = forms.ModelChoiceField(Sucursales.objects.all(),widget=forms.Select(attrs={'class': 'required'}))
+    titular_mn = forms.CharField(label='Titular CUP', widget=forms.TextInput(attrs={'class':'required', 'maxlength':35}) )
+    titular_usd = forms.CharField(label='Titular MLC', widget=forms.TextInput(attrs={'class':'required', 'maxlength':35}) )
+    cuenta_mn = forms.CharField(label='Cuenta CUP', widget=forms.TextInput(attrs={'class':'required', 'maxlength':19}) )
+    cuenta_usd = forms.CharField(label='Cuenta MLC', widget=forms.TextInput(attrs={'class':'required', 'maxlength':19}) )
+    sucursal_mn = forms.ModelChoiceField(Sucursales.objects.all(),label='Sucursal CUP',widget=forms.Select(attrs={'class': 'required'}))
+    sucursal_usd = forms.ModelChoiceField(Sucursales.objects.all(),label='Sucursal MLC', widget=forms.Select(attrs={'class': 'required'}))
     
 class FCliente(forms.Form):
     codigo = forms.CharField(label='Código', widget=forms.TextInput(attrs={'class':'required', 'maxlength':14}) )
@@ -241,3 +242,19 @@ class Ocioso_Casco(forms.Form):
     provincia= forms.ModelChoiceField(required=False, queryset=Provincias.objects.filter().order_by('descripcion_provincia'))
     cliente= forms.ModelChoiceField(Cliente.objects.filter(eliminado=False,externo=False).order_by('nombre'),widget=forms.Select(attrs={'class': 'required'}))
 #    cnro=forms.IntegerField(label='Nro. del casco',widget=forms.TextInput(attrs={'class':'digits required'}) )
+
+class FServicio(forms.Form):
+    codigo = forms.CharField(label='Código', widget=forms.TextInput(attrs={'class': 'required', 'maxlength': 18}))
+    servicio = forms.CharField(label='Asist.Técn.', widget=forms.TextInput(attrs={'class':'required', 'maxlength':50}))
+    precio_mn = forms.DecimalField(label='Precio CUP', widget=forms.TextInput(attrs={'class':'required number', 'max_digits':7, 'decimal_places':2}))
+    unidad_medida = forms.ModelChoiceField(Umedida.objects.all(),widget=forms.Select(attrs={'class': 'required'}))
+    activo = forms.BooleanField(initial=True, required=False)
+
+class FProducciones(forms.Form):
+    codigo = forms.CharField(label='Código', widget=forms.TextInput(attrs={'class': 'required', 'maxlength': 18}))
+    producciones = forms.CharField(label='Prod.Altern.', widget=forms.TextInput(attrs={'class':'required', 'maxlength':50}))
+    precio_mn = forms.DecimalField(label='Precio CUP', widget=forms.TextInput(attrs={'class':'required number', 'max_digits':7, 'decimal_places':2}))
+    unidad_medida = forms.ModelChoiceField(Umedida.objects.all(),widget=forms.Select(attrs={'class': 'required'}))
+    activo = forms.BooleanField(initial=True, required=False)
+
+

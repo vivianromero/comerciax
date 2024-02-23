@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Productos{% endblock %}
+{% block title %}Asistencia Técnica{% endblock %}
 {% block js_include %}
     <script type="text/javascript" src="/comerciax/media/js/jquery.dataTables.min.js"></script>
 {% endblock %}
@@ -9,7 +9,7 @@
 	$('#countries-table').dataTable({
 		'sPaginationType': 'full_numbers', 
 		"bServerSide": true, 
-		"sAjaxSource": "{% url get_producto_list %}",
+		"sAjaxSource": "{% url get_servicio_list %}",
 		"oLanguage": {
 								"sLengthMenu": "Mostrar _MENU_ registros por pagina",
 								"sZeroRecords": "No hay registro - lo siento",
@@ -27,22 +27,15 @@
 		,"aoColumns": [
                                 {"bVisible": 0,"sWidth": "0%" },
 								{"fnRender": function ( oObj ) {
-                                    var url = "{% url viewproducto2 %}" + oObj.aData[0]; 
+                                    var url = "{% url viewservicio2 %}" + oObj.aData[0];
 									return "<a href="+ url +">"+oObj.aData[1] +'</a>';
 								   },
-								 "sWidth": "40%" },
-								{"sWidth": "10%" },
+								 "sWidth": "10%" },
+								{"sWidth": "50%" },
                                 {"sWidth": "10%" },
                                 {"sWidth": "10%" },
                                 {"sWidth": "10%" },
-                                {"sWidth": "10%" }, 
-                                {"sWidth": "10%" }, 
-                                {"sWidth": "10%" },
-                                {"sWidth": "10%" },
-                                {"sWidth": "10%" },
-                                {"sWidth": "10%" },
-                                {"sWidth": "10%" },
-                                {"sWidth": "10%" },
+
 							  ]
 	});
  });
@@ -52,13 +45,13 @@
     <link rel="stylesheet" type="text/css" href="/comerciax/media/css/datatables.css">
 {% endblock %}
 
-{% block controller-name %}Producto{% endblock %}
+{% block controller-name %}Asistencia Técnica{% endblock %}
 
 {% block side-menu %}
     <ul>
         <li><a href="#">Index</a></li>
-        {% if perms.admincomerciax.add_producto %}
-        <li><a href="{% url addproducto %}">Adicionar</a></li>
+        {% if perms.admincomerciax.add_servicio %}
+        <li><a href="{% url addservicio %}">Adicionar</a></li>
         {% endif %}
     </ul>
 {% endblock %}
@@ -67,8 +60,8 @@
     <div class="botones">
             <ul>
                 <li>
-                {% if perms.admincomerciax.add_producto %}
-                    <a href="{% url addproducto %}">
+                {% if perms.admincomerciax.add_servicio %}
+                    <a href="{% url addservicio %}">
                         <span>Adicionar</span>
                     </a>
                  {% endif %}
@@ -83,43 +76,19 @@
                 ID
             </th>
 			<th>
-				Producto
-			</th>
-			<th>
 				C&oacute;digo
 			</th>
-            <th>
-                UM
-            </th>
+			<th>
+				Asistencia Técnica
+			</th>
+			<th>
+				UM
+			</th>
             <th>
                 MN
             </th>
-            <th>
-                MLC
-            </th>
-            <th>
-                Costo MN
-            </th>
-            <th>
-                Costo MLC
-            </th>
-            <th>
-                Prec. a Ent. Externas
-            </th>
-            <th>
-                Prec. a Partic.
-            </th>
-            <th>
-                Prec. Casco
-            </th>
-            <th>
-                Prec. Regrabable
-            </th>
-            <th>
-                Otro Prec. Casco
-            </th>
-            <th>
-                Prec. Vulca
+			<th>
+                Activa
             </th>
 		</tr>
 	</thead>

@@ -149,7 +149,7 @@ urlpatterns = patterns('comerciax.comercial.views',
     url(r'^detalle_factura/edit/(?P<idfa>[a-zA-Z0-9-]{0,40})/(?P<idcasco>[a-zA-Z0-9-]{0,40})/', 'detalleFactura_edit',name='detalleFactura_edit'),
     
     url(r'^detalle_factura/edit/$', 'detalleFactura_edit',name='detalleFactura_edit2'),
-    
+
     url(r'^ajax/detalle_factura/list/(?P<idprod>[a-zA-Z0-9-]{0,40})/(?P<idfa>[a-zA-Z0-9-]{0,40})/$', 'detalleFactCliente_list',name='detalleFactCliente_list'),
     url(r'^ajax/detalle_factura/list/$', 'detalleFactCliente_list', name='detalleFactCliente_list2'),
     
@@ -269,7 +269,11 @@ urlpatterns = patterns('comerciax.comercial.views',
     #############################################################
     #              REGISTRO DE FACTURAS                         #
     #############################################################   
-    url(r'^regfacturas', 'regfacturas', name='regfacturas'), 
+    url(r'^regfacturas', 'regfacturas', name='regfacturas'),
+    #############################################################
+    #              REGISTRO DE FACTURAS DE SERVICIOS            #
+    #############################################################
+    url(r'^servfacturas', 'servfacturas', name='servfacturas'),
     #############################################################
     #              FACTURAS X CLIENTES                          #
     #############################################################   
@@ -320,5 +324,44 @@ urlpatterns = patterns('comerciax.comercial.views',
     #===========================================================================
     # SERVICIOS A CLIENTES
     #===========================================================================
-     url(r'^servclient', 'servclient', name='servclient'), 
+     url(r'^servclient', 'servclient', name='servclient'),
+
+#############################################################
+#                     FACTURAS                               #
+#############################################################
+
+url(r'^factura_servicios/index', 'factura_servicios_index', name='factura_servicios_index'),
+url(r'^factura_producciones/index', 'factura_producciones_index', name='factura_producciones_index'),
+# url(r'^factura_particular_servicios/index', 'factura_particular_servicios_index', name='factura_particular_servicios_index'),
+url(r'^ajax/get-fact-servicios-list/$', 'get_fact_servicios_list', name = 'get_fact_servicios_list'),
+url(r'^ajax/get-fact-producciones-list/$', 'get_fact_producciones_list', name = 'get_fact_producciones_list'),
+url(r'^factura_servicios/add', 'factura_servicios_add', name='facturaserviciosadd'),
+url(r'^factura_producciones/add', 'factura_producciones_add', name='facturaproduccionesadd'),
+url(r'^factura_servicios/view/(?P<idfa>[a-zA-Z0-9-]{0,40})/', 'factura_servicios_view',name='facturaservicios_view'),
+url(r'^factura_producciones/view/(?P<idfa>[a-zA-Z0-9-]{0,40})/', 'factura_producciones_view',name='facturaproducciones_view'),
+url(r'^oferta/verfacturaservicios/(?P<idfactura>[a-zA-Z0-9-]{0,40})/(?P<haycup>\d+)/(?P<haycuc>\d+)/(?P<cantservicios>\d+)/', 'verfacturaservicios',name='verfacturaservicios'),
+url(r'^oferta/verfacturaproducciones/(?P<idfactura>[a-zA-Z0-9-]{0,40})/(?P<haycup>\d+)/(?P<haycuc>\d+)/(?P<cantproducciones>\d+)/', 'verfacturaproducciones',name='verfacturaproducciones'),
+url(r'^ajax/factura_servicios_del/(?P<idfa>[a-zA-Z0-9-]{0,40})/$', 'factura_servicios_del', name='factura_servicios_del'),
+url(r'^ajax/factura_producciones_del/(?P<idfa>[a-zA-Z0-9-]{0,40})/$', 'factura_producciones_del', name='factura_producciones_del'),
+url(r'^factura_servicios/edit/(?P<idfa>[a-zA-Z0-9-]{0,40})/', 'factura_servicios_edit',name='factura_servicios_edit'),
+url(r'^factura_producciones/edit/(?P<idfa>[a-zA-Z0-9-]{0,40})/', 'factura_producciones_edit',name='factura_producciones_edit'),
+url(r'^ajax/factura_servicios_confirmar/(?P<idfa>[a-zA-Z0-9-]{0,40})/$', 'factura_servicios_confirmar',name='factura_servicios_confirmar'),
+url(r'^ajax/factura_producciones_confirmar/(?P<idfa>[a-zA-Z0-9-]{0,40})/$', 'factura_producciones_confirmar',name='factura_producciones_confirmar'),
+url(r'^factura_servicios/imprimir/(?P<idfa>[a-zA-Z0-9-]{0,40})/', 'factura_servicios_imprimir',name='factura_servicios_imprimir'),
+url(r'^ajax/factura_servicios_cancelar/(?P<idfa>[a-zA-Z0-9-]{0,40})/$', 'factura_servicios_cancelar', name='factura_servicios_cancelar'),
+url(r'^ajax/factura_producciones_cancelar/(?P<idfa>[a-zA-Z0-9-]{0,40})/$', 'factura_producciones_cancelar', name='factura_producciones_cancelar'),
+
+########################
+#      DETALLES        #
+########################
+
+url(r'^detalle_factura_servicios/add/(?P<idfa>[a-zA-Z0-9-]{0,40})/', 'detalleFacturaServicios_add',name='detalleFacturaServicios_add'),
+url(r'^detalle_factura_producciones/add/(?P<idfa>[a-zA-Z0-9-]{0,40})/', 'detalleFacturaProducciones_add',name='detalleFacturaProducciones_add'),
+url(r'^ajax/detalle_facturaservicio/delete/(?P<idfa>[a-zA-Z0-9-]{0,40})/(?P<idservicio>[a-zA-Z0-9-]{0,40})/', 'detalleFacturaServicio_delete',name='detalleFacturaServicio_delete'),
+url(r'^ajax/detalle_facturaproduccion/delete/(?P<idfa>[a-zA-Z0-9-]{0,40})/(?P<idproduccion>[a-zA-Z0-9-]{0,40})/', 'detalleFacturaProduccion_delete',name='detalleFacturaProduccion_delete'),
+url(r'^ajax/detalle_facturaservicio/delete/$', 'detalleFacturaServicio_delete',name='detalleFacturaServicio_delete2'),
+url(r'^ajax/detalle_facturaproduccion/delete/$', 'detalleFacturaProduccion_delete',name='detalleFacturaProduccion_delete2'),
+url(r'^detalle_facturaproduccion/edit/(?P<idfa>[a-zA-Z0-9-]{0,40})/(?P<idproduccion>[a-zA-Z0-9-]{0,40})/',
+                           'detalleFacturaProduccion_edit', name='detalleFacturaProduccion_edit'),
+url(r'^detalle_facturaproduccion/edit/$', 'detalleFacturaProduccion_edit',name='detalleFacturaProduccion_edit2'),
 )

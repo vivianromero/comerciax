@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Cascos x Clientes{% endblock %}
+{% block title %}Registro de Facturas{% endblock %}
 
 {% block js_include %}
     <script type="text/javascript" SRC="/comerciax/media/js/jquery.form.js"></script>
@@ -129,7 +129,7 @@
                             <th style="" rowspan=2 >Fecha Emisi&oacute;n</th>
                             <th style="" rowspan=2 >Cascos</th>
                             <th style="text-align: rigth;" colspan=2 >Importe</th>
-                            <th style="" rowspan=2 >Cancelada/Ajuste</th>
+                            <th style="" rowspan=2 >Canc./Ajuste</th>
                         </tr>
                         <tr>
                             <th style="" >CUP</th>
@@ -188,7 +188,7 @@
                                     
                                     {% if not fila.cancelada and fila.tipo != 'A' %}
                                         <td>{{ fila.cantidad_casco }}</td>
-	                                    <td style="text-align: right;">{{ fila.get_importetotalcup }}</td>
+	                                    <td style="text-align: right;">{{ fila.get_importe_total }}</td>
 	                                    <td style="text-align: right;">{{ fila.get_importecuc }}</td>
 	                                {% else %}
 	                                    <td></td>

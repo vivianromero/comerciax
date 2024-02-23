@@ -50,6 +50,12 @@
            {% if ajuste %}
                 <span style="font-weight:bold !important;color:gray ;font-size:60px ;position: absolute;margin-top: 200px; margin-left:35%;display:block; -moz-transform: rotate(-45deg);">Ajuste</span>
            {% endif %}
+           {% if vulca %}
+                <span style="font-weight:bold !important;color:gray ;font-size:60px ;position: absolute;margin-top: 200px; margin-left:35%;display:block; -moz-transform: rotate(-45deg);">Vulca</span>
+           {% endif %}
+           {% if regrabable %}
+                <span style="font-weight:bold !important;color:gray ;font-size:60px ;position: absolute;margin-top: 200px; margin-left:35%;display:block; -moz-transform: rotate(-45deg);">Regrabable</span>
+           {% endif %}
            
             <div id="logo-rpt" class="bloque">
                 
@@ -119,9 +125,22 @@
                     <li><span class="label">C&oacute;digo:</span> {{ cliente_codigo }} <span class="label tab">Cliente:</span> {{ cliente_nombre }}.</li>
                     <li><span class="label">Direcci&oacute;n:</span> {{ cliente_dir }}.</li>
                     <li>
-                      <span class="label">Telf:</span> {{ cliente_phone }} 
-                      <span class="label tab">Email:</span> {{ cliente_email }} 
-                      <span class="label tab">Fax:</span> {{ cliente_fax }}
+                      {% if cliente_fax %}
+                        <span class="label">Telf:</span> {{ cliente_phone }}
+                      {% else %}
+                        <span class="label tab">Telf:&emsp;&emsp;</span>
+                      {% endif %}
+                      {% if cliente_email %}
+                        <span class="label tab">Email:</span> {{ cliente_email }}
+                      {% else %}
+                        <span class="label tab">Email:&emsp;&emsp;</span>
+                      {% endif %}
+                      {% if cliente_fax %}
+                        <span class="label tab">Fax:</span> {{ cliente_fax }}
+                      {% else %}
+                        <span class="label tab">Fax:&emsp;&emsp;</span>
+                     {% endif %}
+                      <span class="label tab">Nro. Contrato:</span> {{ contrato_nro }}
                     </li>
                 </ul>    
               </div>
@@ -181,14 +200,25 @@
                  <th style="width:1%;">Cant.</th>
                  </tr>
                  <tbody>
+                 {% if es_servicios %}
                     {% for detalleFact in detallesFact %}
                        <tr>
-                        <td>{{ detalleFact.casco__producto_salida__codigo }}</td>
+                        <td>{{ detalleFact.servicio__codigo }}11</td>
+                        <td>{{ detalleFact.servicio__descripcion }}</td>
+                        <td>{{ detalleFact.servicio__um__descripcion }}</td>
+                        <td>{{ detalleFact.cantidad }}</td>
+                        </tr>
+                     {% endfor %}
+                 {% else %}
+                    {% for detalleFact in detallesFact %}
+                       <tr>
+                        <td>{{ detalleFact.casco__producto_salida__codigo }}22</td>
                         <td>{{ detalleFact.casco__producto_salida__descripcion }}</td>
                         <td>{{ detalleFact.casco__producto_salida__um__descripcion }}</td>
                         <td>{{ detalleFact.cantidad }}</td>
                         </tr>
                      {% endfor %}
+                 {% endif %}
                      <tr>
                         <td></td>
                         <td></td>
@@ -265,7 +295,7 @@
                             
                             {% if hay_cup == 1 %}
                             <th class="borde-sup tfootdecimal">{{ importecup }}</th>
-                           
+
                             {% endif %}
                              {% if hay_cup == 1 and hay_cuc == 1 %}
                             <th></th>
@@ -274,33 +304,24 @@
                             <th class="borde-sup tfootdecimal">{{ importetotalcuc }}</th>
                             {% endif %}
                         </tr>
-                        <tr class="no-border">     
-                                                  
-                            <th class="tfootdecimal"></th>
-                            
-                            {% if hay_cup == 1 %}
-                            <th class="borde-sup tfootdecimal"></th>
-                           
-                            {% endif %}
-                             {% if hay_cup == 1 and hay_cuc == 1 %}
-                            <th></th>
-                            {% endif %}
-                            {% if hay_cuc == 1 %}
-                            <th class="borde-sup tfootdecimal"></th>
-                            {% endif %}
+                        </br>
+                        {% if recargo %}
+                         <tr class="no-border">
+                            <th class="tfootdecimal">% Recargo</th>
+
+                            <th>{{ recargo }}</th>
+
                         </tr>
+                        {% endif %}
+
                     {% if hay_cup == 1 and hay_venta == 1 %}
 	                    {% for detalle in detallesFact_venta %}
 	                       <tr>                      
-	                        
 	                        <td class="decimal">{{ detalle.precio_casco }}</td>
 	                        <td class="decimal">{{ detalle.importecup }}</td>
-	                        
-	                       </tr> 
+	                       </tr>
 	                    {% endfor %}
                     {% endif %}
-                    
-                    
                   </tbody>    
                   <tfoot>
                        {% if hay_cup == 1 and hay_venta == 1%}
@@ -330,10 +351,15 @@
                             <th >&nbsp;</th>
                             {% endif %}
                         </tr>
+
                         <tr class="no-border">                            
                             <th class="tfootdecimal">A Pagar</th>
                             {% if hay_cup == 1 %}
-                            <th class="tfootdecimal" style="width:2%;font-weight:bold;border-bottom: 1px solid;border-top: 1px solid ">{{ importetotalcup }}</th>                            
+                              {% if recargo %}
+                                 <th class="tfootdecimal" style="width:2%;font-weight:bold;border-bottom: 1px solid;border-top: 1px solid ">{{ importetotalcup_ }}</th>
+                              {% else %}
+                                  <th class="tfootdecimal" style="width:2%;font-weight:bold;border-bottom: 1px solid;border-top: 1px solid ">{{ importetotalcup }}</th>
+                              {% endif %}
                             {% endif %}
                             {% if hay_cup == 1 and hay_cuc == 1 %}
                             <th></th>
@@ -448,18 +474,20 @@
             </div>
           <div class="clear"></div>
       </div>
-      <div id="foot_declaracion" class="row">
-            <div class="mon-cliente2">
-                <ul>
-                    <li>
-                        <span class="label">Declaraci&oacute;n de conformidad: </span>El producto cumple con el ensayo descrito en la NCISO 7619:2005. Elast&oacute;meros-Determinaci&oacute;n
-                        de la dureza de penetraci&oacute;n durante un dur&oacute;metro de bolsillo que garantiza en cumplimiento de la NC 162:2019. Neum&aacute;ticos Recauchados-Especificaciones.
-                        
-                    </li>
-                </ul>
-            </div>
-            <div class="clear"></div>
-      </div>
+      {% if declaracion %}
+          <div id="foot_declaracion" class="row">
+                <div class="mon-cliente2">
+                    <ul>
+                        <li>
+                            <span class="label">Declaraci&oacute;n de conformidad: </span>El producto cumple con el ensayo descrito en la NCISO 7619:2005. Elast&oacute;meros-Determinaci&oacute;n
+                            de la dureza de penetraci&oacute;n durante un dur&oacute;metro de bolsillo que garantiza en cumplimiento de la NC 162:2019. Neum&aacute;ticos Recauchados-Especificaciones.
+
+                        </li>
+                    </ul>
+                </div>
+                <div class="clear"></div>
+          </div>
+      {% endif %}
     </div>
          
     <!-- End Content -->

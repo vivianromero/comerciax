@@ -18,7 +18,11 @@
          	  {% if recepcioncliente.recepcioncliente_tipo == "K" %}
            		"Vulca"
            	  {% else %}
-           		"Venta"
+           	    {% if recepcioncliente.recepcioncliente_tipo == "R" %}
+           		  "Regrabable"
+           	    {% else %}
+           		  "Venta"
+           	    {% endif %}
            	  {% endif %}
     	 	{% endif %}
     	 {% endif %}

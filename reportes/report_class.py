@@ -52,6 +52,8 @@ from geraldo import Report, ReportBand, Label, ObjectValue, SystemField,\
     FIELD_ACTION_COUNT, FIELD_ACTION_SUM, BAND_WIDTH, Line, ReportGroup,SubReport,Image
 
 class Reportes():
+
+
     def GenerarRep(self,queryset,type,pdf_file_name,filtro,*edad):
         tope=0
         cur_dir = os.path.dirname(os.path.abspath(__file__))
@@ -1286,7 +1288,8 @@ class Reportes():
                             tope=tope+0.3*cm
                     tope=tope+0.3*cm
                     height = tope+0.5*cm
-                    elements+=[Label(text="Cliente", top=tope, left=0.11*cm,style={'fontSize': 8}),
+                    elements+=[
+                        Label(text="Cliente", top=tope, left=0.11*cm,style={'fontSize': 8}),
                         Label(text="Código", top=tope , left=9.2*cm, style={'fontSize': 8}),
                         Label(text="Nro.", top=tope , left=11*cm,style={'fontSize': 8}),
                         Label(text="Fecha Emisión", top=tope, left=11.7*cm,style={'fontSize': 8}),                    
@@ -1296,7 +1299,36 @@ class Reportes():
                         Label(text="Importe", top=tope-0.53*cm, left=14.8*cm, style={'fontSize': 9}),
                     ]
                     borders = {'bottom': True}
-                    
+
+                class band_summary(ReportBand):
+                    height = 0*cm
+                    elements = [
+                        Label(text='Total General:',style={'fontName': 'Helvetica-Bold','fontSize': 7, 'alignment': TA_RIGHT}),
+                        ObjectValue(expression='sum(importetotalcup)', left=10.2*cm, style={'fontName': 'Helvetica-Bold','fontSize': 7, 'alignment': TA_RIGHT}),
+                        ObjectValue(expression='sum(importecuc)', left=12.0*cm, style={'fontName': 'Helvetica-Bold','fontSize': 7, 'alignment': TA_RIGHT}),
+                        ]
+                groups = [
+                     ReportGroup(
+                        attribute_name='cancelada',
+                        # band_header=DetailBand(
+                        #     height=0.5*cm,
+                        #     elements=[
+                        #         ObjectValue(expression='cancelada',  width=BAND_WIDTH,style={'fontSize': 7})
+                        #     ]
+                        # ),
+                        band_footer=ReportBand(
+                            height = 0.5*cm,
+                            elements = [
+                                Label(text='SubTotal: ',style={'fontName': 'Helvetica-Bold','fontSize': 7, 'alignment': TA_RIGHT}),
+                                ObjectValue(expression='sum(importetotalcup)', left=10.2*cm, style={'fontName': 'Helvetica-Bold','fontSize': 7, 'alignment': TA_RIGHT}),
+                                ObjectValue(expression='sum(importecuc)', left=12*cm, style={'fontName': 'Helvetica-Bold','fontSize': 7, 'alignment': TA_RIGHT}),
+#                                ObjectValue(expression='sum(imp_cuc)', left=13.5*cm),
+#                                ObjectValue(expression='sum(sub_total_line)', left=16*cm),
+                                ],
+#                            borders = {'top': True},
+                        ),
+                    ),
+                ]
             
                 class band_page_footer(ReportBand):
                     height = 0.5*cm
@@ -1393,7 +1425,7 @@ class Reportes():
                     ]
                     borders = {'bottom': True}
                 class band_summary(ReportBand):
-                    height = 0*cm 
+                    height = 0*cm
                     elements = [
                         Label(text='Total General:',style={'fontName': 'Helvetica-Bold','fontSize': 8, 'alignment': TA_RIGHT}),
                         ObjectValue(expression='sum(cascos)', left=7.1*cm, style={'fontName': 'Helvetica-Bold','fontSize': 7, 'alignment': TA_RIGHT}),
@@ -1403,12 +1435,7 @@ class Reportes():
                 groups = [
                      ReportGroup(
                         attribute_name='tipo',
-                        band_header=DetailBand(
-                            height=0.8*cm,
-                            elements=[
-                                ObjectValue(expression='tipo',  width=BAND_WIDTH,style={'fontSize': 10})
-                            ]
-                        ),
+
                         band_footer=ReportBand(
                             height = 0.8*cm,
                             elements = [
@@ -1429,6 +1456,102 @@ class Reportes():
                     elements = [
                         Label(text='Comerciax', top=0.1*cm),
                         ]
+                    borders = {'top': True}
+
+            if type == "registro_fac_serv":
+                title = 'Registro de Facturas de Asistencia Técnica'
+
+                class band_detail(ReportBand):
+                    height = 0.25 * cm
+                    elements = [
+                        ObjectValue(expression='codigo', left=0.1 * cm, style={'fontSize': 6}),
+                        ObjectValue(expression='nombre', width=11 * cm, left=1.5 * cm, style={'fontSize': 6}),
+                        ObjectValue(expression='factura_nro', left=8.6 * cm, style={'fontSize': 6}),
+                        ObjectValue(expression='fecha_doc', left=9.8 * cm, style={'fontSize': 6}),
+                        ObjectValue(expression='cascos', left=12 * cm, style={'fontSize': 6}),
+                        ObjectValue(expression='importetotalcup', left=9.6 * cm,
+                                    style={'fontSize': 6, 'alignment': TA_RIGHT}),
+                        # ObjectValue(expression='importecuc', left=11.0 * cm,
+                        #             style={'fontSize': 6, 'alignment': TA_RIGHT}),
+                        ObjectValue(expression='cancelada', left=16.5 * cm, style={'fontSize': 6}),
+                    ]
+
+                class band_page_header(ReportBand):
+                    elements = [
+                        SystemField(expression='%(report_title)s', top=0.1 * cm, left=0, width=BAND_WIDTH,
+                                    style={'fontName': 'Helvetica-Bold', 'fontSize': 14,
+                                           'alignment': TA_CENTER}),
+                        SystemField(expression='Impreso el %(now:%d/%m/%Y )s a las %(now:%H:%M)s', top=0.1 * cm,
+                                    width=BAND_WIDTH, style={'alignment': TA_LEFT, 'fontSize': 5}),
+                        SystemField(expression=u'Página %(page_number)d de %(page_count)d', top=0.1 * cm,
+                                    width=BAND_WIDTH, style={'alignment': TA_RIGHT, 'fontSize': 8}), ]
+                    if filtro.__len__() != 0:
+                        elements += [
+                            Label(text="Filtro:", top=0.9 * cm, left=0.1 * cm, style={'fontSize': 5}), ]
+                    tope = 1.2 * cm
+                    for k in range(filtro.__len__()):
+                        elements += [Label(text=filtro[k], top=tope, left=0.1 * cm, style={'fontSize': 5},
+                                           width=BAND_WIDTH), ]
+                        tope = tope + 0.3 * cm
+                    tope = tope + 0.3 * cm
+                    height = tope + 0.5 * cm
+                    elements += [Label(text="Código", top=tope, left=0.1 * cm, style={'fontSize': 8}),
+                                 Label(text="Nombre", top=tope, left=1.5 * cm, style={'fontSize': 8}),
+                                 Label(text="Nro. Factura", top=tope, left=8.0 * cm, style={'fontSize': 8}),
+                                 Label(text="Fecha Emisión", top=tope, left=9.7 * cm, style={'fontSize': 8}),
+                                 Label(text="Servicios", top=tope, left=11.7 * cm, style={'fontSize': 8}),
+                                 Label(text="Importe CUP", top=tope, left=13 * cm, style={'fontSize': 8}),
+                                 # Label(text="MLC", top=tope, left=15 * cm, style={'fontSize': 8}),
+                                 Label(text="Cancelada", top=tope, left=16 * cm, style={'fontSize': 8}),
+                                 # Label(text="Importe", top=tope - 0.5 * cm, left=14.3 * cm,
+                                 #       style={'fontSize': 9}),
+                                 ]
+                    borders = {'bottom': True}
+
+                class band_summary(ReportBand):
+                    height = 0 * cm
+                    elements = [
+                        Label(text='Total General:',
+                              style={'fontName': 'Helvetica-Bold', 'fontSize': 8, 'alignment': TA_RIGHT}),
+                        ObjectValue(expression='sum(cascos)', left=7.1 * cm,
+                                    style={'fontName': 'Helvetica-Bold', 'fontSize': 7, 'alignment': TA_RIGHT}),
+                        ObjectValue(expression='sum(importetotalcup)', left=9.6 * cm,
+                                    style={'fontName': 'Helvetica-Bold', 'fontSize': 7, 'alignment': TA_RIGHT}),
+                        # ObjectValue(expression='sum(importecuc)', left=11.0 * cm,
+                        #             style={'fontName': 'Helvetica-Bold', 'fontSize': 7, 'alignment': TA_RIGHT}),
+                    ]
+
+                # groups = [
+                #     ReportGroup(
+                #         attribute_name='tipo',
+                #
+                #         band_footer=ReportBand(
+                #             height=0.8 * cm,
+                #             elements=[
+                #                 Label(text='SubTotal: ', style={'fontName': 'Helvetica-Bold', 'fontSize': 7,
+                #                                                 'alignment': TA_RIGHT}),
+                #                 ObjectValue(expression='sum(cascos)', left=7.1 * cm,
+                #                             style={'fontName': 'Helvetica-Bold', 'fontSize': 7,
+                #                                    'alignment': TA_RIGHT}),
+                #                 ObjectValue(expression='sum(importetotalcup)', left=9.6 * cm,
+                #                             style={'fontName': 'Helvetica-Bold', 'fontSize': 7,
+                #                                    'alignment': TA_RIGHT}),
+                #                 # ObjectValue(expression='sum(importecuc)', left=11.0 * cm,
+                #                 #             style={'fontName': 'Helvetica-Bold', 'fontSize': 7,
+                #                 #                    'alignment': TA_RIGHT}),
+                #                 #                                ObjectValue(expression='sum(imp_cuc)', left=13.5*cm),
+                #                 #                                ObjectValue(expression='sum(sub_total_line)', left=16*cm),
+                #             ],
+                #             #                            borders = {'top': True},
+                #         ),
+                #     ),
+                # ]
+
+                class band_page_footer(ReportBand):
+                    height = 0.5 * cm
+                    elements = [
+                        Label(text='Comerciax', top=0.1 * cm),
+                    ]
                     borders = {'top': True}
             if type == "cascos_pt_edad":
                 title = 'Casco en PT x Edades'

@@ -719,6 +719,8 @@ def recepcionparticulares_view(request,idrp):
         rp_tipo='Ajuste'
     elif tipo == 'K':
         rp_tipo='Vulca'
+    elif tipo == 'R':
+        rp_tipo='Regrabable'
     rp_observaciones=rp.doc_recepcionparticular.observaciones
     filas = DetalleRP.objects.select_related().filter(rp=idrp).order_by('casco__producto__descripcion','casco__casco_nro')
 
@@ -870,6 +872,8 @@ def recepcionparticular_del(request,idrp):
             rp_tipo='Ajuste'
         elif tipo == 'K':
             rp_tipo='Vulca'
+        elif tipo == 'R':
+            rp_tipo='Regrabable'
         rp_observaciones=rp.doc_recepcionparticular.observaciones
         filas = DetalleRP.objects.select_related().filter(rp=idrp).order_by('admincomerciax_producto.descripcion','casco_casco.casco_nro')
   
@@ -1416,6 +1420,8 @@ def recepcioncliente_view(request,idrc):
         rc_tipo='Ajuste'
     elif tipo== 'K':
         rc_tipo='Vulca'
+    elif tipo== 'R':
+        rc_tipo='Regrabable'
     rc_observaciones=rc.doc_recepcioncliente.observaciones
     filas = DetalleRC.objects.select_related().filter(rc=idrc).order_by('casco__producto__descripcion','casco__casco_nro')
 
@@ -1484,6 +1490,8 @@ def recepcioncliente_del(request,idrc):
             rc_tipo='Ajuste'
         elif tipo == 'K':
             rc_tipo='Vulca'
+        elif tipo == 'R':
+            rc_tipo = 'Regrabable'
         rc_observaciones=rc.doc_recepcioncliente.observaciones
         filas = DetalleRC.objects.select_related().filter(rc=idrc).order_by('admincomerciax_producto.descripcion','casco_casco.casco_nro')
   
@@ -1987,6 +1995,8 @@ def recepcionclienteext_view(request,idrc):
         rc_tipo='Ajuste'
     elif tipo == 'K':
         rc_tipo='Vulca'
+    elif tipo== 'R':
+        rc_tipo='Regrabable'
     rc_observaciones=rc.doc_recepcioncliente.observaciones
     filas = DetalleRC.objects.select_related().filter(rc=idrc).order_by('casco__producto__descripcion','casco__casco_nro')
     adiciono=True
@@ -2053,6 +2063,8 @@ def recepcionclienteext_del(request,idrc):
             rc_tipo='Ajuste'
         elif tipo == 'K':
             rc_tipo='Vulca'
+        elif tipo == 'R':
+            rc_tipo = 'Regrabable'
         rc_observaciones=rc.doc_recepcioncliente.observaciones
         filas = DetalleRC.objects.select_related().filter(rc=idrc).order_by('admincomerciax_producto.descripcion','casco_casco.casco_nro')
   

@@ -39,6 +39,12 @@
                         {% if perms.admincomerciax.producto %}
                         	<li><a HREF="{% url producto %}">Productos</a></li>
                         {% endif %}
+						{% if perms.admincomerciax.servicio %}
+                        	<li><a HREF="{% url servicio %}">Asistencia Técnica</a></li>
+                        {% endif %}
+						{% if perms.admincomerciax.producciones %}
+							<li><a HREF="{% url producciones %}">Producciones Alternativas</a></li>
+                        {% endif %}
                         {% if perms.admincomerciax.provincias %} 
                         	<li><a HREF="{% url provincia %}">Provincias</a></li>
                         {% endif %}
@@ -90,8 +96,13 @@
 		                        <li><a HREF="{% url factura_index %}">Clientes</a></li>
 		                        <li><a HREF="{% url facturaext_index %}">Entidades Externas</a></li>
 		                        <li><a HREF="{% url facturapart_index %}">Particulares</a></li>
+								<li><a HREF="{% url factura_servicios_index %}">Asistencia Técnica</a></li>
+								<li><a HREF="{% url factura_producciones_index %}">Producciones Alternativas Cliente</a></li>
+								<li><a HREF="#">Producciones Alternativas Partic.</a></li>
 							</ul>
+
 						</li>
+
 						{% endif %}
 						{% if perms.comercial.pagos %}
 							<li><a HREF="#">Cobros</a>
@@ -148,6 +159,7 @@
 								<li><a HREF="{% url factcliente %}">Facturas x Cliente</a></li>        
 		                        <li><a HREF="{% url ventas_decomiso %}">Decomisos Vendidos </a></li>
 		                        <li><a HREF="{% url regfacturas %}">Registro de Facturas</a></li>
+								<li><a HREF="{% url servfacturas %}">Facturas de Asistencia Técnica</a></li>
 		                        <li><a HREF="{% url factcobrar %}">Facturas x Cobrar</a></li>
 		                        <li><a HREF="{% url regcobros %}">Registro de Cobros</a></li>
 							</ul>

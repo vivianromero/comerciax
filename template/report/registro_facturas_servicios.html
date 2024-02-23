@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Cascos x Clientes{% endblock %}
+{% block title %}Registro de Facturas de Asistencia Técnica{% endblock %}
 
 {% block js_include %}
     <script type="text/javascript" SRC="/comerciax/media/js/jquery.form.js"></script>
@@ -92,12 +92,12 @@
         <div class="docdig-wraper" id="detalles"> <!-- Detalles -->
             <div class="criterio">
                 <div class="fecha">
-                     <p>Fecha de emisi&oacute;n:   {% now "d/m/Y P" %}</p>
+                     <p>Fecha de emisi&oacute;n:   {% now "d/m/Y P" %}</p> 
                 </div>
                 <div style="padding:5px 10px;margin-bottom: 5px;">
                   <img src="/comerciax/media/img/logo111.png" class="loguo" style="float: left;" />
                   <div id="textencb" style="margin-left: 250px;">
-                      <h2 style="margin-bottom:0px;">Facturas x Clientes</h2>
+                      <h2 style="margin-bottom:0px;">Registro de Facturas de Asistencia Técnica</h2>
                       <div class="leyenda">
                         <p>
                             Filtro:
@@ -125,15 +125,13 @@
                         <tr>
                             <th style="" rowspan=2 >Cliente</th>
                             <th style="" rowspan=2 >C&oacute;digo</th>
-                            <th style="" rowspan=2 >Nro. Factura</th>
+                            <th style="" rowspan=4 >Nro. Factura</th>
                             <th style="" rowspan=2 >Fecha Emisi&oacute;n</th>
-                            <th style="text-align: center;" colspan=2 >Importe</th>
-                            <th style="" rowspan=2 >Cancelada</th>
+                            <th style="" rowspan=2 >Servicios</th>
+                            <th style="text-align: rigth;" rowspan=1 >Importe CUP</th>
+                            <th style="" rowspan=1 >Cancelada</th>
                         </tr>
-                        <tr>
-                            <th style="" >CUP</th>
-                            <th style="" >MLC</th>
-                        </tr>
+
                         
                     </thead>
                 </div>
@@ -145,26 +143,31 @@
                                     <td>{{ fila.cliente.codigo }}</td>
                                     <td>{{ fila.factura_nro }}</td>
                                     <td>{{ fila.doc_factura.fecha_doc|date:"d/m/Y"  }}</td>
-                                    {% if fila.cancelada %}
-                                        <td style="text-align: right;">-</td>
-                                        <td style="text-align: right;">-</td>
-                                    {% else %}
-                                        <td style="text-align: right;">{{ fila.get_importetotalcup }}</td>
-                                        <td style="text-align: right;">{{ fila.get_importecuc }}</td>
+                                    
+                                    {% if not fila.cancelada %}
+                                        <td>{{ fila.cantidad_servicios }}</td>
+	                                    <td style="text-align: right;">{{ fila.get_importetotalcup }}</td>
+	                                {% else %}
+	                                    <td></td>
+	                                	<td style="text-align: center;">-</td>
+	                                {% endif %}
+	                                {% if fila.cancelada %}
+                                    	<td>Si</td>
                                     {% endif %}
-                                    <td>{{ fila.cancelada|yesno:_("Si,No") }}</td
                                 </tr>
                         {% endfor %}
-                        <tr>
-                            <td style="font-weight: bold;font-style: italic;">Total General</td>
+                        {% if valor_cliente %}
+                         <tr>
+                            <td style="font-weight: bold">SubTotal Clientes </td>
                             <td></td>
                             <td></td>
                             <td></td>
-                            <td style="text-align: left; font-weight: bold;">{{ total_mn }}</td>
-                            <td style="text-align: right;font-weight: bold;">{{ total_cuc }}</td>
+                            <td style="text-align: left; font-weight: bold;">{{ total_cascocliente }}</td>
+                            <td style="text-align: right; font-weight: bold;">{{ total_importecup1 }}</td>
                             <td></td>
                          </tr>
-                            
+                         {% endif %}
+
                     </tbody>
                 </table>
             </div>

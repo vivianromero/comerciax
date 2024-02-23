@@ -109,8 +109,12 @@
 	                                <td style="font-weight: bold";>{{ fila.cliente }}</td>
 	                                <td style="font-weight: bold";>{{ fila.dias }}</td>
 	                             {% else %}
-	                                <td >{{ fila.estado_actual}}</td>
-	                                <td>{{ fila.casco_nro }}</td>
+	                                <td>{{ fila.estado_actual}}</td>
+                                    {% if fila.medida == "" %}
+                                        <td style="font-weight: bold";>{{ fila.casco_nro }}</td>
+                                    {% else %}
+                                        <td>{{ fila.casco_nro }}</td>
+                                    {% endif %}
 	                                <td>{{ fila.medida }}</td>
 	                                <td>{{ fila.cliente }}</td>
 	                                <td>{{ fila.dias }}</td>

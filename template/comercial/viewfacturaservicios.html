@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Factura{% endblock %}
+{% block title %}Factura Asistencia Técnica{% endblock %}
 
 {% block js_include %}
     <script type="text/javascript" SRC="/comerciax/media/js/jquery.simplemodal.1.4.min.js"></script>
@@ -15,125 +15,93 @@ $(document).ready(function() {
        
         // example of calling the confirm function
         // you must use a callback function to perform the "yes" action
-        confirm("&iquest;Desea eliminar la factura?" , function () {
-            window.location.href = "{% url facturapart_del idfa=rc_id %}";
+        confirm("&iquest;Desea eliminar la factura?", function () {
+            window.location.href = "{% url factura_servicios_del idfa=rc_id %}";
         });
     });
     
-    $('a.imprim').click(function (e) {
-        e.preventDefault();
-        var a1="{% url verfacturapart idfactura=rc_id haycup=1 haycuc=0 cantcascos=cant_cascos %}"
-        // example of calling the confirm function
-        // you must use a callback function to perform the "yes" action
-            window.location.href = a1;
-    });
     $('a.confirm').click(function (e) {
         e.preventDefault();
        
-        // example of calling the confirm function
-        // you must use a callback function to perform the "yes" action
-            //var impcuc = $("#pcuc")[0].innerHTML;
-            //var impcup = $("#pmn")[0].innerHTML;                                                                                                                                                         
-            //var uri = "{% url facturapart_confirmar idfa=rc_id %}" + impcuc + "/" + impcup + "/";              
         confirm("Al confirmar la factura no podr&aacute; realizar modificaciones. &iquest;Desea confirmar la factura?" , function () {
-            window.location.href = "{% url facturapart_confirmar idfa=rc_id %}" ;
+            window.location.href = "{% url factura_servicios_confirmar idfa=rc_id %}" ;
         });
     });
     
   
     $('a.cancelar').click(function (e) {
         e.preventDefault();
-       
         // example of calling the confirm function
         // you must use a callback function to perform the "yes" action
         confirm("&iquest;Desea cancelar la factura " + ' "' + "{{ rc_nro }}" + '"?' , function () {
-            window.location.href = "{% url facturapart_cancelar idfa=rc_id %}";
+            window.location.href = "{% url factura_servicios_cancelar idfa=rc_id %}";
         });
     });
   
-  $('a.elimdet').live("click",function(e){
+   $('a.imprim').click(function (e) {
+        e.preventDefault();
+        var valor_cup=1;
+        var a1="{% url verfacturaservicios idfactura=rc_id haycup=1 haycuc=0 cantservicios=cant_servicios %}"
+
+        // example of calling the confirm function
+        // you must use a callback function to perform the "yes" action
+            window.location.href = a1;
+    });
+    
+$('a.elimdet').live("click",function(e){
         e.preventDefault();
         ira = this.href 
-        confirm("&iquest;Desea eliminar el casco seleccionado?", function () {
+        confirm("&iquest;Desea eliminar la asistencia técnica seleccionada?", function () {
             $.ajax({
             url:ira,
             dataType:'json',
             success: function(data) {
+            
+            
                if(typeof(data.error) == "undefined")
                {
                    $("#table-fact tbody tr").remove() //limpiar todas las filas de la tabla
                    pmn=0.0;
-                   tot_preciocasco=0.0;
                    cantidad_total=0;
                    crenglones=0;
-                   ccasco=0;
-                   recargo=document.getElementById('recmn').innerHTML;
-                   total_pagar = 0.00;
+                   ccascos=0;
                    $.each(data, function(key, val) { 
                    		if (cantidad_total==0){
                    			pmn=val.importetotalcup
-                   			tot_preciocasco=val.importetotalcasco
                    			crenglones=val.cant_renglones
-                   			ccasco=val.total_casco
-                            recargo = val.recargo
-                            total_pagar = val.total_pagar
+                   			cantidad_total=val.total_servicios
                    			cantidad_total=1
                    			
                    		}
                         // val is { pk, model, {fields}}
-                        var urldel = "{% url detalleFacturapart_delete2 %}" + val.id_doc +"/" + val.casco_id +"/";
-                        var urledit = "{% url detalleFacturaPart_edit2 %}" + val.id_doc +"/" + val.casco_id +"/";
+                        var urldel = "{% url detalleFacturaServicio_delete2 %}" + val.iddetalle +"/";
                          cade= "<tr>\n" +
                          			"<td>\n" +
                                             "<div class='ui-corner-all' id='acciones'>\n"+
-                                                "<a href='" + urledit + "' title='Editar' class='right'><span class='ui-icon ui-icon-pencil'></span></a>\n"+
                                                  "<a href='" + urldel + "' title='Eliminar' class='right elimdet'><span class='ui-icon ui-icon-trash'></span></a>\n"+
                                             "</div>\n"+
                                     "</td>\n" +
                                     
-                                    "<td>" + val.casco_nro +"</td>\n" +
-                                    "<td>" + val.productosalida +"</td>\n"+
-                                    "<td>" + formatCurrency(val.precio_cup,'') +"</td>\n" +
-                                    "<td>" + formatCurrency(val.precio_casco,'') +"</td>\n"
-                                    if (val.cantidad!=undefined)
-                                    {
-                                      //cantidad_total=cantidad_total+val.cantidad
-                                      cade=cade+"<tr>\n"+
-                                           "<td></td>\n"+
-                                           "<td style='font-size: 8pt; font-style: italic; font-weight: bold;'>Total Medida</td>\n"+
-                                           "<td style='font-size: 8pt; font-style: italic; font-weight: bold;'>"+val.cantidad+"</td>\n"+
-                                           "<td style='font-size: 8pt; font-style: italic; font-weight: bold;'>"+formatCurrency(val.t_preciocup,'')+"</td>\n"+
-                                           "<td style='font-size: 8pt; font-style: italic; font-weight: bold;'>"+formatCurrency(val.t_preciocasco,'')+"</td>\n"+
-                                       "<tr>\n"
-                                    }
+                                    "<td>" + val.codigo +"</td>\n" +
+                                    "<td>" + val.servicio +"</td>\n"+
+                                    "<td style='font-size: 10pt; text-align: right'>" + formatCurrency(val.precio_cup,'') +"</td>\n"
                                     
                                     cade=cade+"</tr>\n"
                         $("#table-fact tbody").append(
-                                cade);
+                                cade); 
                     });
                     $("#table-fact tbody").append(
                                 "<tr>\n"+
                                 "<td></td>\n"+
-                                "<td style='font-size: 10pt; font-weight: bold;'>Total Cascos</td>\n"+
-                                "<td style='font-size: 10pt; font-weight: bold;'>"+ccasco+"</td>\n"+
-                                "<td style='font-size: 10pt; font-weight: bold;'>"+tot_preciocasco+"</td>\n"+
-                                "<td style='font-size: 10pt; font-weight: bold;'>"+pmn+"</td>\n"+
-                                "</tr>\n"+
-                                "<tr>\n" +
-                               "<td></td>\n" +
-	                         	   "<td style='font-size: 10pt; font-weight: bold;'>% Recargo</td>\n"+
-	                         	   "<td style='font-size: 10pt; font-weight: bold;'>"+recargo+"</td>\n"+
-                               "</tr>\n" +
-                              "<td></td>\n" +
-	                         	   "<td style='font-size: 10pt; font-weight: bold;'>Total a Pagar</td>\n" +
-	                         	   "<td style='font-size: 10pt; font-weight: bold;'>"+total_pagar+"</td>\n" +
-                               "</tr>\n");
+                                "<td style='font-size: 10pt; font-weight: bold;'>Total </td>\n"+
+                                "<td style='font-size: 10pt; font-weight: bold;'>"+cantidad_total+"</td>\n"+
+                                "<td style='font-size: 10pt; font-weight: bold;text-align: right;'>"+pmn+"</td>\n"+
+                                "</tr>");
                   
                   if (pmn!=undefined){
-                  document.getElementById('pmn').innerHTML = tot_preciocasco
+                  document.getElementById('pmn').innerHTML = pmn 
                   document.getElementById('ccasco').innerHTML = ccasco
-                  document.getElementById('crenglones').innerHTML = crenglones
-                  document.getElementById('totalp').innerHTML = total_pagar
+                  document.getElementById('crenglones').innerHTML = crenglones 
                   }
                   
                }
@@ -146,17 +114,19 @@ $(document).ready(function() {
             }); //llamada ajax
         });
     });
-   
+      
+  
       $('a.elimdet1').click(function (e) {
         e.preventDefault();
         ira = this.href 
         
         
-        confirm("&iquest;Desea eliminar el casco seleccionado?" , function () {
+        confirm("&iquest;Desea eliminar la asistencia técnica seleccionada?" , function () {
             window.location.href = ira;
 
         });
     });
+
  });
 
 function formatCurrency(num,signo) {
@@ -210,8 +180,8 @@ function confirm(message, callback) {
 
 {% block side-menu %}
     <ul>
-        <li><a href="{% url facturapart_index %}">&Iacute;ndice</a></li>
-        <li><a href="{% url facturapart_edit idfa=rc_id %}">Editar</a></li>
+        <li><a href="{% url factura_servicios_index %}">&Iacute;ndice</a></li>
+        <li><a href="{% url factura_servicios_edit idfa=rc_id %}">Editar</a></li>
         <li><a href="#" class="delete">Cancelar</a></li>
     </ul>
 {% endblock %}
@@ -230,12 +200,12 @@ function confirm(message, callback) {
             <ul>
                 {% if editar == 1 %}
                   <li>
-                    <a href="{% url facturapart_edit idfa=rc_id %}"><span>Editar</span></a>
+                    <a href="{% url factura_servicios_edit idfa=rc_id %}"><span>Editar</span></a>
                    </li>
                 {% endif %}
                 {% if confirmar != 1 %}
                     <li>
-                        <a href="{% url facturapart_confirmar idfa=rc_id %}" class="confirm" ><span>Confirmar</span></a>
+                        <a href="{% url factura_servicios_confirmar idfa=rc_id %}" class="confirm" ><span>Confirmar</span></a>
                     </li>
                 {% endif %}
                 {% if eliminar == 1 %}
@@ -245,7 +215,6 @@ function confirm(message, callback) {
                 {% endif %}
                 {% if confirmar == 1 %}
                     <li>
-                        
                         <a href="#" target="_blank" class="imprim"><span >Imprimir</span></a>
                     </li>
                     <li>
@@ -255,7 +224,7 @@ function confirm(message, callback) {
                     </li>   
                 {% endif %}            
                 <li>
-                    <a href="{% url facturapart_index %}" ><span>Regresar</span></a>
+                    <a href="{% url factura_servicios_index %}" ><span>Regresar</span></a>
                 </li>
             </ul>
     </div>
@@ -271,6 +240,7 @@ function confirm(message, callback) {
 <div style="width:100%;">
     <!-- Content Here -->
     <form name='mm'>
+        <div id="tipo" value="0" style="visibility:hidden"></div>
         <div class="data">
             <div class="data-wraper"> <!-- DATOS GENERALES -->
                 <div class="data-left">
@@ -285,16 +255,13 @@ function confirm(message, callback) {
                         <span class="value">{{ cliente }}</span>
                      </div>
                      <div class="item">
-                        <span class="label">CI:</span>
-                        <span class="value">{{ ci }}</span>
+                        <span class="label">Personas Autorizadas:</span>
+                        <span class="value">{{ transportador }}</span>
                     </div>
-                    <div class="item">
-                        <span class="label">Cant. Cascos:</span>
-                        <span id="ccasco" class="value">{{ cant_cascos }}</span>
-                    </div>
+
                     <div class="item">
                         <span class="label">Renglones:</span>
-                        <span id="crenglones" class="value">{{ crenglones }}</span>
+                        <span id="crenglones" class="value">{{ cant_renglones }}</span>
                     </div>
                 </div>
                  <div class="data-rigth">
@@ -303,21 +270,18 @@ function confirm(message, callback) {
                         <span class="value">{{ fecha }}</span>
                     </div>
                     <div class="item">
-                        <span class="label">Tipo:</span>
-                        <span class="value">{{ tipo }}</span>
+                        <span class="label">Licencia:</span>
+                        <span class="value">{{ licencia }}</span>
+                    </div>
+                    <div class="item">
+                        <span class="label">Chapa:</span>
+                        <span class="value">{{ chapa }}</span>
                     </div>
                     <div id="impcup" class="item">
                         <span class="label">Importe CUP:</span>
                         <span id="pmn" class="value">{{ importecup }}</span>
                     </div>
-                     <div id="rec" class="item">
-                        <span class="label">% Recargo:</span>
-                        <span id="recmn" class="value">{{ recargo }}</span>
-                    </div>
-                     <div id="totalpagar" class="item">
-                        <span class="label">Total a pagar:</span>
-                        <span id="totalp" class="value">{{ totalpagar }}</span>
-                    </div>
+
                      <div class="item">
                         <span class="label">Observaciones:</span>
                         <span class="value">{{ observaciones }}</span>
@@ -325,8 +289,6 @@ function confirm(message, callback) {
                 </div>
             </div>
         </div>
-         
-         
          </form>
         
         <div class="result">
@@ -334,9 +296,10 @@ function confirm(message, callback) {
         </div>
         <div class="docdig-wraper"> <!-- Detalles -->
             <div class="titleview2">
-                <span>Cascos</span>
+                <span>Asistencia Técnica</span>
                   {% if confirmar == 0 %}
-                        <span><a href="{% url detalleFacturapart_add idfa=rc_id %}">+adicionar</a></span>
+                        <span><a href="{% url detalleFacturaServicios_add idfa=rc_id %}">+adicionar</a></span>
+
                   {% endif %}
                 <div class="line2"></div>
             </div>
@@ -345,54 +308,34 @@ function confirm(message, callback) {
                     <thead>
                         <tr>
                             <th></th>
-                            <th>N&uacute;mero</th>
-                            <th>Medida</th>
-                            <th class="preccup">Precio</th>
-                            <th>Precio Casco</th>
+                            <th>Código</th>
+                            <th>Asistencia Técnica</th>
+                            <th class="preccup">{{precio_CUP}}</th>
                         </tr>
                     </thead>
                     <tbody>
                     
-                         {% for filas in elementos_detalle %}
+                           {% for filas in elementos_detalle %}
                                 <tr>
+                                
                                 <td>
                                     <div class="ui-corner-all" id="acciones">
                                     {% if confirmar == 0 %}
-                                    	<a href="{% url detalleFacturaPart_edit idfa=rc_id idcasco=filas.casco_id %}" title="Editar" class="right"><span class="ui-icon ui-icon-pencil"></span></a>
-                                        <a href="{% url detalleFacturapart_delete idfa=rc_id idcasco=filas.casco_id %}" title="Eliminar" class="right elimdet"><span class="ui-icon ui-icon-trash"></span></a>
+                                        <a href="{% url detalleFacturaServicio_delete idfa=rc_id idservicio=filas.servicio_id %}" title="Eliminar" class="right elimdet"><span class="ui-icon ui-icon-trash"></span></a>
                                     {% endif %}
                                     </div>
                                 </td>
-                                    <td>{{ filas.casco_nro }}</td>
-                                    <td>{{ filas.productosalida }}</td>
-                                    <td>{{ filas.precio_cup }}</td>
-                                    <td>{{ filas.precio_casco }}</td>
-                                    {% if filas.cantidad %}
-                                    <tr>
-                                        <td></td>
-                                    	<td style="font-size: 8pt; font-style: italic; font-weight: bold;">Total Medida</td>
-                                    	<td style="font-size: 8pt; font-style: italic; font-weight: bold;">{{ filas.cantidad }}</td>
-                                    	<td style="font-size: 8pt; font-style: italic; font-weight: bold;">{{ filas.t_preciocup }}</td>
-                                    	<td style="font-size: 8pt; font-style: italic; font-weight: bold;">{{ filas.t_preciocasco  }}</td>
-                                    </tr>
-                                    {% endif %}
+                                    <td style="font-size: 10pt;">{{ filas.codigo }}</td>
+                                    <td style="font-size: 10pt;">{{ filas.servicio }}</td>
+                                    <td style="font-size: 10pt; text-align: right">{{ filas.precio_cup }}</td>
+
                                 </tr>
                                 {% endfor %}  
                                 <tr>
                                <td></td>
-	                         	   <td style="font-size: 10pt; font-weight: bold;">Total Cascos</td>
-	                         	   <td style="font-size: 10pt; font-weight: bold;">{{ total_casco }}</td>
-	                         	   <td style="font-size: 10pt; font-weight: bold;">{{ importecup}}</td>
-	                         	   <td style="font-size: 10pt; font-weight: bold;">{{ importecasco }}</td>
-                               </tr>
-                                <tr>
-                               <td></td>
-	                         	   <td style="font-size: 10pt; font-weight: bold;">% Recargo</td>
-	                         	   <td style="font-size: 10pt; font-weight: bold;">{{ recargo }}</td>
-                               </tr>
-                              <td></td>
-	                         	   <td style="font-size: 10pt; font-weight: bold;">Total a Pagar</td>
-	                         	   <td style="font-size: 10pt; font-weight: bold;">{{ totalpagar }}</td>
+	                         	   <td style="font-size: 10pt; font-weight: bold;">Total </td>
+	                         	   <td style="font-size: 10pt; font-weight: bold;">{{ total_servicios }}</td>
+	                         	   <td style="font-size: 10pt; font-weight: bold;text-align: right;">{{ importecup}}</td>
                                </tr>
                     </tbody>
                 </table>
@@ -400,5 +343,4 @@ function confirm(message, callback) {
         </div>
     <!-- End Content -->
 </div>
-
 {% endblock %}

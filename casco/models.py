@@ -92,13 +92,13 @@ class Cierre(models.Model):
     
 class NumeroDoc(models.Model):
     id_numerodoc=models.CharField(max_length=40,primary_key=True, unique=True)
-    #nro_nominaz= models.CharField(max_length=10,null=True)
-    #nro_minaz=models.CharField(max_length=10,null=True)
     nro_oferta=models.IntegerField(default=0)
     nro_factura=models.IntegerField(default=0)
     nro_facturapart=models.IntegerField(default=0)
     nro_facturaext=models.IntegerField(default=0)
-    
+    nro_factura_servicios = models.IntegerField(default=0)
+    nro_factura_prodalter = models.IntegerField(default=0)
+    nro_factura_prodalterpart = models.IntegerField(default=0)
 
 
 ''' 
@@ -129,7 +129,9 @@ class Doc(models.Model):
     # 17 - Factura a particulares
     # 18- Recepc. de Casco desde entidades externas, transf. no aceptada
     # 19- Devolucion de casco a clientes
-    
+    # 20- Factura de Servicios a Clientes
+    # 21- Factura Prod. Altern. a Clientes
+
     tipo_doc=models.CharField(max_length=2) 
     
     observaciones=models.TextField(blank=True)
@@ -212,7 +214,14 @@ class Casco(models.Model):
         if DetalleRC.objects.filter(casco=self.id_casco).count()!=0:
             return DetalleRC.objects.get(casco=self.id_casco).rc.recepcioncliente_nro
         return DetalleRP.objects.get(casco=self.id_casco).rp.recepcionparticular_nro
-    
+
+    def get_nro_tipo(self):
+        if DetalleRC.objects.filter(casco=self.id_casco).count()!=0:
+            tipo = DetalleRC.objects.get(casco=self.id_casco).rc.recepcioncliente_tipo
+        else:
+            tipo = DetalleRP.objects.get(casco=self.id_casco).rp.recepcionparticular_tipo
+        return str(self.casco_nro) if tipo == 'O' else str(self.casco_nro)+'('+tipo+')'
+
     def get_causa_rechazo(self):
         if self.estado_actual=="DIP":
             return DetalleDIP.objects.get(casco=self.id_casco).causa.descripcion

@@ -17,6 +17,7 @@ class RecepcionClienteForm(forms.Form):
         ('A', 'Ajuste'),
         ('V', 'Para la Venta'),
         ('K', 'Vulca'),
+        ('R', 'Regrabable'),
         ('O','Otro')
     )
 
@@ -52,6 +53,7 @@ class RecepcionParticularesForm(forms.Form):
     TIPO_CHOICES = (
         ('A', 'Ajuste'),
         ('K', 'Vulca'),
+        ('R', 'Regrabable'),
         ('O','Otro')
     )
 

@@ -21,9 +21,9 @@ DATABASES = {
         'NAME': 'comerciax',                      # Or path to database file if using sqlite3.
         #'NAME': 'xx',                      # Or path to database file if using sqlite3.
         'USER': 'postgres',                      # Not used with sqlite3.
-        'PASSWORD': 'Comerciax123..',                  # Not used with sqlite3.
+        'PASSWORD': 'postgres',                  # Not used with sqlite3.
         #'PASSWORD': 'Desoft*10',                  # Not used with sqlite3.
-        'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
+        'HOST': '172.17.0.3',                      # Set to empty string for localhost. Not used with sqlite3.
         #'HOST': '10.15.0.72',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '5432',                      # Set to empty string for default. Not used with sqlite3.
     }
