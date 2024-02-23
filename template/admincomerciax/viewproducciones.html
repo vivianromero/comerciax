@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Producciones Alternativas{% endblock %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.simplemodal.1.4.min.js"></script>
+{% endblock %}
+
+{% block js_code %}
+ $(document).ready(function() {
+  $('#confirm-dialog input.confirm, #confirm-dialog a.confirm, a.delete').click(function (e) {
+        e.preventDefault();
+
+        // example of calling the confirm function
+        // you must use a callback function to perform the "yes" action
+        confirm("Desea eliminar la producción alternativa " + ' "' + "{{ producciones_name }}" + '"' , function () {
+            window.location.href = "{% url delproducciones idproducciones=producciones_id %}";
+        });
+    }); 
+   
+ });
+ 
+function confirm(message, callback) {
+    $('#confirm').modal({
+        closeHTML: "<a href='#' title='Close' class='modal-close'>x</a>",
+        position: ["20%",],
+        overlayId: 'confirm-overlay',
+        containerId: 'confirm-container', 
+        onShow: function (dialog) {
+            $('.message', dialog.data[0]).append(message);
+
+            // if the user clicks "yes"
+            $('.yes', dialog.data[0]).click(function () {
+                // call the callback
+                if ($.isFunction(callback)) {
+                    callback.apply();
+                }
+                // close the dialog
+                $.modal.close();
+            });
+        }
+    });
+}
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/confirm.css">
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+{% endblock %}
+
+{% block controller-name %}Producciones Alternativas{% endblock %}
+
+{% block side-menu %}
+    <ul>
+        <li><a href="{% url producto %}">Index</a></li>
+        {% if perms.admincomerciax.change_producciones %}
+        <li><a href="{% url editproducciones idproducciones=producciones_id %}">Editar</a></li>
+        <li><a href="#" class="delete">Eliminar</a></li>
+        {% endif %}
+    </ul>
+{% endblock %}
+
+{% block main-content %}
+        <div id='confirm'>
+            <div class='header'><span>Confirmar</span></div>
+            <div class='message'></div>
+            <div class='buttons'>
+                <div class='no simplemodal-close'>No</div><div class='yes'>S&iacute;</div>
+            </div>
+        </div>
+
+    <div class="botones">
+            <ul>
+                {% if perms.admincomerciax.change_producciones %}
+                <li>                   
+                    <a href="{% url editproducciones idproducciones=producciones_id %}"><span>Editar</span></a>
+                </li>
+                <li>
+                    <a href="#" class="delete"><span>Eliminar</span></a>
+                </li>
+                {% endif %}
+                <li>
+                    <a href="{% url producciones %}" ><span>Regresar</span></a>
+                </li>
+            </ul>
+    </div>
+    
+    {% if error2 %}
+        <div class="ui-state-error">
+           <ul>
+                <li>{{ error2 }}</li>
+            </ul> 
+        </div>
+    {% endif %}
+    
+<div style="width:100%;">
+    <!-- Content Here -->
+        <div class="data">
+            <div class="data-wraper"> <!-- DATOS GENERALES -->
+                <div class="data-left">
+                    <div class="item">
+                        <span class="label">C&oacute;digo:</span>
+                        <span class="value">{{ codigo }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Producción Alternativa:</span>
+                        <span class="value">{{ producciones_name }}</span>
+                     </div>
+                    <div class="item">
+                        <span class="label">UM:</span>
+                        <span class="value">{{ um }}</span>
+                    </div>
+                </div>
+                 <div class="data-rigth">
+                     <div class="item">
+                        <span class="label">Precio MN:</span>
+                        <span class="value">{{ preciomn }}</span>
+                    </div>
+                </div>
+                <div class="data-rigth">
+                     <div class="item">
+                        <span class="label">Activa:</span>
+                        <span class="value">{{ activo|yesno:_("Si,No") }}</span>
+                    </div>
+                </div>
+            </div>
+        </div> 
+    <!-- End Content -->
+</div>
+
+{% endblock %}
