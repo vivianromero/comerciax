@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Decomisar Cascos{% endblock %}
+{% block js_include %}
+    <script type="text/javascript" src="/comerciax/media/js/jquery.dataTables.min.js"></script>
+{% endblock %}
+
+{% block js_code %}
+ $(document).ready(function() {
+    $('#countries-table').dataTable({
+        'sPaginationType': 'full_numbers', 
+        "bServerSide": true, 
+        "sAjaxSource": "{% url get_dc_list %}",
+        "oLanguage": {
+                                "sLengthMenu": "Mostrar _MENU_ registros por pagina",
+                                "sZeroRecords": "No hay registro - lo siento",
+                                "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ registros",
+                                "sInfoEmtpy": "Mostrando 0 a 0 de 0 registros",
+                                "sInfoFiltered": "(Filtrado desde _MAX_ total de registro)",
+                                "oPaginate":{
+                                            "sFirst":"Primero",
+                                            "sLast":"&Uacute;ltimo",
+                                            "sNext":"Siguiente",
+                                            "sPrevious":"Anterior"
+                                            },
+                                "sSearch":"Buscar:"
+                             }
+        ,"aoColumns": [
+                                {"bVisible": 0,"sWidth": "0%" },
+                                {"fnRender": function ( oObj ) {
+                                    var url = "view/" + oObj.aData[0];
+                                    return "<a href="+ url +">"+oObj.aData[1] +'</a>';
+                                   },
+                                 "sWidth": "5%" },
+                                 {"sWidth": "5%" }, 
+                                 
+                              ]
+    });
+ });
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/datatables.css">
+{% endblock %}
+
+{% block controller-name %}Decomisar Cascos {% endblock %}
+
+{% block side-menu %}
+    <ul>
+        <li> <a HREF="{% url index2 %}">Inicio</a></li>
+        <li><a href="{% url cascodc_add %}">Adicionar</a></li>
+    </ul>
+{% endblock %}
+
+{% block main-content %}
+    {{botonadd}}
+    <div class="botones">
+            <ul>
+                <li>
+                    <a href="{% url cascodc_add %}">
+                        <span>Adicionar</span>
+                    </a>
+                </li>
+            </ul>
+    </div>
+<div style="width:100%;">
+<table id="countries-table" class="display" style="width:100%;">
+    <thead>
+        <tr>
+            <th>
+                ID
+            </th>
+            <th>
+                Fecha
+            </th>
+            <th>
+                M&iacute;n. D&iacute;as en PT
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+</table>
+</div>
+
+{% endblock %}

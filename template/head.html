@@ -1,0 +1,252 @@
+	<div class="grid_5" id="logo">
+	</div>
+    
+    <div class="grid_7" id="menu-user">
+    	<div id="user">
+        <class="mio"> <a HREF="{% url index2 %}">Inicio |<a HREF="{% url logout2 %}">Salir |</a>	{{ user.get_full_name }} </a></a><a HREF="{% url viewperfil idusuario=user.id %}"> Perfil</a>
+        </div>
+        <div id="menu">
+        	<ul class="sf-menu">
+				{% if perms.admincomerciax %}
+				<li class=" current"> <a HREF="#">Administraci&oacute;n</a>
+					<ul>
+						{% if perms.admincomerciax.area %}
+                        	<li><a HREF="{% url area %}">&Aacute;reas</a></li>
+                        {% endif %}
+                        {% if perms.admincomerciax.causarechazo %}
+                        	<li><a HREF="{% url causar %}">Causas de rechazo</a></li>
+                        {% endif %}					
+                        {% if perms.admincomerciax.cliente %}
+                        	<li><a HREF="{% url cliente %}">Clientes</a></li>
+                        {% endif %}
+                        {% if perms.admincomerciax.planes %}
+                        	<li><a HREF="{% url planes %}">Planes contratados</a></li>
+                        {% endif %}
+                        {% if perms.admincomerciax.empresa %}
+                        	<li><a HREF="{% url empresa %}">Empresa</a></li>
+                        {% endif %}
+                        {% if perms.admincomerciax.formapago %}
+                        	<li><a HREF="{% url formap %}">Formas de pago</a></li>
+                        {% endif %}
+                        
+                        {% if perms.admincomerciax.monedas %}
+                        	<!--<li><a HREF="{% url moneda %}">Monedas</a></li>-->
+                        {% endif %}
+                        
+                        {% if perms.admincomerciax.organismo %}
+                        	<li><a HREF="{% url organismo %}">Organismos</a></li>
+                        {% endif %}
+                        {% if perms.admincomerciax.producto %}
+                        	<li><a HREF="{% url producto %}">Productos</a></li>
+                        {% endif %}
+						{% if perms.admincomerciax.servicio %}
+                        	<li><a HREF="{% url servicio %}">Asistencia Técnica</a></li>
+                        {% endif %}
+						{% if perms.admincomerciax.producciones %}
+							<li><a HREF="{% url producciones %}">Producciones Alternativas</a></li>
+                        {% endif %}
+                        {% if perms.admincomerciax.provincias %} 
+                        	<li><a HREF="{% url provincia %}">Provincias</a></li>
+                        {% endif %}
+                        {% if perms.admincomerciax.sucursal %}
+                        	<li><a HREF="{% url sucursal %}">Sucursales</a></li>
+                        {% endif %}
+                        {% if perms.admincomerciax.umedida %}
+                        	<li><a HREF="{% url unidadm %}">Unidades De medida</a></li>
+                        {% endif %}
+                        {% if perms.auth.add_user %}
+                        	<li><a HREF="{% url usuario %}">Usuarios</a></li>
+                        {% endif %}
+                        {% if perms.auth.add_group %}
+                        	<li><a HREF="{% url grupo %}">Grupos de Usuarios</a></li>
+                        {% endif %}
+                        {% if perms.admincomerciax.consorg %}
+                        	<li><a HREF="{% url confignrocasco_index %}">N&uacute;meros de casco x Org</a></li>
+                        {% endif %}
+                        {% if perms.admincomerciax.fecha_ver %}
+                        	<li><a HREF="{% url ver_fecha %}">Fecha para Listar documentos</a></li>
+                        {% endif %}
+                        {% if perms.admincomerciax.consorg  %}
+                        	<li><a HREF="{% url config_smtp %}">Correo SMTP</a></li>
+                        {% endif %}
+                        
+                         {% if perms.admincomerciax.consorg  %}
+                        	<li><a HREF="{% url eliminar_casco %}">Eliminar Casco de PT</a></li>
+                        {% endif %}
+                        
+                        {% if perms.admincomerciax.consorg  %}
+                        	<li><a HREF="{% url ocioso_casco %}">Pasar Casco a Ocioso</a></li>
+                        {% endif %}
+                        
+                        {% if perms.admincomerciax.consorg  %}
+                        	<li><a HREF="{% url eliminar_ocioso %}">Eliminar Casco Ocioso</a></li>
+                        {% endif %}
+                        
+					</ul>
+				</li>
+				{% endif %}
+				<li class="current"><a HREF="#">Comercial</a>
+					<ul>
+					    {% if perms.comercial.oferta %}
+						   <li><a HREF="{% url oferta_index %}">Ofertas</a>
+						{% endif %}
+						{% if perms.comercial.factura %}
+						<li><a HREF="#">Facturas</a>
+							<ul>
+		                        <li><a HREF="{% url factura_index %}">Clientes</a></li>
+		                        <li><a HREF="{% url facturaext_index %}">Entidades Externas</a></li>
+		                        <li><a HREF="{% url facturapart_index %}">Particulares</a></li>
+								<li><a HREF="{% url factura_servicios_index %}">Asistencia Técnica</a></li>
+								<li><a HREF="{% url factura_producciones_index %}">Producciones Alternativas Cliente</a></li>
+								<li><a HREF="#">Producciones Alternativas Partic.</a></li>
+							</ul>
+
+						</li>
+
+						{% endif %}
+						{% if perms.comercial.pagos %}
+							<li><a HREF="#">Cobros</a>
+							<ul>
+								<li><a HREF="{% url pagoefect_index %}">A Entidades </a></li>
+								<li><a HREF="{% url pagoefectpart_index %}">A Particulares </a></li>
+							</ul>
+						   </li>
+						{% endif %}
+						{% if perms.casco.decomisar %}
+						<li><a HREF="{% url cascodc_index %}">Pasar Cascos para la Venta</a>
+						{% endif %}
+						{% if perms.comercial.invcliente %}
+                        	<li><a HREF="{% url cerrarmes %}">Cierre Mensual Comercial</a></li>
+                        {% endif %}	
+						<li class="current"><a HREF="#">Reportes</a>
+					<ul>
+						<li><a HREF="#">Clientes, Contratos y Planes</a>
+							<ul>
+							   
+								<li><a HREF="{% url regcontratos %}">Registro de Contratos</a></li>
+		                        <li><a HREF="{% url repplanes %}">Planes Contratados</a></li>
+		                        <li><a HREF="{% url repcumpplanes %}">Cumplimiento del Plan</a></li>
+		                        <li><a HREF="{% url contratosvencimiento %}">Contratos por Fecha de Vencimiento</a></li>
+		                        <li><a HREF="{% url formorgfarmin %}">Servicio de recape a organismo</a></li>
+								 <!--
+		                        <li><a HREF="{% url formconcixcliente %}">Conciliaci&oacute;n con entidades</a></li>
+		                        <li><a HREF="{% url formconcixorgprov %}">Conciliaci&oacute;n por entidades y org</a></li>
+		                        -->		
+		                        <li><a HREF="{% url conciliacion %}">Conciliaci&oacute;n</a></li>  
+		                        <li><a HREF="{% url servclient %}">Servicios a Clientes</a></li>  
+		                           
+							</ul>
+						</li>	
+									
+						<li><a HREF="#">Cascos</a>
+							<ul>
+							    <li><a HREF="{% url invfall %}">Inventario F&iacute;sico </a></li>
+		                       	<!-- <li><a HREF="{% url formbalacvsrecap %}">Balance de Casco vs Recapados</a></li> -->  
+								<li><a HREF="{% url cascosxcliente %}">Cascos x Clientes</a></li>
+		                        <li><a HREF="{% url cascostraza %}">Trazabilidad del Casco</a></li>
+		                        <li><a HREF="{% url cascosventa %}">Cascos para la venta en PT</a></li>
+		                        <li><a HREF="{% url cascosestado %}">Cascos x Estado</a></li>
+		                        <li><a HREF="{% url cascosptedad %}">Cascos en PT x Edad</a></li>
+		                        <li><a HREF="{% url cascosptcantidad %}">Cascos en PT x Cantidad</a></li>
+		                        <li><a HREF="{% url transfenviadas %}">Transferencias Enviadas</a></li>
+		                        <li><a HREF="{% url plazoscasco %}">Plazos en F&aacute;brica</a></li>
+		                        <li><a HREF="{% url movcascos %}">Movimiento de Cascos</a></li>
+							</ul>
+						</li>
+						
+						<li><a HREF="#">Ventas y Cobros</a>
+							<ul>
+								<li><a HREF="{% url factcliente %}">Facturas x Cliente</a></li>        
+		                        <li><a HREF="{% url ventas_decomiso %}">Decomisos Vendidos </a></li>
+		                        <li><a HREF="{% url regfacturas %}">Registro de Facturas</a></li>
+								<li><a HREF="{% url servfacturas %}">Facturas de Asistencia Técnica</a></li>
+		                        <li><a HREF="{% url factcobrar %}">Facturas x Cobrar</a></li>
+		                        <li><a HREF="{% url regcobros %}">Registro de Cobros</a></li>
+							</ul>
+						</li>
+	
+	
+					</ul>
+				</li>
+						
+					</ul>
+				</li>
+				
+				{% if perms.casco %}
+				<li class="current"><a HREF="#">Cascos</a>
+					<ul>
+					    {% if perms.casco.recepcioncliente or perms.casco.receprechext or perms.casco.receprechext or perms.casco.recepcascoext%}
+						<li><a HREF="#">Entradas</a>
+							<ul>
+								{% if perms.casco.recepcioncliente %}
+		                        	<li><a HREF="{% url rc_index %}">Recepci&oacute;n a Clientes</a></li>
+		                        	<li><a HREF="{% url rp_index %}">Recepci&oacute;n a Particulares</a></li>
+		                        	<li><a HREF="{% url rcext_index %}">Recepci&oacute;n a Clientes Externos</a></li>
+		                        {% endif %}
+		                        {% if perms.casco.receprechext %}
+		                        	<li><a HREF="{% url rechaexternos_index %}">Recepci&oacute;n Rechazados por Clientes Externos</a></li>
+		                        {% endif %}
+		                        {% if perms.casco.recepcascoext %}
+		                        	<li><a HREF="{% url cascoexternos_index %}">Recepci&oacute;n Cascos no Procesados por Clientes Externos</a></li>
+		                        {% endif %}
+							</ul>
+						</li>
+						{% endif %}	
+						{% if perms.casco.cc  or  perms.casco.transferencia or perms.casco.errorrecep or perms.casco.entregrech or perms.casco.vulcaprod %}			
+						<li><a HREF="#">Salidas</a>
+							<ul>
+								{% if perms.casco.cc %}
+		                        	<li><a HREF="{% url cascocc_index %}">Entregar a Producci&oacute;n</a></li>
+		                        {% endif %}
+		                        {% if perms.casco.transferencia %}
+		                        	<li><a HREF="{% url tc_index %}">Transferencia</a></li>
+		                        {% endif %}
+		                        {% if perms.casco.errorrecep %}
+		                        	<li><a HREF="{% url cascoer_index %}">Rechazar por error de revisi&oacute;n</a></li>
+		                        {% endif %}
+		                        {% if perms.casco.entregrech %}
+		                        	<li><a HREF="{% url cascocr_index %}">Entregar rechazados</a></li>
+		                        {% endif %}
+		                        {% if perms.casco.devolucion %}
+		                        	<li><a HREF="{% url cascodcc_index %}">Devoluci&oacute;n de Cascos a Clientes</a></li>
+		                        {% endif %}
+		                        {% if perms.casco.vulcaprod %}
+		                        	<li><a HREF="{% url cascovp_index %}">Vulca a producci&oacute;n</a></li>
+		                        {% endif %}
+		                        
+							</ul>
+						</li>
+						{% endif %}
+						{% if perms.casco.invalmcasco %}
+                        	<li><a HREF="{% url almc %}">Cierre Mensual Almac&eacute;n Casco</a></li>
+                        {% endif %}			
+					</ul>
+				</li>
+				{% endif %}
+				{% if perms.casco.dip or perms.casco.dvp or perms.casco.prodterm or perms.casco.invalmprod or perms.casco.ptext %}
+				<li class="current"><a HREF="#">Producci&oacute;n</a>
+					<ul>
+						{% if perms.casco.dip %}
+							<li><a HREF="{% url cascodip_index %}">Devoluci&oacute;n a inservibles</a></li>
+						{% endif %}
+						{% if perms.casco.dvp %}
+							<li><a HREF="{% url cascodvp_index %}">Devoluci&oacute;n a Vulca</a></li>
+						{% endif %}
+						{% if perms.casco.prodterm %}
+							<li><a HREF="{% url cascopt_index %}">Entrega a Producci&oacute;n Terminada</a></li>
+						{% endif %}
+						{% if perms.casco.ptext %}
+							<li><a HREF="{% url ptexternos_index %}">Producci&oacute;n Terminada desde Entidades Externas</a></li>
+						{% endif %}
+						{% if perms.casco.invalmprod %}
+                        	<li><a HREF="{% url almp %}">Cierre Mensual Almac&eacute;n Producci&oacute;n</a></li>
+                        {% endif %}
+					</ul>
+				</li>
+				{% endif %}
+				
+				<li class="current"><a HREF="/comerciax/media/ayuda/index.html" target="_blank">Ayuda</a> </li>
+				<!-- <li  class="current"><a HREF="{% url logout2 %}" >Salir</a></li> -->
+			</ul>
+        </div>
+    </div>

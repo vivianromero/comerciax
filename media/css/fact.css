@@ -1,0 +1,164 @@
+.content{
+	/*width:90%;*/
+	font-size: 12px;
+}
+
+#top{
+	width:100%;
+	padding:3px;
+}
+
+.row{
+	border:thin solid rgb(70, 70, 70);
+	/*min-height:120px;*/
+}
+
+.clear{clear:both;}
+.bloque{float:left; /*min-height:120px;*/}
+
+#logo-rpt{	
+	width:20%;
+	/*border:thin solid #999;*/
+}
+
+#titular{
+	width: 46%;
+	/*border:thin solid #999;*/
+}
+
+#monedas{
+	width: 22%;
+	/*border:thin solid #999;*/
+}
+
+#cliente_data{
+	width: 70%;
+	/*border:thin solid #999;*/
+}
+
+#cliente_moneda{
+	width: 29%;
+	/*border:thin solid #999;*/
+}
+
+#descripcion{
+	min-height:620px;
+}
+
+#vendedor_data, #vendedor_fact, #vendedor_confecc{ width:33%;/*border:thin solid #999;*/}
+.comprador{ width:33%;/*border:thin solid #999;*/}
+#factdetalle{
+    float: none;
+    margin: 10px auto;
+    width: 98%;
+}
+
+#foot_declaracion{
+	border: medium none;
+    font-size: 12px;
+    text-align: left;
+}
+
+table{
+	width:100%;
+	font-size:14px;
+}
+
+table thead th, table th {
+    border-bottom: 1px solid black;
+    color: #464646;
+    font-weight: bold;	
+    /*padding: 3px 18px 3px 10px;*/
+	padding: 3px 18px 3px 0;
+    text-align: left;
+}
+
+table tfoot th{
+	/*text-align: left;*/
+	/*padding: 3px 10px;*/
+	padding: 3px 10px 3px 0;
+}
+
+table tbody td, table td, .as-td {
+    /*border-bottom: 1px solid #CCCCCC;*/
+    /*font-size: 12px;*/
+    /*padding: 3px 10px;*/
+	/*padding: 0 5px;*/
+	padding: 0 5px 0 0;
+}
+
+.decimal{
+	text-align:right;
+	padding-right:5px;
+}
+.thdecimal{
+	width:3%;
+	text-align:right;
+	padding-right:5px;
+}
+.tfootdecimal{
+	padding-right: 5px;
+    text-align: right;
+}
+
+.mon-cliente2{
+    float: none;
+    width: 100%;
+	margin: 0px 0;
+}
+
+.loguo{
+    /*background: url(../img/logo111.png) no-repeat center;*/
+	height:55px;
+	margin:10px auto;
+	width: 120px;
+}
+
+.mon-cliente2 ul{
+	list-style:none;
+	margin: 0;
+    padding: 0;
+}
+
+.mon-cliente2 ul li{
+	/*padding: 3px;*/
+	padding: 1px 4px;
+	margin-left: 0;
+}
+
+.label{
+	font-weight:bold;
+}
+.mon-cliente2 ul li .tab{
+	margin-left:10px;
+}
+.no-border th{border:none;}
+.no-border .borde-sup{border-top: 1px solid #CCCCCC; }
+
+
+#top_btns{
+	background-color: #DEDEDE;
+	border:none;
+}
+.titleview2 span{
+	float:left;
+	color:#464646;
+	font-family:"Times New Roman",Times,serif;
+	font-size:28px;
+	font-style:italic;
+}
+.titleview2 span a {
+	color:#77A6BF;
+	font-family:Verdana,Times,serif;
+	font-size:12px;
+	font-style:normal;
+	text-decoration:none;
+}
+
+.titleview2 span.right{
+	float:right;
+}
+.line2  {
+	border-bottom: 10px solid #77A6BF;
+    clear:both;
+}

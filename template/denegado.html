@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Acceso denegado{% endblock %}
+
+{% block js_code %}
+ $(document).ready(function() {
+    // Variables
+    var objMain = $('#main_content2');
+    
+    hideSidebar();
+    
+    // Hide sidebar
+    function hideSidebar(){
+    objMain.removeClass('use-sidebar');
+    } 
+ });
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/denied.css">
+{% endblock %}
+
+{% block controller-name %}Acceso denegado{% endblock %}
+
+{% block main-content %}
+    <div class="denied">
+        <div class="image-denied"></div>
+        <h2>ACCESO DENEGADO</h2>
+        <p>Usted no tiene privilegios suficientes para visualizar la p&aacute;gina solicitada, consulte con el administrador para mayor informaci&oacute;n.</p>
+        <p class="back"><a href="{% url index2 %}" ><span>Regresar al inicio</span></a></p>
+    </div>
+{% endblock %}

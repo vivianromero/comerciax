@@ -1,0 +1,19 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for cc in querySet %}
+    [
+    	"{{cc.id}}",
+    	"{{cc.org.codigo_organismo}}",
+    	"{{cc.org.siglas_organismo}}"
+ 	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}
+
+

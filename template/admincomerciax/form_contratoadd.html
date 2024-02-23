@@ -1,0 +1,118 @@
+{% extends "form/form_edit.html" %}
+
+{% block js_code %}    
+ $(document).ready(function(){
+      var pickerOpts = {
+            dateFormat:"dd/mm/yy",
+            changeMonth: true,
+            changeYear: true
+     };
+        $(".formulario").validate();
+        $(".date").datepicker(pickerOpts);
+    
+    $("#id_venta_costo_1").change(function(e){
+        e.preventDefault();
+        $('input[name="venta_costo_mn"]').attr("disabled","disabled");
+        $('input[name="venta_costo_cuc"]').attr("disabled","disabled");
+    })
+    
+      $("#id_fecha_vigencia").change(function(e){
+        e.preventDefault();
+        var tiempoentrado = $(this).val();
+        
+        
+        var t_vigencia = parseInt(document.getElementById("id_tiempo_vigencia").value)
+        if (isNaN(t_vigencia)){
+        	t_vigencia=0
+        }
+        var dia1=tiempoentrado.substr(0, 2);
+        var nMes1 = tiempoentrado.substr(3, 2);
+		var nAno1 = tiempoentrado.substr(6, 4); 
+		if (dia1.substr(0,1) == '0'){
+			dia1=dia1.substr(1,1)
+		}
+		if (nMes1.substr(0,1) == '0'){
+			nMes1=nMes1.substr(1,1)
+		}
+		var dia=parseInt(dia1);
+        var nMes = parseInt(nMes1);
+		var nAno = parseInt(nAno1);  
+		
+		if ( nMes == 2 && dia >= 29 ) {
+		  nMes=3 
+		  dia = 1
+		}
+		nAno+=t_vigencia
+		var a1=dia+""
+		if (a1.length == 1){
+		    dia="0"+dia
+		}
+		a1=nMes+""
+		if ( a1.length == 1 ){
+		    nMes="0"+nMes
+		}
+        $('input[name="fecha_vencimiento"]').attr("value",dia+"/"+nMes+"/"+nAno);
+        
+    })
+    $("#id_tiempo_vigencia").change(function(e){
+        e.preventDefault();
+        var tiempo = $(this).val();
+        tiempo1=parseInt(tiempo)
+        if (isNaN(tiempo1)){
+        	tiempo1=0
+        }
+        var tiempoentrado = document.getElementById("id_fecha_vigencia").value
+        var dia1=tiempoentrado.substr(0, 2);
+        var nMes1 = tiempoentrado.substr(3, 2);
+		var nAno1 = tiempoentrado.substr(6, 4);  
+		
+ 
+		if (dia1.substr(0,1) == '0'){
+			dia1=dia1.substr(1,1)
+		}
+		if (nMes1.substr(0,1) == '0'){
+			nMes1=nMes1.substr(1,1)
+		}
+		var dia=parseInt(dia1);
+        var nMes = parseInt(nMes1);
+		var nAno = parseInt(nAno1);  
+		if ( nMes == 2 && dia >= 29 ) {
+		  nMes=3 
+		  dia = 1
+		}
+		nAno+=tiempo1
+		var a1=dia+""
+		if (a1.length == 1){
+		    dia="0"+dia
+		}
+		a1=nMes+""
+		if ( a1.length == 1 ){
+		    nMes="0"+nMes
+		}
+
+        $('input[name="fecha_vencimiento"]').attr("value",dia+"/"+nMes+"/"+nAno);
+        
+    })
+    $("#id_venta_costo_0").change(function(e){
+        e.preventDefault();
+        $('input[name="venta_costo_mn"]').removeAttr("disabled");
+        $('input[name="venta_costo_cuc"]').removeAttr("disabled");
+    })
+    
+         $("#id_para_la_venta_0").change(function(e){
+        e.preventDefault();
+        $('input[name="otro_precio_casco"]').attr("disabled","disabled");
+        document.getElementById('id_otro_precio_casco').checked = false;
+        
+    })
+    
+     $("#id_para_la_venta_1").change(function(e){
+        e.preventDefault();
+        $('input[name="otro_precio_casco"]').removeAttr("disabled","disabled");
+    })
+    
+    
+    
+ }); 
+    
+{% endblock %}

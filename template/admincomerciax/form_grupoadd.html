@@ -1,0 +1,14 @@
+{% extends "form/form_add.html" %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.validate.min.js"></script>
+{% endblock %}
+
+{% block js_code %}    
+ $(document).ready(function(){
+                              
+    $(".formulario").validate();
+
+ }); 
+    
+{% endblock %}

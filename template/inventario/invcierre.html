@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Reporte 1{% endblock %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.form.js"></script>
+{% endblock %}
+
+{% block js_code %}
+ $(document).ready(function() {
+                               
+    $('.imprimir').click(function() {
+         window.print();
+        });
+                               
+   // Variables
+    var objMain = $('#main_content2');
+    
+    hideSidebar();
+    
+    // Hide sidebar
+    function hideSidebar(){
+    objMain.removeClass('use-sidebar');
+    }
+    
+    var options = { 
+        //target:        '#output1',   // target element(s) to be updated with server response 
+        //beforeSubmit:  showRequest,  // pre-submit callback 
+        success:       showResponse,  // post-submit callback 
+        url: "{% url reportclientemio %}",
+        // other available options: 
+        //url:       url         // override for form's 'action' attribute 
+        //type:      type        // 'get' or 'post', override for form's 'method' attribute 
+        dataType:  'json'        // 'xml', 'script', or 'json' (expected server response type) 
+        //clearForm: true        // clear all form fields after successful submit 
+        //resetForm: true        // reset the form after successful submit 
+ 
+        // $.ajax options can be used here too, for example: 
+        //timeout:   3000 
+    }; 
+ 
+    // bind form using 'ajaxForm' 
+    $('#form1').ajaxForm(options);
+ });
+ 
+    // pre-submit callback 
+    function showRequest(formData, jqForm, options) { 
+        // formData is an array; here we use $.param to convert it to a string to display it 
+        // but the form plugin does this for you automatically when it submits the data 
+        var queryString = $.param(formData); 
+     
+        // jqForm is a jQuery object encapsulating the form element.  To access the 
+        // DOM element for the form do this: 
+        // var formElement = jqForm[0]; 
+     
+        alert('About to submit: \n\n' + queryString); 
+     
+        // here we could return false to prevent the form from being submitted; 
+        // returning anything other than false will allow the form submit to continue 
+        return true; 
+    } 
+    
+    function showResponse(data){
+       if(typeof(data.error) == "undefined")
+       {
+          $(".criterio").empty();
+          $(".criterio").append('<div style=" background-color: #D3D3D3; border: 1px solid #686868; padding:5px 10px;margin-bottom: 5px;"><h2 style="margin-bottom:0px;">Criterio para generar</h2>parametros1 = cualquier cosa</br>parametros1 = cualquier cosa</br>parametros1 = cualquier cosa</br></div>');
+           $("#example tbody tr").remove() //limpiar todas las filas de la tabla
+           $.each(data, function(key, val) {
+                 
+                // val is { pk, model, {fields}}
+                $("#example tbody").append(
+                        "<tr>\n" +
+                            "<td>" + val.medida +"</td>\n" +
+                            "<td>" + val.AlmacenC +"</td>\n" +
+                            "<td>" + val.AlmacenP +"</td>\n" +
+                            "<td>" + val.AlmacenPT +"</td>\n" +
+                 "</tr>\n");                          
+            });
+       }
+       else
+       {
+            //mostrar error mandado del servidor
+            alert(data.message);
+       } 
+      }
+     
+    // post-submit callback 
+   /* function showResponse(responseText, statusText, xhr, $form)  { 
+        // for normal html responses, the first argument to the success callback 
+        // is the XMLHttpRequest object's responseText property 
+     
+        // if the ajaxForm method was passed an Options Object with the dataType 
+        // property set to 'xml' then the first argument to the success callback 
+        // is the XMLHttpRequest object's responseXML property 
+     
+        // if the ajaxForm method was passed an Options Object with the dataType 
+        // property set to 'json' then the first argument to the success callback 
+        // is the json data object returned by the server 
+     
+        alert('status: ' + statusText + '\n\nresponseText: \n' + responseText +'\n\nThe output div should have already been updated with the responseText.'); 
+    } */
+
+{% endblock %}
+
+
+{% block controller-name %}Inventario{% endblock %}
+
+{% block main-content %}
+    
+    {% if error2 %}
+        <div class="ui_state_error">
+           <ul>
+                <li>{{ error2 }}</li>
+            </ul> 
+        </div>
+    {% endif %}
+    
+<div style="width:100%;">
+    <!-- Content Here -->       
+        <div class="docdig-wraper" id="detalles"> <!-- Detalles -->
+            <div class="criterio">
+                <div style=" background-color: #D3D3D3; border: 1px solid #686868; padding:5px 10px;margin-bottom: 5px;">
+                  <h2 style="margin-bottom:0px;">Inventario F&iacute;sico</h2>
+                   del mes de <em>{{ mes }}</em></br>
+                </div>
+            </div>
+            <div class="titleview2">
+                <span>&nbsp;</span>
+                <span class="right">
+                    <a href="{% url pdfcliente %}"><img src="/comerciax/media/img/pdf.png"></a>
+                    <a href="#" class="imprimir" ><img src="/comerciax/media/img/printer.png"></a>
+                </span>
+                <div class="line2"></div>
+            </div>
+            <div class="table">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th style="width:15%;">Medida</th>
+                            <th style="width:20%;">Almacen Casco</th>
+                            <th style="width:20%;">Almacen Producci&oacute;n</th>
+                            <th style="width:30%;">Almacen Prod. Terminada</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                       {% for filas in elementos %}
+                            <tr>
+                                <td>{{ filas.medida }}</td>
+                                <td>{{ filas.AlmacenC }}</td>
+                                <td>{{ filas.AlmacenP }}</td>
+                                <td>{{ filas.AlmacenPT }}</td>
+                            </tr>
+                       {% endfor %}                          
+                    </tbody>
+                </table>
+                <div class="botones">
+                    <ul>
+                        <li>
+                            <a href="{% url cerrar_mes %}" ><span>Cerrar Mes</span></a>
+                        </li>
+                    </ul>
+            </div>
+            </div>
+        </div>
+         
+    <!-- End Content -->
+</div>
+
+{% endblock %}

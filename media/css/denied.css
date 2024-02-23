@@ -1,0 +1,22 @@
+@CHARSET "UTF-8";
+
+.denied{
+    color: red;
+    display: block;
+    text-align: center;
+    width: 400px;
+    margin: 0px auto;
+}
+
+.denied .image-denied{
+    height: 180px;
+    background: url('../img/denegado.png') center no-repeat;
+}
+
+.denied h2{
+    margin-bottom:0;
+}
+
+.denied .back{
+    color:blue;
+}

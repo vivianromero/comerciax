@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}Cascos a Vulca{% endblock %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.simplemodal.1.4.min.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-ui-1.8.7.js"></script>
+{% endblock %}
+
+{% block js_code %}
+ $(document).ready(function() {
+  $('#confirm-dialog input.confirm, #confirm-dialog a.confirm, a.delete').click(function (e) {
+        e.preventDefault();
+
+        // example of calling the confirm function
+        // you must use a callback function to perform the "yes" action
+        confirm("&iquest;Desea eliminar el documento " + ' "' + "{{ rc_nro }}" + '"?' , function () {
+            window.location.href = "{% url cascodvp_del iddvp=rc_id %}";
+        });
+    });
+    
+    
+  $('a.elimdet').live("click",function(e){
+        e.preventDefault();
+        ira = this.href 
+        confirm("&iquest;Desea eliminar el casco seleccionado?", function () {
+            $.ajax({
+            url:ira,
+            dataType:'json',
+            success: function(data) {
+               if(typeof(data.error) == "undefined")
+               {
+                   $("#table-dvp tbody tr").remove() //limpiar todas las filas de la tabla
+                   cantidad_total=0
+                   $.each(data, function(key, val) { 
+                        // val is { pk, model, {fields}}
+                         var urldel = "{% url detalleDVP_delete2 %}" + val.casco_id +"/" + val.id_doc +"/";
+                         cantidad_total=val.total_casco
+                         cade= "<tr>\n" +
+                                    "<td>\n" +
+                                            "<div class='ui-corner-all' id='acciones'>\n"+
+                                                "<a href='" + urldel + "' title='Eliminar' class='right elimdet'><span class='ui-icon ui-icon-trash'></span></a>\n"+
+                                            "</div>\n"+
+                                    "</td>\n" +
+                                    "<td>" + val.casco_nro +"</td>\n" +
+                                    "<td>" + val.producto +"</td>\n"+
+                                    "<td>" + val.cliente +"</td>\n"
+                                    if (val.cantidad!=undefined)
+                                    {
+                                      cade=cade+"<tr>\n"+
+                                           "<td></td>\n"+
+                                           "<td style='font-size: 8pt; font-style: italic; font-weight: bold;'>Total Medida</td>\n"+
+                                           "<td style='font-size: 8pt; font-style: italic; font-weight: bold;'>"+val.cantidad+"</td>\n"+
+                                       "<tr>\n"
+                                    }
+                                    
+                                    cade=cade+"</tr>\n"
+                        $("#table-dvp tbody").append(
+                                cade); 
+                    });
+                    $("#table-dvp tbody").append(
+                                "<tr>\n"+
+                                "<td></td>\n"+
+                                "<td style='font-size: 10pt; font-weight: bold;'>Total Cascos</td>\n"+
+                                "<td style='font-size: 10pt; font-weight: bold;'>"+cantidad_total+"</td>\n"+
+                                "</tr>");
+               }
+               else
+               {
+                    //mostrar error mandado del servidor
+                    alert(data.message);
+               } 
+              } 
+            }); //llamada ajax
+            
+        });
+    });
+      
+      $('a.elimdet1').click(function (e) {
+        e.preventDefault();
+        ira = this.href 
+        
+        
+        confirm("&iquest;Desea eliminar el casco seleccionado?" , function () {
+            window.location.href = ira;
+
+        });
+    });
+     
+ });
+
+function confirm(message, callback) {
+    $('#confirm').modal({
+        closeHTML: "<a href='#' title='Close' class='modal-close'>x</a>",
+        position: ["20%",],
+        overlayId: 'confirm-overlay',
+        containerId: 'confirm-container', 
+        onShow: function (dialog) {
+            $('.message', dialog.data[0]).append(message);
+
+            // if the user clicks "yes"
+            $('.yes', dialog.data[0]).click(function () {
+                // call the callback
+                if ($.isFunction(callback)) {
+                    callback.apply();
+                }
+                // close the dialog
+                $.modal.close();
+            });
+        }
+    });
+}
+
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/confirm.css">
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+{% endblock %}
+
+{% block controller-name %}Cascos a Vulca{% endblock %}
+
+{% block side-menu %}
+    <ul>
+        <li><a href="{% url cascodvp_index %}">&Iacute;ndice</a></li>
+        {% if edito == 1 %}
+            <li><a href="{% url cascodvp_edit iddvp=rc_id %}">Editar</a></li>
+            <li><a href="#" class="delete">Eliminar</a></li>
+        {% endif %}
+    </ul>
+{% endblock %}
+
+
+{% block main-content %}
+        <div id='confirm'>
+            <div class='header'><span>Confirmar</span></div>
+            <div class='message'></div>
+            <div class='buttons'>
+                <div class='no simplemodal-close'>No</div><div class='yes'>S&iacute;</div>
+            </div>
+        </div>
+
+    <div class="botones">
+            <ul>
+                
+                    {% if edito == 1   %}
+                       <li>
+                         <a href="{%url cascodvp_edit iddvp=rc_id %}"><span>Editar</span></a>
+                       </li>
+                       <li>
+                         <a href="#" class="delete"><span>Eliminar</span></a>
+                       </li>    
+                    {% endif %}
+                
+                
+                <li>
+                    <a href="{% url cascodvp_index %}" ><span>Regresar</span></a>
+                </li>
+            </ul>
+    </div>
+    {% if error2 %} 
+     <div class="ui-state-error">
+         <ul>
+            {% for error in error2 %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+     </div>    
+    {% endif %}
+<div style="width:100%;">
+    <!-- Content Here -->
+        <div class="data">
+            <div class="data-wraper"> <!-- DATOS GENERALES -->
+                <div class="data-left">
+                    <div class="item">
+                        <span class="label">No:</span>
+                        <span class="value">{{ rc_nro }}</span>
+                     </div>
+                     
+                    
+                </div>
+                 <div class="data-rigth">
+                    <div class="item">
+                        <span class="label">Fecha:</span>
+                        <span class="value">{{ fecha }}</span>
+                    </div>
+                     <div class="item">
+                        <span class="label">Observaciones:</span>
+                        <span class="value">{{ observaciones }}</span>
+                    </div>
+                </div>
+            </div>
+        </div> 
+        
+
+        <div class="docdig-wraper"> <!-- Detalles -->
+            <div class="titleview2">
+                <span>Cascos</span>
+                    {% if adiciono %}
+                    <span><a href="{% url detalleDVP_add iddvp=rc_id %}">+adicionar</a></span>
+                    {% endif %}
+                <div class="line2"></div>
+            </div>
+            <div class="table" id="table-dvp">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>N&uacute;mero</th>
+                            <th>Medida</th>
+                            <th>Cliente</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    
+                      {% for filas in elementos_detalle %}
+                                <tr>
+                                <td>
+                                    <div class="ui-corner-all" id="acciones">
+                                        {% if adiciono %}
+                                        	<a href="{%url detalleDVP_delete idcasco=filas.casco_id iddvp=rc_id %}" title="Eliminar" class="right elimdet"><span class="ui-icon ui-icon-trash"></span></a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                    <td>{{ filas.casco_nro }}</td>
+                                    <td>{{ filas.producto }}</td>
+                                    <td>{{ filas.cliente }}</td>
+                                    {% if filas.cantidad %}
+	                                    <tr>
+	                                        <td></td>
+	                                    	<td style="font-size: 8pt; font-style: italic; font-weight: bold;">Total Medida</td>
+	                                    	<td style="font-size: 8pt; font-style: italic; font-weight: bold;">{{ filas.cantidad }}</td>
+	                                    </tr>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}    
+                            <tr>
+                               <td></td>
+                         	   <td style="font-size: 10pt; font-weight: bold;">Total Cascos</td>
+                         	   <td style="font-size: 10pt; font-weight: bold;">{{ total_casco }}</td>
+                            </tr> 
+
+                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    <!-- End Content -->
+</div>
+
+{% endblock %}

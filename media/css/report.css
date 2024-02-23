@@ -1,0 +1,9 @@
+@CHARSET "UTF-8";
+
+.zend_form{
+    padding: 10px;
+}
+
+p.submit-group{
+    margin-bottom: 0px;
+}

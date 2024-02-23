@@ -1,0 +1,27 @@
+	<div class="grid_12" id="main_content_top">
+    	<h2>{% block controller-name %}{% endblock %}</h2>
+	</div>	
+    <div class="clear"></div>
+	
+	<div class="grid_12" id="main_content">
+			<div class="use-sidebar sidebar-at-left" id="main_content2">
+                <div id="sidebar">
+                	{% block side-menu %}{% endblock %}
+                </div>
+								
+ 				<a href="#" id="separator"></a>
+				
+                <div id="content">
+                     {% block main-content %}{% endblock %}
+                     {{ mensage }}
+                </div>
+				
+                <div class="clearer">&nbsp;</div>
+			</div>
+    </div>   
+    <div class="clear"></div>
+    
+    <div class="grid_12" id="main_content_bottom">
+    	<!-- aqui se muestra el cierre del cuerpo -->
+    </div>    
+    <div class="clear"></div> 

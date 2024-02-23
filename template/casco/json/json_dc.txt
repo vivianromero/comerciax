@@ -1,0 +1,17 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for decomiso in querySet %}
+    [
+    	"{{decomiso.doc_decomiso.id_doc}}",
+    	"{{decomiso.doc_decomiso.fecha_doc|date:"d/m/Y"}}",
+    	"{{decomiso.dias}}"
+	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}

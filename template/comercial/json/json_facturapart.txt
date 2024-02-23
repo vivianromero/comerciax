@@ -1,0 +1,27 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for fact in querySet %}
+    [
+    	"{{fact.doc_factura.id_doc}}",
+    	{% if fact.confirmar == 1 %}
+    		"{{fact.factura_nro}}",
+    	{% else %}
+    	    "  ",
+    	{% endif %}
+    	"{{fact.doc_factura.fecha_doc|date:"d/m/Y"}}",
+    	"{{fact.nombre}}",
+    	"{{fact.ci}}",
+    	"{{fact.cancelada|yesno:_("Si,No")}}",
+    	"{{fact.confirmar|yesno:_("Si,No")}}"
+    	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}
+
+

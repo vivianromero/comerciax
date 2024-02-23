@@ -1,0 +1,148 @@
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-1.4.2.min.js"></script>
+{% endblock %}
+
+<script type="application/javascript" >
+    $(document).ready(function() {
+                                  
+        //window.print();                           
+        $('.imprimir').click(function() {
+             window.print();
+        });                                   
+     });
+</script>
+<style>
+    @media print
+    {
+        #top_btns {
+            display:none;
+        }
+    }
+
+</style>
+ 
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/fact.css">
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/print.css">
+{% endblock %}
+
+{% block main-content %}    
+	<div style="width:100%;">
+	    <!-- Content Here --> 
+	     <div class="content">
+	        <div id="top_btns" class="row">
+	          <div class="titleview2">
+	            <span>Vista previa de: Registro de Cobros</span>
+	                        <span class="right">
+	                            <a href="#" target="_new" class="imprimir" ><img src="/comerciax/media/img/printer.png"></a>
+	                        </span>
+	                <div class="line2"></div>
+	            </div>
+	        </div>
+        {% if error2 %}
+            <div class="ui-state-error">
+               <ul>
+                    {% for error in error2 %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+               </ul> 
+            </div>
+        {% endif %}      
+        <div class="docdig-wraper" id="detalles"> <!-- Detalles -->
+            <div class="criterio">
+                <div class="fecha">
+                     <p>Fecha de emisi&oacute;n:   {% now "d/m/Y P" %}</p> 
+                </div>
+                <div style="padding:5px 10px;margin-bottom: 5px;">
+                  <img src="/comerciax/media/img/logo111.png" class="loguo" style="float: left;" />
+                  <div id="textencb" style="margin-left: 250px;">
+                      <h2 style="margin-bottom:0px;">Registro de Cobros</h2>
+                      <div class="leyenda">
+                        <p> 
+                            Filtro:
+                            </br>
+                            {% for filt in filtro %}
+                            {{ filt }}
+                            </br>
+                            {% endfor %}
+                        </p>
+                     </div>
+                   </div>
+                </div>
+            </div>
+            <div class="titleview2">
+                <span>&nbsp;</span>
+                <span class="right">
+                    <a href="{% url pdfcliente %}" id="printer"><img src="/comerciax/media/img/pdf.png"></a>
+                    <a href="#" class="imprimir" ><img src="/comerciax/media/img/printer.png"></a>
+                </span>
+                <div class="line2"></div>
+            </div>
+            <div class="table">
+               
+               
+                {% for filas in resultado %}
+                
+                        {% if filas.cliente  %}
+                        <table cellpadding="0" cellspacing="0" border="0" class="display" id="example" style="width:100%;">
+                            <thead>
+                                <tr>
+                                    <th style="" colspan=6><em>{{ filas.cliente }}</em></th>
+                                </tr>
+                                <tr>
+                                    <th style="width:260px" rowspan=1>Nro. Pago</th>
+                                    <th style="width:60px" rowspan=1>Fecha</th>
+                                    <th style="width:50px" rowspan=1>Moneda</th>
+                                    <th style="width:60px" rowspan=1>Forma Pago</th>
+                                    <th style="width:20px;text-align: left" rowspan=1>Importe</th>
+                                    <th style="width:20px;text-align: left" rowspan=1>Dep&oacute;sito Adelantado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    {% else %}
+                               {% if filas.encab_fact %}
+                                 <tr>
+                                   <td style="width:20px;text-align: right;font-weight:bold">Nro. Factura</td>
+                                   <td style="width:20px;text-align: lefth;font-weight:bold">Fecha</td>
+                                   <td style="width:20px;text-align: right;font-weight:bold">Imp. Pagado</td>
+                                   <td>&nbsp;</td>
+                                   <td>&nbsp;</td>
+                                   <td>&nbsp;</td>
+                                </tr>
+                               {% else %}
+                               {% if filas.factura_nro %}
+                               <tr>
+                                   <td style="text-align: right">{{ filas.factura_nro }}</td>
+                                   <td style="text-align: lefth" >{{ filas.fechafact|date:"d/m/Y" }}</td>
+                                   <td style="text-align: right" >{{ filas.pagado }}</td>
+                                   <td>&nbsp;</td>
+                                   <td>&nbsp;</td>
+                                   <td>&nbsp;</td>
+                                </tr>
+                               {% else %}
+                               <tr>
+                                   <td >{{ filas.pago_nro }}</td>
+                                   <td >{{ filas.fecha|date:"d/m/Y" }}</td>
+                                   <td >{{ filas.moneda }}</td>
+                                   <td >{{ filas.forma_pago }}</td>
+                                   <td class="filai">{{ filas.importe_pagado }}</td>
+                                   <td class="filai">{{ filas.deposito_adelantado }}</td>
+                                </tr>
+                                {% endif %}
+                                {% endif %}
+                           
+                    {% endif %}
+                    
+                {% endfor %}
+                </tbody>
+                <br/>
+                </br>
+                </table>
+                <br/>
+                </br>
+            </div>
+  </div>       
+    <!-- End Content -->
+</div>
+{% endblock %}

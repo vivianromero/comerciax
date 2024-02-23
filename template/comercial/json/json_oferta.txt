@@ -1,0 +1,29 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for ofer in querySet %}
+    [
+    	"{{ofer.doc_oferta.id_doc}}",
+    	"{{ofer.oferta_nro}}",
+    	"{{ofer.cliente.nombre}}",
+    	"{{ofer.doc_oferta.fecha_doc|date:"d/m/Y"}}",
+    	{% if ofer.oferta_tipo == "A" %}
+           "Ajuste"
+        {% else %}
+    		{% if ofer.oferta_tipo == "O" %}
+                "Otro"
+         	{% else %}
+           		"Venta"
+    	 	{% endif %}
+    	 {% endif %}
+ 	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}
+
+

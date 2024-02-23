@@ -1,0 +1,19 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for transferencia in querySet %}
+    [
+    	"{{transferencia.doc_transferencia.id_doc}}",
+    	"{{transferencia.transferencia_nro}}",
+    	"{{transferencia.doc_transferencia.fecha_doc|date:"d/m/Y"}}",
+    	"{{transferencia.destino.nombre}}",
+        "{{transferencia.cerrada|yesno:_("Si,No")}}"
+	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}

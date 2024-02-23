@@ -1,0 +1,19 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for cr in querySet %}
+    [
+    	"{{cr.doc_entregarechazado.id_doc}}",
+    	"{{cr.entregarechazado_nro}}",
+    	"{{cr.cliente}}",
+    	"{{cr.doc_entregarechazado.fecha_doc|date:"d/m/Y"}}"
+ 	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}
+

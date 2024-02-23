@@ -1,0 +1,193 @@
+{% extends "form/form_edit.html" %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.maskedinput-1.3.min.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.validate.min.js"></script>
+{% endblock %}
+
+{% block js_code %}
+
+function valida_totales() 
+{ 
+   
+   pc=parseInt(document.getElementById('id_plan_contratado').value)
+   if(isNaN(pc))
+   	 pc = 0
+   enero=parseInt(document.getElementById('id_plan_enero').value)
+   if(isNaN(enero))
+   	 enero = 0
+   febrero=parseInt(document.getElementById('id_plan_febrero').value)
+   if(isNaN(febrero))
+   	 febrero = 0
+   marzo=parseInt(document.getElementById('id_plan_marzo').value)
+   if(isNaN(marzo))
+   	 marzo = 0
+   abril=parseInt(document.getElementById('id_plan_abril').value)
+   if(isNaN(abril))
+   	 abril = 0
+   mayo=parseInt(document.getElementById('id_plan_mayo').value)
+   if(isNaN(mayo))
+   	 mayo = 0
+   junio=parseInt(document.getElementById('id_plan_junio').value)
+   if(isNaN(junio))
+   	 junio = 0
+   julio=parseInt(document.getElementById('id_plan_julio').value)
+   if(isNaN(julio))
+   	 julio = 0
+   agosto=parseInt(document.getElementById('id_plan_agosto').value)
+   if(isNaN(agosto))
+   	 agosto = 0
+   septiembre=parseInt(document.getElementById('id_plan_septiembre').value)
+   if(isNaN(septiembre))
+   	 septiembre = 0
+   octubre=parseInt(document.getElementById('id_plan_octubre').value)
+   if(isNaN(octubre))
+   	 octubre = 0
+   noviembre=parseInt(document.getElementById('id_plan_noviembre').value)
+   if(isNaN(noviembre))
+   	 noviembre = 0
+   diciembre=parseInt(document.getElementById('id_plan_diciembre').value)
+   if(isNaN(diciembre))
+   	 diciembre = 0
+   suma=enero+febrero+marzo+abril+mayo+junio+julio+agosto+septiembre+octubre+noviembre+diciembre
+   if (suma == 0){
+   	 document.getElementById('id_valida_total').value=pc
+   }
+   else{
+     document.getElementById('id_valida_total').value=suma
+   }
+} 
+    
+ $(document).ready(function(){
+    $("#id_codigo").mask("999.9.?********");
+    $(".formulario").validate({
+        rules: {
+            plan_contratado: {
+                required: true,
+                equalTo:  "#id_valida_total"
+            },
+            
+        },
+        messages: {
+            plan_contratado: {
+                
+                equalTo: "Debe ser igual al desglose por meses"
+            },
+        }
+        });
+    
+    var aa1 = $('element-canel-link > a').context.URL.split('/')
+    	var long = aa1.length
+    	var idcont = aa1[long-2]
+    	var url = "{% url obteneranos_list2 %}"+idcont+"/1" ;
+        a1=20
+           $.ajax({
+            url:url,
+            dataType:'json',
+            success: function(data) {
+                var ax=5
+                var options = '<option value="">---------</option>';
+                for (var i = 0; i < data.length; i++){
+                    a1='<option value="'+data[i][0]+'">'
+                    a1+=  data[i][1] + '</option>'
+                    options += '<option value="'+data[i][0]+'">' + data[i][1] + '</option>'
+                }
+                
+                $('#id_anoplan').html(options)
+                $("#id_anoplan option:first").attr('selected', 'selected');
+                
+              } 
+            }); //llamada ajax
+    
+    $("#id_organismo").change(function(e){
+        e.preventDefault();
+        var idorg = $(this).val();
+        if(idorg == "" || idorg == null)
+        {
+          $("#id_union").empty();
+          $("#id_union").attr('disabled','disabled');
+          $("#id_union").removeClass('required');
+        }
+        else
+        {
+            var ira = "{% url get_uniones2 %}" + idorg +"/" ;
+            $.ajax({
+                url:ira,
+                dataType:'json',
+                success: function(data) {
+                   if(data.length > 0)
+                   {
+                       $("#id_union").addClass('required');
+                       $("#id_union").removeAttr('disabled');
+                       var op = '<option value="">---------</option>';
+                       $.each(data, function(key, val) { 
+                            // val is { pk, model, {fields}}
+                            op += '<option value="' + val.pk +'">' + val.fields.descripcion +'</option>'; 
+                        });
+                        $("#id_union").html(op);
+                   }
+                   else
+                   {
+                        $("#id_union").empty();
+                        $("#id_union").attr('disabled','disabled');
+                        $("#id_union").removeClass('required');
+                   } 
+                  } 
+            }); //llamada ajax
+        } //else
+    })
+    
+    $("#id_anoplan").change(function(e){
+        e.preventDefault();
+        var aa1 = $('element-canel-link > a').context.URL.split('/')
+    	var long = aa1.length
+    	var idcont = aa1[long-2]
+    	var idano = $(this).val();
+        var ira = "{% url get_datosplan2 %}" + idcont +"/"+idano+"/" ;
+            $.ajax({
+                url:ira,
+                dataType:'json',
+                success: function(data) {
+                   if(data.length > 0)
+                   {
+                     document.getElementById('id_plan_contratado').value=data[0].fields.plan_contratado;
+                     document.getElementById('id_valida_total').value=data[0].fields.plan_contratado;
+                     document.getElementById('id_plan_enero').value=data[0].fields.plan_enero;
+                     document.getElementById('id_plan_febrero').value=data[0].fields.plan_febrero; 
+                     document.getElementById('id_plan_marzo').value=data[0].fields.plan_marzo;
+                     document.getElementById('id_plan_abril').value=data[0].fields.plan_abril; 
+                     document.getElementById('id_plan_mayo').value=data[0].fields.plan_mayo; 
+                     document.getElementById('id_plan_junio').value=data[0].fields.plan_junio; 
+                     document.getElementById('id_plan_julio').value=data[0].fields.plan_julio; 
+                     document.getElementById('id_plan_agosto').value=data[0].fields.plan_agosto; 
+                     document.getElementById('id_plan_septiembre').value=data[0].fields.plan_septiembre; 
+                     document.getElementById('id_plan_octubre').value=data[0].fields.plan_octubre; 
+                     document.getElementById('id_plan_noviembre').value=data[0].fields.plan_noviembre; 
+                     document.getElementById('id_plan_diciembre').value=data[0].fields.plan_diciembre; 
+                      
+                   }
+                   else{
+                     document.getElementById('id_plan_contratado').value="";
+                     document.getElementById('id_valida_total').value="";
+                     document.getElementById('id_plan_enero').value="0";
+                     document.getElementById('id_plan_febrero').value="0"; 
+                     document.getElementById('id_plan_marzo').value="0";
+                     document.getElementById('id_plan_abril').value="0"; 
+                     document.getElementById('id_plan_mayo').value="0"; 
+                     document.getElementById('id_plan_junio').value="0"; 
+                     document.getElementById('id_plan_julio').value="0"; 
+                     document.getElementById('id_plan_agosto').value="0"; 
+                     document.getElementById('id_plan_septiembre').value="0"; 
+                     document.getElementById('id_plan_octubre').value="0"; 
+                     document.getElementById('id_plan_noviembre').value="0"; 
+                     document.getElementById('id_plan_diciembre').value="0";
+                   }
+                   
+                  } 
+            }); //llamada ajax
+
+    })    
+    
+ }); 
+    
+{% endblock %}

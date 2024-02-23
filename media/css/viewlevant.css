@@ -1,0 +1,133 @@
+@CHARSET "ISO-8859-1";
+
+/* ALL */
+.wrapper{
+	margin: 0 20px;
+	color: #464646;
+}
+/* END ALL*/
+
+/* Levantamiento */
+.botones{
+	height: 30px;
+}
+
+	/* BOTONES CAMBIO ESTADO*/
+	
+	.btnestado a {
+		display:block;
+		float:left;
+		height:24px;
+		background:url(../img/button_normal_right.gif) no-repeat top right;
+		text-align: center;
+		padding-right:10px;
+		font-family: Tahoma, sans-serif;
+		color:#113a63;
+		font-size:12px;
+		text-decoration: none;
+		margin-left:10px;
+	}
+	
+	.btnestado a span {
+		background:url(../img/button_normal_left.gif) no-repeat;
+		display:block;
+		line-height:24px;
+		padding-left:10px;
+		padding-right:0px;
+	}
+	/* FIN BOTONES */
+
+.data{ background:#ededed; float:left; width: 100%; margin-bottom:10px;}
+
+.item{
+	display:inline-block; 
+	list-style:none outside none;
+	margin:0;
+	padding:3px;
+}
+
+.titleview, .data-wraper{ margin:5px 10px 10px;}
+
+.titleview span,.titleview2 span{
+	color:#464646;
+	font-family:"Times New Roman",Times,serif;
+	font-size:18px;
+	font-style:italic;
+}
+.titleview2 span a {
+	color:#77A6BF;
+	font-family:Verdana,Times,serif;
+	font-size:12px;
+	font-style:normal;
+	text-decoration:none;
+}
+
+.titleview2 span.right{
+	float:right;
+}
+.line2  {
+border:1px solid #77A6BF;
+
+}
+	
+.data-left,.data-rigth{
+	float:left;
+	margin:0;
+	overflow:hidden;
+	padding:0;
+	width: 50%;
+}
+
+.data-left span.label,.data-rigth span.label{
+	font-weight: bold;
+	display:inline-block;
+	line-height:1.8;
+	vertical-align:top;
+	width:140px;
+}
+
+.data-left span.value,.data-rigth span.value{
+	float:right;
+margin:2px 0 0 2px;
+width:280px;
+}
+
+.docdig-wraper{
+	clear: both;
+	padding-top:20px;
+}
+
+
+.table{
+	min-width: 50%;
+	margin-left: 10px;
+	margin-right: 10px;
+}
+.table tr.cerrado{
+	background-color:#fcdad2;
+}
+.ccancel{
+	color:red;
+}
+
+.table table thead th {
+	border-bottom:1px solid black;
+	font-weight:bold;
+	padding:3px 18px 3px 10px;
+	color:#464646;
+	text-align: left;
+}
+.table table tbody td {
+	font-size:12px;
+	border-bottom:1px solid #cccccc;
+	padding:3px 10px;
+}
+/* FIN Levantamiento */
+
+/*############################################################*/
+/*			BOTONES JQUERY-UI								  */
+/*############################################################*/
+
+#acciones a{
+	display:table-cell;
+}

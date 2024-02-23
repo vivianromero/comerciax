@@ -1,0 +1,18 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for devolucion in querySet %}
+    [
+    	"{{devolucion.doc_devolucion.id_doc}}",
+    	"{{devolucion.devolucion_nro}}",
+    	"{{devolucion.cliente}}",
+    	"{{devolucion.doc_devolucion.fecha_doc|date:"d/m/Y"}}"
+ 	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}

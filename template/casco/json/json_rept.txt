@@ -1,0 +1,18 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for rptext in querySet %}
+    [
+    	"{{rptext.doc_ptexternos.id_doc}}",
+    	"{{rptext.ptexternos_nro}}",
+    	"{{rptext.doc_ptexternos.fecha_doc|date:"d/m/Y"}}",
+    	"{{rptext.cliente.nombre}}"
+	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}

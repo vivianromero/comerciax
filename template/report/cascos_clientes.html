@@ -1,0 +1,133 @@
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-1.4.2.min.js"></script>
+{% endblock %}
+
+<script type="application/javascript" >
+    $(document).ready(function() {
+                                  
+        //window.print();                           
+        $('.imprimir').click(function() {
+             window.print();
+        });                                   
+     });
+</script>
+<style>
+    @media print
+    {
+        #top_btns {
+            display:none;
+        }
+    }
+
+</style>
+ 
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/fact.css">
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/print.css">
+{% endblock %}
+
+{% block main-content %}
+    
+<div style="width:100%;">
+    <!-- Content Here --> 
+     <div class="content">
+        <div id="top_btns" class="row">
+            <div class="titleview2">
+            <span>Vista previa de: Cascos por Cliente</span>
+                        <span class="right">
+                            <a href="#" target="_new" class="imprimir" ><img src="/comerciax/media/img/printer.png"></a>
+                        </span>
+                <div class="line2"></div>
+            </div>
+        </div>
+        {% if error2 %}
+            <div class="ui-state-error">
+               <ul>
+                    {% for error in error2 %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+               </ul> 
+            </div>
+        {% endif %}      
+        <div class="docdig-wraper" id="detalles"> <!-- Detalles -->
+            <div class="criterio">
+                <div class="fecha">
+                     <p>Fecha de emisi&oacute;n:   {% now "d/m/Y P" %}</p> 
+                </div>
+                <div style="padding:5px 10px;margin-bottom: 5px;">
+                  <img src="/comerciax/media/img/logo111.png" class="loguo" style="float: left;" />
+                  <div id="textencb" style="margin-left: 250px;">
+                      <h2 style="margin-bottom:0px;">Cascos x Clientes</h2>
+                      <div class="leyenda">
+                        <p> 
+                            Filtro:
+                            </br>
+                            {% for filt in filtro %}
+                            {{ filt }}
+                            </br>
+                            {% endfor %}
+                        </p>
+                     </div>
+                   </div>
+                </div>
+            </div>
+            <div class="titleview2">
+                <span>&nbsp;</span>
+                <div class="line2"></div>
+            </div>
+            
+                <div class="table">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example" style="width:100%;">
+                <thead>
+                        <tr>
+                            <th style="" >Organismo</th>
+                            <th style="" >Provincia</th>
+                            <th style="" >Cliente</th>
+                            {% if not particular %}
+                                <th style="" >C&oacute;digo</th>
+                            {% else %}
+                            	<th style="" >C.I</th>
+                            {% endif %}
+                            <th style="" >Nro. Casco</th>
+                            <th style="" >Medida</th>
+                            <th style="" >Docum. entrada</th>
+                            <th style="" >Fecha entrada</th>
+                            <th style="" >Estado Actual</th>
+                        </tr>
+                        
+                    </thead>
+                </div>
+            
+                    <tbody>
+                    
+                        {% for fila in resultado %}
+                            <tr>
+                            	<td>{{ fila.ministerio }}</td>
+                            	<td>{{ fila.provincia }}</td>
+                                <td>{{ fila.nombre }}</td>
+                                <td>{{ fila.codigo }}</td>
+                                <td>{{ fila.casco_nro }}</td>
+                                <td>{{ fila.descripcion }}</td>
+                                <td>{{ fila.recepcioncliente_nro }}</td>
+                                <td>{{ fila.fecha_doc }}</td>
+                                <td>{{ fila.estado_actual }}</td>
+                            </tr>
+                        {% endfor %}
+                            
+                    </tbody>
+                </table>
+            </div>
+           
+            </div>
+            <div>
+               <p>** Clientes del sector no estatal</p> 
+               
+            </div>
+        </div>
+         
+    <!-- End Content -->
+</div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "form/form.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.validate.min.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-ui-1.8.7.js"></script>
+{% endblock %}
+
+{% block js_code %}
+
+$(document).ready(function() {
+                              
+    $(".formulario").validate();  
+    
+ });
+
+
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+{% endblock %}
+
+{% block controller-name %}{{ controlador }}{% endblock %}
+
+{% block side-menu %}
+    <ul>
+        <li><a href="{% url cliente %}">Index</a></li>
+        <li><a href="{% url editcliente idcliente=cliente_id %}">Editar</a></li>
+        <li><a href="#" class="delete">Eliminar</a></li>
+    </ul>
+{% endblock %}
+
+{% block form_form %}
+    <form class="formulario" action="{{ accion }}" method="post">
+        <div class="zend_form">
+            <p class="element-group">
+                <div class="table">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
+                    <thead>
+                        <tr>
+                        <th></th>   
+                        	<th>Seleccionar</th>                                                             
+                            <th>N&uacute;mero</th>
+                            <th>Vigencia</th>
+                            <th>Vencimineto</th>
+                            <th>Cliente</th>
+                            <th>Provincia</th>
+                            
+                        </tr>
+                    </thead>
+            <tbody>
+                      
+                  {% for filas in contratos %}
+                      <tr>
+                          <td><a href="{% url viewcontratoselecc idcliente=filas.cliente.id idcontrato=filas.contrato.id_contrato %}">ver</a></td>
+                          <td>
+                              <div class="ui-corner-all" id={{ filas.contrato.contrato_nro }}>
+                                <input name='radiosel' id={{ filas.contrato.contrato_nro }} type='radio'  value={{ filas.contrato.id_contrato }}>                                 
+                              </div>
+                          </td>
+                          <td>{{ filas.contrato.contrato_nro }}</td>
+                          <td>{{ filas.contrato.fecha_vigencia }}</td>
+                          <td>{{ filas.contrato.fecha_vencimiento }}</td>
+                          <td>{{ filas.cliente.nombre }}</td>
+                          <td>{{ filas.cliente.provincia }}</td>
+                          
+                      </tr>
+                  {% endfor %}
+              
+                 </tbody>
+             </table>
+         </div>
+      </p>
+                <p class="submit-group">
+                    <input type="submit" name="submit" id="submit" class="submit" value="Salvar">
+                    <span class="element-canel-link"><a href= {{ cancelbtn }}>Cancelar</a></span>
+                </p>
+        </div>
+    </form>
+{% endblock %}
+

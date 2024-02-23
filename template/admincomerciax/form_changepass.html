@@ -1,0 +1,64 @@
+{% extends "form/form.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.validate.min.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-ui-1.8.7.js"></script>
+{% endblock %}
+
+{% block js_code %}
+ $(function(){
+         $(".formulario").validate({
+            rules: {
+           
+            clave_nueva: {
+                required: true,
+                minlength: 6
+            },
+            confirmar_clave: {
+                required: true,
+                minlength: 6,
+                equalTo: "#id_clave_nueva"
+            },
+            clave_actual: {
+                required: true,
+            }
+        },
+        messages: {
+            clave_nueva: {
+                required: "Por favor introduzca una clave",
+                minlength: "Su clave debe ser de al menos 6 caracteres de largo"
+            },
+            confirmar_clave: {
+                required: "Por favor introduzca una clave",
+                minlength: "Su clave debe ser de al menos 6 caracteres de largo",
+                equalTo: "Por favor introduzca la clave igual a la anterior"
+            },
+            clave_actual: "Por favor introduzca un valor",
+        }
+            });
+
+    }); 
+ 
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+{% endblock %}
+
+{% block controller-name %}{{ controlador }}{% endblock %}
+
+{% block form_form %}
+    <form class="formulario" action="{{ accion }}" method="post">
+        <div class="zend_form">
+                <p class="element-group">
+                    <input id="id_idusuario" type="hidden" value="{{ idusuario }}" name="idusuario">
+                </p>
+                {% include "form/form_snippet.html" %}
+                
+                <p class="submit-group">
+                    <input type="submit" name="submit1" id="submit" class="submit" value="Salvar">
+                    <span class="element-canel-link"><a href={{ cancelbtn }}>Cancelar</a></span>
+                </p>
+        </div>
+    </form>
+{% endblock %}

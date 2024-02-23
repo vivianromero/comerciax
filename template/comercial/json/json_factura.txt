@@ -1,0 +1,43 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for fact in querySet %}
+    [
+    	"{{fact.doc_factura.id_doc}}",
+    	{% if fact.confirmar == 1 %}
+    		"{{fact.factura_nro}}",
+    	{% else %}
+    	    "  ",
+    	{% endif %}
+    	"{{fact.cliente.nombre}}",
+    	"{{fact.doc_factura.fecha_doc|date:"d/m/Y"}}",
+    	{% if fact.tipo == "A" %}
+           "Ajuste",
+        {% else %}
+    		{% if fact.tipo == "O" %}
+                "Otro",
+         	{% else %}
+         	  {% if fact.tipo == "K" %}
+           		"Vulca",
+           	  {% else %}
+           	    {% if fact.tipo == "R" %}
+           		    "Regrabable",
+           	     {% else %}
+           	        "Venta"
+           	      {% endif %}
+           	  {% endif %}
+    	 	{% endif %}
+    	 {% endif %}
+    	 "{{fact.cancelada|yesno:_("Si,No")}}",
+    	 "{{fact.confirmar|yesno:_("Si,No")}}"
+    	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}
+
+

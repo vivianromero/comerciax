@@ -1,0 +1,20 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for empresa in querySet %}
+    [
+    	"{{empresa.id}}",
+    	"{{empresa.codigo}}",
+    	"{{empresa.nombre}}",
+    	"{{empresa.direccion}}",
+    	"{{empresa.telefono}}",
+    	"{{empresa.fax}}"
+	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}

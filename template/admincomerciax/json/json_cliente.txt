@@ -1,0 +1,25 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for clientex in querySet %}
+      
+    [
+    	"{{clientex.id}}",
+    	"{{clientex.codigo}}",
+    	"{{clientex.nombre}}",
+    	"{{clientex.organismo.siglas_organismo}}",
+    	"{{clientex.provincia.descripcion_provincia}}",
+    	"{{clientex.get_contrato_nro}}",
+    	"{{clientex.direccion}}",
+    	"{{clientex.telefono}}",
+    	"{{clientex.fax}}",
+    	"{{clientex.get_idcontrato}}"
+	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}

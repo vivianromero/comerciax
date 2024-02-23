@@ -1,0 +1,226 @@
+{% extends "form/form.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.validate.min.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-ui-1.8.7.js"></script>
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.ui.datepicker-es.js"></script>
+{% endblock %}
+
+{% block js_code %}
+
+ $(function(){
+    var pickerOpts = {
+            dateFormat:"dd/mm/yy",
+            changeMonth: true,
+            changeYear: true
+     };
+        $(".formulario").validate();
+        $(".date").datepicker(pickerOpts);
+        
+
+    $("#id_cliente").change(function(e){
+        e.preventDefault();
+        var idcli = $(this).val();
+        if(idcli == "" || idcli == null)
+        {
+          $("#id_nro").removeAttr('disabled');
+          $("#id_tipo").removeAttr('disabled');
+          $("#id_cerrado").removeAttr('disabled');
+          $("#id_preciocup").removeAttr('disabled');
+          $("#id_preciocuc").removeAttr('disabled');
+          $("#id_dias").removeAttr('disabled');
+        }
+        else
+        {
+          $("#id_nro").attr('disabled','disabled');
+          $("#id_tipo").attr('disabled','disabled');
+          $("#id_cerrado").attr('disabled','disabled');
+          $("#id_preciocup").attr('disabled','disabled');
+          $("#id_preciocuc").attr('disabled','disabled');
+          $("#id_dias").attr('disabled','disabled');
+          
+        }
+    })
+        
+        $("#id_nro").change(function(e){
+        e.preventDefault();
+        var idcli = $(this).val();
+        if(idcli == "" || idcli == null)
+        {
+          $("#id_cliente").removeAttr('disabled');
+          $("#id_tipo").removeAttr('disabled');
+          $("#id_cerrado").removeAttr('disabled');
+          $("#id_preciocup").removeAttr('disabled');
+          $("#id_preciocuc").removeAttr('disabled');
+          $("#id_dias").removeAttr('disabled');
+        }
+        else
+        {
+          $("#id_cliente").attr('disabled','disabled');
+          $("#id_tipo").attr('disabled','disabled');
+          $("#id_cerrado").attr('disabled','disabled');
+          $("#id_preciocup").attr('disabled','disabled');
+          $("#id_preciocuc").attr('disabled','disabled');
+          $("#id_dias").attr('disabled','disabled');
+          
+        }
+    })
+    
+        
+    $('#id_organismo,#id_provincia').change(function(e) {
+        e.preventDefault();
+        //var organismo = $(this).val();
+        var organismo = document.getElementById('id_organismo').value
+        var provincia = document.getElementById('id_provincia').value
+        if (organismo=="")
+        {
+         organismo=0;
+         }
+         if (provincia=="")
+        {
+         provincia=0;
+         }
+        //fecha.split("/").join("-")
+        var url = "{% url obtenerclientes_list2 %}" + organismo + "/"+provincia+"/2";
+        a1=20
+           $.ajax({
+            url:url,
+            dataType:'json',
+            success: function(data) {
+                
+                var options = '<option value="">---------</option>';
+                for (var i = 0; i < data.length; i++){
+                    a1='<option value="'+data[i]["id"]+'">'
+                    a1+=  data[i]["nombre"] + '</option>'
+                    options += '<option value="'+data[i]["id"]+'">' + data[i]["codigo"] +" | "+ data[i]["nombre"] + '</option>'
+                }
+                
+                $('#id_cliente').html(options)
+                $("#id_cliente option:first").attr('selected', 'selected');
+                
+              } 
+            }); //llamada ajax 
+         });
+         
+    $('#id_cliente').change(function(e) {
+      e.preventDefault();
+      var med = $(this).val();
+      var url = "{% url detalleeliminar_list2 %}" + med + "/{{ tipo }}/" ;
+           $.ajax({
+            url:url,
+            dataType:'json',
+            success: function(data) {
+               if(typeof(data.error) == "undefined")
+               {
+                   $("#example tbody tr").remove() //limpiar todas las filas de la tabla
+                   $.each(data, function(key, val) { 
+                        // val is { pk, model, {fields}}
+                        $("#example tbody").append(
+                                "<tr>\n" +
+                                    "<td>"+
+                                        "<div class='ui-corner-all' class='1'>"+
+                                            "<input name='" + val.pk + "' type='checkbox'>"+                                 
+                                        "</div>"+
+                                    "</td>\n"+
+                                    "<td>" + val.casco_nro +"</td>\n" +
+                                    "<td>" + val.medida +"</td>\n" +
+                                    "<td>" + val.dias +"</td>\n" +
+                                    
+                         "</tr>\n");                          
+                    });
+               }
+               else
+               {
+                    //mostrar error mandado del servidor
+                    alert(data.message);
+               } 
+              } 
+            }); //llamada ajax 
+    });
+    }); 
+
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+{% endblock %}
+
+{% block controller-name %}{{ controlador }}{% endblock %}
+
+{% block side-menu %}
+    <ul>
+        <li><a href="#" class="delete">Eliminar</a></li>
+    </ul>
+{% endblock %}
+
+{% block form_form %}
+    <form class="formulario" action="{{ accion }}" method="post">
+        <div class="zend_form">
+                <p class="element-group">
+                      <label for="organismo">Organismo</label>
+                        <select id="id_organismo" class="organismochange"  name="organismo">
+                            <option selected="selected" value="">---------</option>
+                            {% for optorganismo in arrorganismo %}
+                              <option value={{optorganismo.id}}>{{optorganismo.siglas_organismo}} </option>
+                            {% endfor %}
+                        </select>
+                </p>
+
+				<p class="element-group">
+                      <label for="provincia">Provincia</label>
+                        <select id="id_provincia" class="provinciachange"  name="provincia">
+                            <option selected="selected" value="">---------</option>
+                            {% for optprovincia in arrprovincia %}
+                              <option value={{optprovincia.codigo_provincia}}>{{optprovincia.descripcion_provincia}} </option>
+                            {% endfor %}
+                        </select>
+                </p>
+                
+                <p class="element-group">
+                      <label for="cliente">Cliente</label>
+                        <select id="id_cliente" class="clientechange"  name="cliente">
+                            <option selected="selected" value="">---------</option>
+                            {% for optpcliente in arrcliente %}
+                              <option value={{optcliente.id}}>{{optcliente.nombre}} </option>
+                            {% endfor %}
+                        </select>
+                </p>
+
+            <p class="element-group">
+                <div class="table">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
+                    <thead>
+                        <tr>
+                        <th></th>                                                                
+                            <th>N&uacute;mero</th>
+                            <th>Medida</th>
+                            <th>D&iacute;as</th>
+                            </tr>
+                    </thead>
+            <tbody>
+                     {% for filas in elementos_detalle %}
+                        <tr>
+                        <td>
+                            <div class="ui-corner-all" id="1">
+                                <input name={{ filas.id_casco }} type='checkbox'  >                                 
+                            </div>
+                        </td>
+                        <td>{{ filas.casco_nro }}</td>
+                        <td>{{ filas.producto }}</td>
+                        <td>{{ filas.get_dias }}</td>
+                        </tr>
+                     {% endfor %}
+            </tbody>
+            </table>
+            </div>
+            </p>
+                      
+                <p class="submit-group">
+                    <input type="submit" name="submit" id="submit" class="submit" value="Eliminar">
+                    <span class="element-canel-link"><a href= {{ cancelbtn }}>Cancelar</a></span>
+                </p>
+      
+        </div>
+    </form>
+{% endblock %}
+

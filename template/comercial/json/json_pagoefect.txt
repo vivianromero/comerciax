@@ -1,0 +1,22 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for pagos in querySet %}
+    [
+    	"{{pagos.id_pago}}",
+    	"{{pagos.pagosefectivo.nombre}}",
+    	"{{pagos.pagosefectivo.ci}}",
+    	"{{pagos.fecha_pago|date:"d/m/Y"}}",
+    	"{{pagos.tipo_moneda.descripcion}}",
+    	"{{pagos.format_importe}}",
+    	"{{pagos.format_deposito_adelantado}}"
+ 	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}
+

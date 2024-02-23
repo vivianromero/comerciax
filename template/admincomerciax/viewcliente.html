@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Clientes{% endblock %}
+
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery.simplemodal.1.4.min.js"></script>
+{% endblock %}
+
+{% block js_code %}
+ $(document).ready(function() {
+  $('#confirm-dialog input.confirm, #confirm-dialog a.confirm, a.delete').click(function (e) {
+        e.preventDefault();
+
+        // example of calling the confirm function
+        // you must use a callback function to perform the "yes" action
+        confirm("Desea eliminar el cliente " + ' "' + "{{ cliente_nombre }}" + ' y todos sus contratos"' , function () {
+            window.location.href = "{% url delcliente idcliente=cliente_id %}";
+        });
+    }); 
+   
+   $('a.addcon').live("click",function(e){
+        e.preventDefault();
+        if (typeof $("span.cerrado")[0] !== 'undefined')
+        {
+            var exist = $("span.cerrado")[0].innerHTML;
+            if (exist > 0)
+            {
+               messaje("No se puede Adicionar contrato, porque existe uno vigente, debe cancelarlo primero" , function () {
+                    
+               });
+            }
+            else
+            {
+                window.location.href = "{% url contratoadd idcliente=cliente_id %}";
+            }
+        }
+        else
+        {
+          window.location.href = "{% url contratoadd idcliente=cliente_id %}";
+        } 
+    });
+    
+   $('a.addcon1').live("click",function(e){
+        e.preventDefault();
+        if (typeof $("span.cerrado")[0] !== 'undefined')
+        {
+            var exist = $("span.cerrado")[0].innerHTML;
+            if (exist > 0)
+            {
+               messaje("No se puede Adicionar contrato, porque existe uno vigente, debe cancelarlo primero" , function () {
+                    
+               });
+            }
+            else
+           {
+                window.location.href = "{% url contratoexiste idcliente=cliente_id %}";
+            }
+        }
+        else
+        {
+          window.location.href = "{% url contratoexiste idcliente=cliente_id %}";
+        } 
+    });    
+ });
+ 
+function confirm(message, callback) {
+    $('#confirm').modal({
+        closeHTML: "<a href='#' title='Close' class='modal-close'>x</a>",
+        position: ["20%",],
+        overlayId: 'confirm-overlay',
+        containerId: 'confirm-container', 
+        onShow: function (dialog) {
+            $('.message', dialog.data[0]).append(message);
+
+            // if the user clicks "yes"
+            $('.yes', dialog.data[0]).click(function () {
+                // call the callback
+                if ($.isFunction(callback)) {
+                    callback.apply();
+                }
+                // close the dialog
+                $.modal.close();
+            });
+        }
+    });
+};
+function messaje(message, callback) {
+    $('#info').modal({
+        closeHTML: "<a href='#' title='Close' class='modal-close'>x</a>",
+        position: ["20%",],
+        overlayId: 'confirm-overlay',
+        containerId: 'confirm-container', 
+        onShow: function (dialog) {
+            $('.message', dialog.data[0]).append(message);
+        }
+    });
+}
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/confirm.css">
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/ui-lightness/jquery-ui-1.7.2.custom.css">
+{% endblock %}
+
+{% block controller-name %}Cliente{% endblock %}
+
+{% block side-menu %}
+    <ul>
+        <li><a href="{% url cliente %}">Index</a></li>
+        {% if perms.admincomerciax.change_cliente %}
+        	<li><a href="{% url editcliente idcliente=cliente_id %}">Editar</a></li>
+        	<li><a href="#" class="delete">Eliminar</a></li>
+        {% endif %}
+    </ul>
+{% endblock %}
+
+{% block main-content %}
+        <div id='confirm'>
+            <div class='header'><span>Confirmar</span></div>
+            <div class='message'></div>
+            <div class='buttons'>
+                <div class='no simplemodal-close'>No</div><div class='yes'>S&iacute;</div>
+            </div>
+        </div>
+        <div id='info'>
+            <div class='header'><span>Informaci&oacute;n</span></div>
+            <div class='message'></div>
+            <div class='buttons'>
+                <div class='no simplemodal-close'>OK</div>
+            </div>
+        </div>
+
+    <div class="botones">
+            <ul>
+                 {% if perms.admincomerciax.change_cliente %}
+                <li>
+                    <a href="{% url editcliente idcliente=cliente_id %}"><span>Editar</span></a>
+                </li>
+                <li>
+                    <a href="#" class="delete"><span>Eliminar</span></a>
+                </li>
+                {% endif %}
+                <li>
+                    <a href="{% url cliente %}" ><span>Regresar</span></a>
+                </li>
+            </ul>
+    </div>
+    
+    {% if error2 %}
+        <div class="ui-state-error">
+           <ul>
+                <li>{{ error2 }}</li>
+            </ul> 
+        </div>
+    {% endif %}
+    
+<div style="width:100%;">
+    <!-- Content Here -->
+        <div class="data">
+            <div class="data-wraper"> <!-- DATOS GENERALES -->
+                <div class="data-left">
+                    <div class="item">
+                        <span class="label">C&oacute;digo:</span>
+                        <span class="value">{{ codigo }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Email:</span>
+                        <span class="value">{{ email }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Tel&eacute;fono:</span>
+                        <span class="value">{{ telefono }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Direcci&oacute;n:</span>
+                        <span class="value">{{ direccion }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Externo:</span>
+                        <span class="value">{{ externo }}</span>
+                     </div>
+                </div>
+                 <div class="data-rigth">
+                    <div class="item">
+                        <span class="label">Nombre:</span>
+                        <span class="value">{{ cliente_nombre }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Fax:</span>
+                        <span class="value">{{ fax }}</span>
+                     </div>
+                      <div class="item">
+                        <span class="label">Provincia:</span>
+                        <span class="value">{{ provincia }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Organismo:</span>
+                        <span class="value">{{ organismo }}</span>
+                     </div>
+                     <div class="item">
+                        <span class="label">Uni&oacute;n:</span>
+                        <span class="value">{{ union }}</span>
+                     </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="docdig-wraper"> <!-- Detalles -->
+            <div class="titleview2">
+                <span>Contratos</span>
+                    {% if perms.admincomerciax.change_contrato %}
+                    <span><a href="{% url contratoadd idcliente=cliente_id %}" class="addcon">+nuevo</a></span>
+                    <span><a href="{% url contratoexiste idcliente=cliente_id %}" class="addcon1">+existente</a></span>
+                    {% endif %}
+                <div class="line2"></div>
+            </div>
+            <div class="table">
+                <table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>No.</th>
+                            <th>Vigencia</th>
+                            <th>Vencimiento</th>
+                            <th>Sucursal MN</th>
+                            <th>Cuenta MN</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                       {% for fila in contratos %}
+                            {% if fila.cerrado %}
+                            <tr class="cerrado">
+                                <td><a href="{% url viewcontrato idcliente=cliente_id idcontrato=fila.contrato.id_contrato %}">ver</a></td>
+                            {% else %}
+                                <span class="cerrado" style="visibility: hidden;">{{a|add:1}}</span>
+                            <tr>
+                                <td><a href="{% url viewcontrato idcliente=cliente_id idcontrato=fila.contrato.id_contrato %}">ver</a></td>
+                            {% endif %}
+                                
+                                <td>{{ fila.contrato.contrato_nro }}</td>
+                                <td>{{ fila.contrato.fecha_vigencia }}</td>
+                                <td>{{ fila.contrato.fecha_vencimiento }}</td>
+                                <td>{{ fila.contrato.sucursal_mn }}</td>
+                                <td>{{ fila.contrato.cuenta_mn }}</td>
+                            </tr>
+                        {% endfor %}                         
+                    </tbody>
+                </table>
+            </div>
+        </div>
+         
+    <!-- End Content -->
+</div>
+
+{% endblock %}

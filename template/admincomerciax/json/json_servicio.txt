@@ -1,0 +1,21 @@
+{
+    "sEcho": {{sEcho}},
+    "iTotalRecords": {{iTotalRecords}},
+    "iTotalDisplayRecords": {{iTotalDisplayRecords}},
+    "aaData":[
+    {% for servicio in querySet %}
+    [
+    	"{{servicio.id}}",
+    	"{{servicio.codigo}}",
+    	"{{servicio.descripcion}}",
+    	"{{servicio.um.descripcion}}",
+    	"{{servicio.precio_mn}}",
+    	"{{servicio.activo|yesno:_("Si,No")}}"
+    	
+	]
+    {% if not forloop.last %}
+    ,
+    {% endif %}
+    {% endfor %}
+    ]
+}

@@ -1,0 +1,496 @@
+{% block js_include %}
+    <script type="text/javascript" SRC="/comerciax/media/js/jquery-1.4.2.min.js"></script>
+{% endblock %}
+
+<script type="application/javascript" >
+    $(document).ready(function() {
+                                  
+        //window.print();                           
+        $('.imprimir').click(function() {
+             window.print();
+        });                                   
+     });
+</script>
+<style>
+    @media print
+    {
+        #top_btns {
+            display:none;
+        }
+    }
+
+</style>
+ 
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/fact.css">
+    <link rel="stylesheet" type="text/css" href="/comerciax/media/css/print.css">
+{% endblock %}
+
+{% block main-content %}
+<div style="width:100%;">
+    <!-- Content Here -->
+        <div class="content">
+        <div id="top_btns" class="row">
+            <div class="titleview2">
+            <span>Vista previa de: FACTURA</span>
+                        <span class="right">
+                            <a href="#"><img src="/comerciax/media/img/pdf.png"></a>
+                            <a href="#" target="_new" class="imprimir" ><img src="/comerciax/media/img/printer.png"></a>
+                        </span>
+                <div class="line2"></div>
+            </div>
+        </div>
+       
+        <div id="top_titular" class="row">
+           <div>
+           {% if cancelada %}
+               <span style="font-weight:bold !important;color:gray ;font-size:60px ;position: absolute;margin-top: 200px; margin-left:35%;display:block; -moz-transform: rotate(-45deg);">Cancelada</span>
+           {% endif %}
+           {% if ajuste %}
+                <span style="font-weight:bold !important;color:gray ;font-size:60px ;position: absolute;margin-top: 200px; margin-left:35%;display:block; -moz-transform: rotate(-45deg);">Ajuste</span>
+           {% endif %}
+           {% if vulca %}
+                <span style="font-weight:bold !important;color:gray ;font-size:60px ;position: absolute;margin-top: 200px; margin-left:35%;display:block; -moz-transform: rotate(-45deg);">Vulca</span>
+           {% endif %}
+           {% if regrabable %}
+                <span style="font-weight:bold !important;color:gray ;font-size:60px ;position: absolute;margin-top: 200px; margin-left:35%;display:block; -moz-transform: rotate(-45deg);">Regrabable</span>
+           {% endif %}
+           
+            <div id="logo-rpt" class="bloque">
+                
+                <img src="/comerciax/media/img/logo111.png" class="loguo" />
+            </div>
+            </div>
+            <div id="titular" class="bloque">
+              <div class="mon-cliente2">
+                
+                <ul>
+                    
+                    <li><span class="label">Factura:</span> {{ factura }} <span class="label tab">C&oacute;digo:</span> {{ titular_codigo }}. </li>
+                    <li><span class="label">Titular:</span> {{ titular_name }}.</li>
+                    <li><span class="label">Direcci&oacute;n:</span> {{ titular_dir }}.</li>
+                    <li>
+                      <span class="label">Telf:</span> {{ titular_phone }} 
+                      <span class="label tab">Email:</span> {{ titular_email }} 
+                      <span class="label tab">Fax:</span> {{ titular_fax }}
+                    </li>
+                </ul>    
+              </div>
+            </div>
+            <div id="monedas" class="bloque">
+             <div class="mon-cliente2">
+                 <table cellspacing="0" cellpadding="0" border="0" id="example-mon" class="display">
+                    <thead>
+                      <tr>
+                        <th style="border:none;">&nbsp;</th>
+                         {% if hay_cup == 1 %}
+                        <th style="border:none;">CUP</th>
+                        {% endif %}
+                         {% if hay_cuc == 1 %}
+                        <th style="border:none;">MLC</th>
+                        {% endif %}
+                      </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th class="as-td"  style="border:none;">Sucursal</th>
+                            {% if hay_cup == 1 %}
+                            <td>{{ titular_sucursal_mn }}</td>
+                            {% endif %}
+                            {% if hay_cuc == 1  %}
+                            <td>{{ titular_sucursal_cuc }}</td>
+                            {% endif %}
+                        </tr>
+                        <tr>
+                            <th class="as-td"  style="border:none;">Cuenta</th>
+                            {% if hay_cup == 1 %}
+                            <td>{{ titular_cuenta_mn }}</td>
+                            {% endif %}
+                            {% if hay_cuc == 1 %}
+                            <td>{{ titular_cuenta_cuc }}</td>
+                            {% endif %}
+                        </tr>
+                    </tbody>
+                 </table>
+              </div>
+            </div>
+            <div class="clear"></div>
+        </div>
+        
+        <div id="top_cliente" class="row">
+            <div id="cliente_data" class="bloque">
+              <div class="mon-cliente2">
+                <ul>
+                    <li><span class="label">C&oacute;digo:</span> {{ cliente_codigo }} <span class="label tab">Cliente:</span> {{ cliente_nombre }}.</li>
+                    <li><span class="label">Direcci&oacute;n:</span> {{ cliente_dir }}.</li>
+                    <li>
+                      {% if cliente_fax %}
+                        <span class="label">Telf:</span> {{ cliente_phone }}
+                      {% else %}
+                        <span class="label tab">Telf:&emsp;&emsp;</span>
+                      {% endif %}
+                      {% if cliente_email %}
+                        <span class="label tab">Email:</span> {{ cliente_email }}
+                      {% else %}
+                        <span class="label tab">Email:&emsp;&emsp;</span>
+                      {% endif %}
+                      {% if cliente_fax %}
+                        <span class="label tab">Fax:</span> {{ cliente_fax }}
+                      {% else %}
+                        <span class="label tab">Fax:&emsp;&emsp;</span>
+                     {% endif %}
+                      <span class="label tab">Nro. Contrato:</span> {{ contrato_nro }}
+                    </li>
+                </ul>    
+              </div>
+            </div>
+            <div id="cliente_moneda" class="bloque">
+              <div class="mon-cliente2">
+                 <table cellspacing="0" cellpadding="0" border="0" id="example-mon" class="display">
+                    <thead>
+                      <tr>
+                        <th style="border:none;">&nbsp;</th>
+                        {% if hay_cup == 1 %}
+                        <th style="border:none;">CUP</th>
+                        {% endif %}
+                        {% if hay_cuc == 1 %}
+                        <th style="border:none;">MLC</th>
+                        {% endif %}
+                      </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th class="as-td" style="border:none;">Sucursal</th>
+                            {% if hay_cup == 1 %}
+                              {% if contrato_sucursal_mn  %}
+                            	<td>{{ contrato_sucursal_mn }}</td>
+                              {% endif %}
+                            {% endif %}
+                            {% if hay_cuc == 1  %}
+                              {% if contrato_sucursal_cuc  %}
+                            	<td>{{ contrato_sucursal_cuc }}</td>
+                              {% endif %}
+                              
+                            {% endif %}
+                        </tr>
+                        <tr>
+                            <th class="as-td"  style="border:none;">Cuenta</th>
+                            {% if hay_cup == 1 %}
+                            <td>{{ contrato_cuenta_mn }}</td>
+                            {% endif %}
+                            {% if hay_cuc == 1 %}
+                            <td>{{ contrato_cuenta_cuc }}</td>
+                            {% endif %}
+                        </tr>
+                    </tbody>
+                 </table>
+              </div>
+            </div>
+            <div class="clear"></div>
+        </div>
+        <div id="descripcion" style="min-height: 640px;">
+            <div id="factdetalle" class="bloque">
+            <div id="tabla1" style="width: 70%;margin-top: 23px;float: left;">
+            <table cellspacing="0" cellpadding="0" border="0" id="example" class="display"style="width:100%;">
+            <tr> 
+            	 <th style="width:2%;">C&oacute;digo</th>
+                 <th style="width:20%;">Descripci&oacute;n</th>
+                 <th style="width:1%;">UM</th>
+                 <th style="width:1%;">Cant.</th>
+                 </tr>
+                 <tbody>
+                 {% if es_servicios %}
+                    {% for detalleFact in detallesFact %}
+                       <tr>
+                        <td>{{ detalleFact.servicio__codigo }}11</td>
+                        <td>{{ detalleFact.servicio__descripcion }}</td>
+                        <td>{{ detalleFact.servicio__um__descripcion }}</td>
+                        <td>{{ detalleFact.cantidad }}</td>
+                        </tr>
+                     {% endfor %}
+                 {% else %}
+                    {% for detalleFact in detallesFact %}
+                       <tr>
+                        <td>{{ detalleFact.casco__producto_salida__codigo }}22</td>
+                        <td>{{ detalleFact.casco__producto_salida__descripcion }}</td>
+                        <td>{{ detalleFact.casco__producto_salida__um__descripcion }}</td>
+                        <td>{{ detalleFact.cantidad }}</td>
+                        </tr>
+                     {% endfor %}
+                 {% endif %}
+                     <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td style="font-weight:bold;">{{ cantcascos }}</td>
+                        </tr>
+                     {% if hay_venta == 1 and hay_cup == 1 %}
+                      <tr>
+	                        <td style="width:2%;">&nbsp;</td>
+	                        <td></td>
+	                        <td></td>
+	                        <td></td>
+	                        </tr>
+	                        <tr>
+	                        <td style="width:2%;font-weight:bold;" class="tfootdecimal">Venta de Cascos</td>
+	                        <td></td>
+	                        <td></td>
+	                        <td></td>
+	                        </tr>
+                           {% for detalleFact in detallesFact_venta %}
+	                       <tr>
+	                        <td>{{ detalleFact.casco__producto_salida__codigo }}</td>
+	                        <td>{{ detalleFact.casco__producto_salida__descripcion }}</td>
+	                        <td>{{ detalleFact.casco__producto_salida__um__descripcion }}</td>
+	                        <td>{{ detalleFact.cantidad }}</td>
+	                        </tr>
+	                     {% endfor %}
+	                   {% endif %}
+
+                     
+                  </tbody>           	
+            </table>       
+            </div>
+            <div id="tabla2" style="width: 25%;float: left;">
+            <table cellspacing="0" cellpadding="0" border="0" id="example" class="display">
+            	 <tr> 
+            	  {% if hay_cup == 1 %}
+            	  	<th></th>
+                     <th  style="border-bottom:1px solid; text-align:center; ">CUP</th>
+                  {% endif %}
+                     {% if hay_cuc == 1 %}
+                     <th></th>
+                     <th  style="border-bottom:1px solid; text-align: center; ">MLC</th>
+                     {% endif %}
+                     </tr>
+                     <tr>
+                         {% if hay_cup == 1 %}
+                            <th class="thdecimal">Precio</th>
+                            <th class="thdecimal">Importe</th>
+                            {% endif %}
+                            
+                            {% if hay_cuc == 1 %}
+                            <th class="thdecimal">Precio</th>
+                            <th class="thdecimal">Importe</th>   
+                            {% endif %}  
+                     </tr>
+                 <tbody>
+                      {% for detalle in detallesFact %}
+                       <tr>                      
+                        {% if hay_cup == 1 %}
+                        <td class="decimal">{{ detalle.precio_mn }}</td>
+                        <td class="decimal">{{ detalle.importecup }}</td>
+                        {% endif %}
+                           
+                        {% if hay_cuc == 1 %}
+                        <td class="decimal">{{ detalle.precio_cuc }}</td>
+                        <td class="decimal">{{ detalle.importecuc }}</td>
+                        {% endif %}
+                       </tr> 
+                    {% endfor %}
+                    
+                     <tr class="no-border">
+                            <th class="tfootdecimal">Total Serv.</th>
+                            
+                            {% if hay_cup == 1 %}
+                            <th class="borde-sup tfootdecimal">{{ importecup }}</th>
+
+                            {% endif %}
+                             {% if hay_cup == 1 and hay_cuc == 1 %}
+                            <th></th>
+                            {% endif %}
+                            {% if hay_cuc == 1 %}
+                            <th class="borde-sup tfootdecimal">{{ importetotalcuc }}</th>
+                            {% endif %}
+                        </tr>
+                        </br>
+                        {% if recargo %}
+                         <tr class="no-border">
+                            <th class="tfootdecimal">% Recargo</th>
+
+                            <th>{{ recargo }}</th>
+
+                        </tr>
+                        {% endif %}
+
+                    {% if hay_cup == 1 and hay_venta == 1 %}
+	                    {% for detalle in detallesFact_venta %}
+	                       <tr>                      
+	                        <td class="decimal">{{ detalle.precio_casco }}</td>
+	                        <td class="decimal">{{ detalle.importecup }}</td>
+	                       </tr>
+	                    {% endfor %}
+                    {% endif %}
+                  </tbody>    
+                  <tfoot>
+                       {% if hay_cup == 1 and hay_venta == 1%}
+                        <tr class="no-border">                            
+                            <th class="tfootdecimal">Total Venta</th>
+                            {% if hay_cup == 1 %}
+                            <th class="borde-sup tfootdecimal">{{ importecup_venta }}</th>                            
+                            {% endif %}
+                            {% if hay_cup == 1 and hay_cuc == 1 %}
+                            <th></th>
+                            {% endif %}
+                            {% if hay_cuc == 1 %}
+                            <th class="borde-sup tfootdecimal"></th>
+                            {% endif %}
+                       {% endif %}
+                       </tr>
+                        
+                        <tr class="no-border">                            
+                            <th >&nbsp;</th>
+                            {% if hay_cup == 1 %}
+                            <th >&nbsp;</th>                            
+                            {% endif %}
+                            {% if hay_cup == 1 and hay_cuc == 1 %}
+                            <th></th>
+                            {% endif %}
+                            {% if hay_cuc == 1 %}
+                            <th >&nbsp;</th>
+                            {% endif %}
+                        </tr>
+
+                        <tr class="no-border">                            
+                            <th class="tfootdecimal">A Pagar</th>
+                            {% if hay_cup == 1 %}
+                              {% if recargo %}
+                                 <th class="tfootdecimal" style="width:2%;font-weight:bold;border-bottom: 1px solid;border-top: 1px solid ">{{ importetotalcup_ }}</th>
+                              {% else %}
+                                  <th class="tfootdecimal" style="width:2%;font-weight:bold;border-bottom: 1px solid;border-top: 1px solid ">{{ importetotalcup }}</th>
+                              {% endif %}
+                            {% endif %}
+                            {% if hay_cup == 1 and hay_cuc == 1 %}
+                            <th></th>
+                            {% endif %}
+                            {% if hay_cuc == 1 %}
+                            <th class="tfootdecimal" style="width:2%;font-weight:bold;border-bottom: 1px solid;border-top: 1px solid ">{{ importetotalcuc }}</th>
+                            {% endif %}
+                        </tr>
+                        
+                        </tr>
+                    
+                    </tfoot>       	
+            
+            </table> 
+                  
+            </div>
+            
+            
+               
+              </div>  
+              <div class="clear"></div>
+        </div>
+        
+        <div id="foot_vendedor" class="row ">
+            <div id="vendedor_data" class="bloque">
+              <div class="mon-cliente2">
+                <ul>
+                    <li><span class="label">Despachador:________________________</span> </li>
+                    <li><span class="label">Confeccionado: {{ confeccionado }}</span></li>
+                    <li><span class="label">Anotado:_______________________________________</span> </li>
+                </ul>    
+              </div>
+            </div>
+            <div id="vendedor_fact" class="bloque">
+              <div class="mon-cliente2">
+                <ul>
+                    <li><span class="label">Facturado: {{ vendedor }}</span> </li>
+                    <li><span class="label">Firma:</span> ___________________</li>
+                </ul>    
+              </div>
+            </div>        
+            <div id="vendedor_confecc" class="bloque">
+              <div class="mon-cliente2">
+                <ul>
+                    <li><span class="label">Confeccionada el {{ fecha_confeccionado|date:"d/m/Y " }}</span> </li>
+                    <!-- <li><span class="label">Impresa el {% now "d/m/Y P" %}</span> </li>  -->
+                    <li><span class="label">Imprimi&oacute;: {{ vendedor }}</span> </li>
+                </ul>    
+              </div>
+            </div>
+            <div class="clear"></div>
+        </div>
+        <div id="foot_observacion" class="row">
+            <div class="mon-cliente2">
+                <ul>
+                    <li>
+                        <span class="label">Observaciones: {{ observaciones }}</span><br/>
+                        
+                    </li>
+                </ul>
+            </div>
+            <div class="clear"></div>
+        </div>
+        <div id="foot_comprador" class="row">
+               <div class="comprador bloque">
+              <div class="mon-cliente2">
+                <ul>
+                    <li><span class="label">Trnasportador:</span> _____________________</li>
+                    <li><span class="label">Carn&eacute; I.:</span> _____________________</li>
+                </ul>    
+              </div>
+            </div>
+            <div class="comprador bloque">
+              <div class="mon-cliente2">
+                <ul>
+                    <li><span class="label">Licencia:</span> {{ factura.licencia }}</li>
+                    <li><span class="label">Chapa:</span> {{ transportador_chapa }}</li>
+                </ul>    
+              </div>
+            </div>        
+            <div class="comprador bloque">
+              <div class="mon-cliente2">
+                <ul>
+                    <li><span class="label">&nbsp;</span></li>
+                    <li><span class="label">Firma:</span> _______________________</li>
+                </ul>    
+              </div>
+            </div>
+          <div class="clear"></div>
+      </div>
+      <div id="foot_recibido" class="row">
+               <div class="comprador bloque">
+              <div class="mon-cliente2">
+                <ul>
+                    <li><span class="label">Recibido:</span> {{ transportador_nombre }}</li>
+                </ul>    
+              </div>
+            </div>
+            <div class="comprador bloque">
+              <div class="mon-cliente2">
+                <ul>
+                    <li><span class="label">C. Identidad:</span> {{ transportador_ci }}</li>
+                </ul>    
+              </div>
+            </div>        
+            <div class="comprador bloque">
+              <div class="mon-cliente2">
+                <ul>
+                    <li><span class="label">Firma:</span> _____________________</li>
+                </ul>    
+              </div>
+            </div>
+          <div class="clear"></div>
+      </div>
+      {% if declaracion %}
+          <div id="foot_declaracion" class="row">
+                <div class="mon-cliente2">
+                    <ul>
+                        <li>
+                            <span class="label">Declaraci&oacute;n de conformidad: </span>El producto cumple con el ensayo descrito en la NCISO 7619:2005. Elast&oacute;meros-Determinaci&oacute;n
+                            de la dureza de penetraci&oacute;n durante un dur&oacute;metro de bolsillo que garantiza en cumplimiento de la NC 162:2019. Neum&aacute;ticos Recauchados-Especificaciones.
+
+                        </li>
+                    </ul>
+                </div>
+                <div class="clear"></div>
+          </div>
+      {% endif %}
+    </div>
+         
+    <!-- End Content -->
+</div>
+
+{% endblock %}
