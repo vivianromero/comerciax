@@ -351,6 +351,16 @@ url(r'^factura_servicios/imprimir/(?P<idfa>[a-zA-Z0-9-]{0,40})/', 'factura_servi
 url(r'^ajax/factura_servicios_cancelar/(?P<idfa>[a-zA-Z0-9-]{0,40})/$', 'factura_servicios_cancelar', name='factura_servicios_cancelar'),
 url(r'^ajax/factura_producciones_cancelar/(?P<idfa>[a-zA-Z0-9-]{0,40})/$', 'factura_producciones_cancelar', name='factura_producciones_cancelar'),
 
+url(r'^ajax/get-fact-produccionespart-list/$', 'get_fact_produccionespart_list', name = 'get_fact_produccionespart_list'),
+url(r'^factura_produccionespart/index', 'factura_produccionespart_index', name='factura_produccionespart_index'),
+url(r'^factura_produccionespart/add', 'factura_produccionespart_add', name='facturaproduccionespartadd'),
+url(r'^factura_produccionespart/view/(?P<idfa>[a-zA-Z0-9-]{0,40})/', 'factura_produccionespart_view',name='facturaproduccionespart_view'),
+url(r'^oferta/verfacturaproduccionespart/(?P<idfactura>[a-zA-Z0-9-]{0,40})/(?P<haycup>\d+)/(?P<haycuc>\d+)/(?P<cantproducciones>\d+)/', 'verfacturaproduccionespart',name='verfacturaproduccionespart'),
+url(r'^ajax/factura_produccionespart_del/(?P<idfa>[a-zA-Z0-9-]{0,40})/$', 'factura_produccionespart_del', name='factura_produccionespart_del'),
+url(r'^factura_produccionespart/edit/(?P<idfa>[a-zA-Z0-9-]{0,40})/', 'factura_produccionespart_edit',name='factura_produccionespart_edit'),
+url(r'^ajax/factura_produccionespart_confirmar/(?P<idfa>[a-zA-Z0-9-]{0,40})/$', 'factura_produccionespart_confirmar',name='factura_produccionespart_confirmar'),
+url(r'^ajax/factura_produccionespart_cancelar/(?P<idfa>[a-zA-Z0-9-]{0,40})/$', 'factura_produccionespart_cancelar', name='factura_produccionespart_cancelar'),
+
 ########################
 #      DETALLES        #
 ########################
@@ -364,4 +374,10 @@ url(r'^ajax/detalle_facturaproduccion/delete/$', 'detalleFacturaProduccion_delet
 url(r'^detalle_facturaproduccion/edit/(?P<idfa>[a-zA-Z0-9-]{0,40})/(?P<idproduccion>[a-zA-Z0-9-]{0,40})/',
                            'detalleFacturaProduccion_edit', name='detalleFacturaProduccion_edit'),
 url(r'^detalle_facturaproduccion/edit/$', 'detalleFacturaProduccion_edit',name='detalleFacturaProduccion_edit2'),
+url(r'^detalle_factura_produccionespart/add/(?P<idfa>[a-zA-Z0-9-]{0,40})/', 'detalleFacturaProduccionesPart_add',name='detalleFacturaProduccionesPart_add'),
+url(r'^ajax/detalle_facturaproduccionpart/delete/(?P<idfa>[a-zA-Z0-9-]{0,40})/(?P<idproduccion>[a-zA-Z0-9-]{0,40})/', 'detalleFacturaProduccionPart_delete',name='detalleFacturaProduccionPart_delete'),
+url(r'^ajax/detalle_facturaproduccionpart/delete/$', 'detalleFacturaProduccionPart_delete',name='detalleFacturaProduccionPart_delete2'),
+url(r'^detalle_facturaproduccionpart/edit/$', 'detalleFacturaProduccionPart_edit',name='detalleFacturaProduccionPart_edit2'),
+url(r'^detalle_facturaproduccionpart/edit/(?P<idfa>[a-zA-Z0-9-]{0,40})/(?P<idproduccion>[a-zA-Z0-9-]{0,40})/',
+                           'detalleFacturaProduccionPart_edit', name='detalleFacturaProduccionPart_edit'),
 )

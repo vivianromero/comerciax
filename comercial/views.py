@@ -43,7 +43,8 @@ import base64
 #===============================================================================
 from comerciax.reportes import report_class
 
-from comercial.models import FacturasProdAlter, DetalleFacturaProdAlter
+from comercial.models import FacturasProdAlter, DetalleFacturaProdAlter, \
+    FacturasProdAlterPart, DetalleFacturaProdAlterPart
 
 tipo_entrada = {'O':'Otro', 'A':'Ajuste', 'K':'Vulca', 'V':'Venta', 'R':'Regrabable'}
 
@@ -4185,7 +4186,7 @@ def facturapart_edit(request,idfa):
         rc_cliente=fact.nombre
         rc_ci=fact.ci
         rc_nro=fact.factura_nro
-        rc_recarga=fact.recargo
+        rc_recarga=fact.format_recargo()
 
         # importecup=FacturasParticular.objects.get(pk=idfa).get_importetotalcup()
         importecup=fact.get_importetotalcup()
@@ -4371,7 +4372,7 @@ def facturapart_view(request,idfa):
     t_preciocuc=0.0
     t_preciocup=0.0  
     t_preciocasco=0.0  
-    recargo = fact.recargo
+    recargo = fact.format_recargo()
     totalpagar = fact.get_importe_total(recargo)
     for a1 in filas:
         if k!=0:
@@ -4396,12 +4397,13 @@ def facturapart_view(request,idfa):
         elementos_detalle[k-1]['cantidad'] = k2    
         elementos_detalle[k-1]['t_preciocup'] = t_preciocup
         elementos_detalle[k-1]['t_preciocasco'] = t_preciocasco
-    return render_to_response('comercial/viewfacturapart.html',{'crenglones':crenglones,'total_casco':k,'eliminar':eliminar,'editar':editar,'cancelar':cancelar,'confirmar':confirmar,
+    return render_to_response('comercial/viewfacturapart.html',{'crenglones':crenglones,'total_casco':k,'eliminar':eliminar,
+                                                                'editar':editar,'cancelar':cancelar,'confirmar':confirmar,
                                                             'ci':rc_ci,'importecup':importecup,
                                                             'tipo':rc_tipo,'rc_nro':rc_nro,'fecha':rc_fecha,'cliente':rc_cliente,
                                                             'observaciones':rc_observaciones,'rc_id':idfa,'elementos_detalle':elementos_detalle,
                                                             'cant_cascos':cant_cascos, 'importecasco':importecasco,
-                                                            'error2':l, 'recargo': recargo, 'totalpagar': totalpagar},context_instance = RequestContext(request))
+                                                            'error2':l, 'recargo': fact.format_recargo(), 'totalpagar': totalpagar},context_instance = RequestContext(request))
 
 @login_required
 @transaction.commit_on_success()
@@ -4945,7 +4947,7 @@ def detalleFacturapart_delete(request,idfa,idcasco):
             total_pagar = a1.factura.get_importe_total(recargo)
             elementos_detalle+=[{'total_casco':total_casco,'cant_renglones':cant_renglones,'id_doc':a1.factura.doc_factura.id_doc,
                                  'importetotalcup':importetotalcup,'casco_id':a1.casco.id_casco,
-                                 'recargo': str(recargo), 'total_pagar': total_pagar,
+                                 'recargo': str(a1.factura.format_recargo()), 'total_pagar': total_pagar,
                              'casco_nro':a1.casco.casco_nro,'productosalida':a1.casco.producto_salida.descripcion,
                              'productoid':a1.casco.producto.id,'precio_cup':a1.format_precio_particular(),
                              'importetotalcasco':importetotalcasco,
@@ -12733,3 +12735,753 @@ def detalleFacturaProduccion_edit(request, idfa, idproduccion):
                                                           'cancelbtn': cancelbtn_form},
                                   context_instance=RequestContext(request))
     return factura_producciones_view(request, idfa)
+
+
+####################################################
+#   FACTURA PRODUCCIONES ALTERNATIVAS PARTICULAR   #
+####################################################
+@login_required
+def get_fact_produccionespart_list(request):
+    # prepare the params
+    # prepare the params
+    try:
+        fecha_desde = Fecha_Ver.objects.get()
+    except Exception, e:
+        fecha_desde = None
+    if fecha_desde == None:
+        querySet = FacturasProdAlterPart.objects.select_related().all()
+    else:
+        querySet = FacturasProdAlterPart.objects.select_related().filter(doc_factura__fecha_doc__gte=fecha_desde.fecha)
+    # querySet = querySet.filter(doc__fecha_doc__year=2010)
+
+    columnIndexNameMap = {0: '-doc_factura__fecha_doc', 1: 'factura_nro', 2: 'doc_factura__fecha_doc', 3: 'nombre',
+                          4: 'ci', 5: 'cancelada', 6: 'confirmar'}
+
+    # {0: 'oferta_nro',1: 'oferta_nro',2:'admincomerciax_cliente.nombre',3:'doc_oferta__fecha_oferta',4:'oferta_tipo'}
+
+    searchableColumns = ['factura_nro', 'nombre', 'ci', 'confirmar', 'doc_factura__fecha_doc']
+    # path to template used to generate json
+    jsonTemplatePath = 'comercial/json/json_facturaprodpart.txt'
+
+    # call to generic function from utils
+    return get_datatables_records(request, querySet, columnIndexNameMap, searchableColumns, jsonTemplatePath)
+
+@login_required
+def factura_produccionespart_index(request):
+    if not request.user.has_perm('comercial.facturasprodalter'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+    return render_to_response('comercial/facturaproduccionespartindex.html', locals(), context_instance=RequestContext(request))
+
+@login_required
+@transaction.commit_on_success()
+def factura_produccionespart_add(request):
+    if not request.user.has_perm('comercial.facturasprodalter'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    nombre_form = 'Producciones Alternativas Particular'
+    descripcion_form = 'Realizar Factura de Producciones Alternativas Particular'
+    titulo_form = 'Producciones Alternativas Particular'
+    controlador_form = 'Producciones Alternativas Particular'
+    accion_form = '/comerciax/comercial/factura_produccionespart/add'
+    cancelbtn_form = '/comerciax/comercial/factura_produccionespart/index'
+    fecha_hoy = datetime.date.today().strftime("%d/%m/%Y")
+    fecha_cierre = Fechacierre.objects.get(almacen='cm').fechaminima()
+    fecha_maxima = Fechacierre.objects.get(almacen='cm').fechamaxima()
+    c = None
+    l = []
+    if request.method == 'POST':
+        form = FacturaProduccionesPartForm(request.POST)
+        if form.is_valid():
+
+            pk_user = User.objects.get(pk=request.user.id)
+
+            fact = FacturasProdAlterPart()
+
+            pk_doc = uuid4()
+            obj_doc = Doc()
+
+            obj_doc.id_doc = pk_doc
+            obj_doc.tipo_doc = '22'
+            obj_doc.fecha_doc = form.cleaned_data['fecha']
+            obj_doc.operador = pk_user
+            obj_doc.fecha_operacion = datetime.date.today()
+            obj_doc.observaciones = form.cleaned_data['observaciones']
+
+            fact.doc_factura = obj_doc
+            fact.factura_nro = str(random.randint(1, 100000)) + "S/C"
+            fact.nombre = form.cleaned_data['nombre']
+            fact.ci = form.cleaned_data['ci']
+            fact.recargo = form.cleaned_data['recargo']
+            fact.confirmada = hashlib.sha1(pk_doc.__str__() + 'NO').hexdigest()
+
+            try:
+                obj_doc.save()
+                fact.save()
+                #                nume.save()
+                return HttpResponseRedirect('/comerciax/comercial/factura_produccionespart/view/' + pk_doc.__str__())
+            except Exception, e:
+                exc_info = e.__str__()  # sys.exc_info()[:1]
+                c = exc_info.find("DETAIL:")
+
+                if c < 0:
+                    l = l + ["Error Fatal."]
+                else:
+                    c = exc_info[c + 7:]
+                    l = l + [c]
+
+                transaction.rollback()
+                form = FacturaProduccionesPartForm(request.POST)
+                return render_to_response('comercial/facturaproduccionespartadd.html',
+                                          {'form': form, 'form_name': nombre_form,
+                                           'form_description': descripcion_form,
+                                           'accion': accion_form, 'titulo': titulo_form,
+                                           'controlador': controlador_form,
+                                           'cancelbtn': cancelbtn_form, 'fecha_minima': fecha_cierre,
+                                           'fecha_maxima': fecha_maxima, 'error2': l},
+                                          context_instance=RequestContext(request))
+            else:
+                transaction.commit()
+    else:
+        meshoy = int(fecha_hoy.split('/')[1])
+        mescierre = int(fecha_cierre.split('/')[1])
+
+        if meshoy == mescierre:
+            fecha_cierre = fecha_hoy
+        form = FacturaProduccionesPartForm(initial={'fecha': fecha_cierre})
+
+    return render_to_response('comercial/facturaproduccionespartadd.html',
+                              {'form': form, 'form_name': nombre_form, 'form_description': descripcion_form,
+                               'accion': accion_form, 'titulo': titulo_form, 'controlador': controlador_form,
+                               'cancelbtn': cancelbtn_form, 'fecha_minima': fecha_cierre,
+                               'fecha_maxima': fecha_maxima,
+                               'error2': c}, context_instance=RequestContext(request))
+
+@login_required
+def factura_produccionespart_view(request, idfa):
+    if not request.user.has_perm('comercial.facturasprodalter'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    l = []
+    cancelar = 0
+    fact = FacturasProdAlterPart.objects.select_related().get(pk=idfa)
+    if fact.cancelada == True:
+        cancelar = 1
+    confir = fact.get_confirmada()
+    confirmar = 2
+    if confir == 'N':
+        confirmar = 0
+    elif confir == 'S':
+        confirmar = 1
+
+    eliminar = 1
+    editar = 1
+    if confirmar == 2 or confirmar == 1:
+        eliminar = 0
+        editar = 0
+
+    rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+    nombre = fact.nombre
+    ci = fact.ci
+    rc_nro = fact.factura_nro
+    importecup = fact.get_importetotalcup()
+    cant_producciones = fact.cantidad_producciones()
+    recargo = fact.recargo
+    cant_renglones = fact.get_renglones()
+    totalpagar = fact.get_importe_total(recargo)
+
+    precio_CUP = "Precio CUP"
+    importe_CUP = "Importe CUP"
+
+    rc_observaciones = fact.doc_factura.observaciones
+    filas = DetalleFacturaProdAlterPart.objects.select_related().filter(factura=idfa).all().order_by('produccionalter__descripcion')
+
+    hay_cup = 1
+
+    return render_to_response('comercial/viewfacturaproduccionespart.html', {'total_producciones': cant_producciones,
+                                                                         'hay_cup': hay_cup,
+                                                                      'hay_cuc': 0,
+                                                             'eliminar': eliminar, 'editar': editar,
+                                                             'cancelar': cancelar,
+                                                             'confirmar': confirmar,
+                                                             'recargo': fact.format_recargo(),
+                                                             'precio_CUP': precio_CUP,
+                                                             'importe_CUP': importe_CUP,
+                                                             'importecup': importecup,
+                                                             'fecha': rc_fecha,
+                                                             'rc_nro': rc_nro,
+                                                             'nombre': nombre,
+                                                             'ci': ci,
+                                                             'totalpagar': totalpagar,
+                                                             'observaciones': rc_observaciones, 'rc_id': idfa,
+                                                             'elementos_detalle': filas,
+                                                             'error2': l, 'cant_producciones': cant_producciones,
+                                                             'cant_renglones': cant_renglones},
+                              context_instance=RequestContext(request))
+
+def verfacturaproduccionespart(request, idfactura, haycup, haycuc, cantproducciones):
+    # empresaobj1 = Empresa.objects.all()
+    hay_cup = int(haycup)
+    hay_cuc = int(haycuc)
+
+    factura = FacturasProdAlterPart.objects.select_related().get(doc_factura=idfactura)
+    pk_user = User.objects.get(pk=request.user.id)
+    # vendedor = pk_user.first_name + " " + pk_user.last_name
+
+    user_doc = Doc.objects.get(id_doc=factura.doc_factura.id_doc).operador
+    operador_ = User.objects.get(pk=user_doc.id)
+    confeccionado = operador_.first_name + " " + operador_.last_name
+
+    detallesFact = DetalleFacturaProdAlterPart.objects.select_related().filter(factura=idfactura).values('factura','precio_mn',
+                                                                                                'produccionalter__codigo',
+                                                                                                'produccionalter__descripcion', \
+                                                                                                'produccionalter__um__descripcion') \
+        .annotate(cantidad=Count('produccionalter__descripcion'))
+    for a1 in range(detallesFact.__len__()):
+        detallesFact[a1]['importecup'] = detallesFact[a1]['precio_mn'] * detallesFact[a1]['cantidad']
+        detallesFact[a1]['precio_mn'] = str(detallesFact[a1]['precio_mn'])
+
+    nombre = factura.nombre
+    ci = factura.ci
+    fecha_confeccionado = factura.doc_factura.fecha_doc
+
+
+    importetotalcup = factura.get_importetotalcup()
+    importecup = factura.get_importecup()
+
+    observaciones = factura.doc_factura.observaciones
+
+    if factura.recargo > 0.0:
+        recargo = float(factura.recargo)
+        importe_ = float(importetotalcup.replace(' ', '').replace(',', '').replace('$', ''))
+        val = utils.redondeo((importe_ * recargo)/100, 2)
+        importetotalcup_ = utils.redondeo(importe_ + val,2)
+        importetotalcup_ = '$' + '{:20,.2f}'.format(importetotalcup_)
+
+    return render_to_response("report/factura.html", locals(), context_instance=RequestContext(request))
+
+@login_required
+@transaction.commit_on_success()
+def factura_produccionespart_del(request, idfa):
+    if not request.user.has_perm('comercial.facturasprodalter'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    l = []
+    fact = FacturasProdAlterPart.objects.get(pk=idfa)
+    totalpagar = fact.get_importe_total(fact.recargo)
+    noelim = 0
+    if fact.confirmada == hashlib.sha1(fact.pk.__str__() + 'YES').hexdigest():
+        mensa = "No se puede eliminar la factura Nro. " + fact.factura_nro + " porque ya está confirmada"
+        noelim = 1
+    elif fact.confirmada != hashlib.sha1(fact.pk.__str__() + 'NO').hexdigest():
+        mensa = "No se puede eliminar la factura Nro. " + fact.factura_nro + " porque está corrupta"
+        noelim = 1
+    if noelim == 1:
+        l = [mensa]
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_nro = fact.factura_nro
+        importecup = fact.get_importetotalcup()
+
+
+        precio_CUP = "Precio CUP"
+
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = DetalleFacturaProdAlterPart.objects.select_related().filter(factura=idfa).order_by('produccionalter.descripcion')
+
+        hay_cup = 1
+        # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
+
+        return render_to_response('comercial/viewfacturaproduccionespart.html',
+                                  {'hay_cup': hay_cup, 'eliminar': 0, 'editar': 1, 'cancelar': 0,
+                                   'confirmar': 0,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'nombre': fact.nombre,
+                                   'ci':fact.ci, 'recargo':fact.format_recargo(),
+                                   'totalpagar': totalpagar,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa, 'elementos_detalle': filas,
+                                   'error2': l}, context_instance=RequestContext(request))
+    try:
+        Doc.objects.select_related().get(pk=idfa).delete()
+
+        return HttpResponseRedirect('/comerciax/comercial/factura_produccionespart/index')
+        # return render_to_response("casco/recepcionclienteindex.html",locals(),context_instance = RequestContext(request))
+    except Exception, e:
+        transaction.rollback()
+        l = ['Error al eliminar el documento']
+        fact = FacturasProdAlterPart.objects.select_related().get(pk=idfa)
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        nombre = fact.nombre
+        ci = fact.ci
+        racargo = fact.recargo
+        rc_nro = fact.factura_nro
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = DetalleFacturaProdAlterPart.objects.select_related().filter(factura=idfa).order_by('produccionalter.descripcion')
+
+        return render_to_response('comercial/viewfacturaproduccionespart.html',
+                                  {'rc_nro': rc_nro, 'fecha': rc_fecha,
+                                   'nombre': nombre, 'ci':ci, 'recargo':fact.format_recargo(),
+                                   'totalpagar': totalpagar,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa,
+                                   'elementos_detalle': filas, 'error2': l}, context_instance=RequestContext(request))
+    else:
+        transaction.commit()
+
+    return 0
+
+@login_required
+@transaction.commit_on_success()
+def factura_produccionespart_edit(request, idfa):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    fact = FacturasProdAlterPart.objects.select_related().get(pk=idfa)
+    totalpagar = fact.get_importe_total(fact.recargo)
+    noedit = 0
+    if fact.confirmada == hashlib.sha1(fact.pk.__str__() + 'YES').hexdigest():
+        mensa = "No se puede editar la factura Nro. " + fact.factura_nro + " porque ya está confirmada"
+        noedit = 1
+    elif fact.confirmada != hashlib.sha1(fact.pk.__str__() + 'NO').hexdigest():
+        mensa = "No se puede editar la factura Nro. " + fact.factura_nro + " porque está corrupta"
+        noedit = 1
+    if noedit == 1:
+        l = [mensa]
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_nro = fact.factura_nro
+
+        importecup = fact.get_importecup()
+
+        # pmn = FacturasProdAlter.objects.select_related().get(cliente=fact.cliente.id, cerrado=False)
+
+        precio_CUP = "Precio CUP"
+        importe_CUP = "Importe CUP"
+
+
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = DetalleFacturaProdAlterPart.objects.select_related().filter(factura=idfa).order_by('produccionalter.descripcion')
+
+
+        hay_cup = 0
+
+        # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
+        return render_to_response('comercial/viewfacturaproduccionespart.html',
+                                  {'hay_cup': hay_cup, 'eliminar': 0, 'editar': 1, 'cancelar': 0,
+                                   'confirmar': 0,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'importe_CUP': importe_CUP,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'nombre': fact.nombre,
+                                   'ci': fact.ci, 'recargo': fact.format_recargo(),
+                                   'totalpagar': totalpagar,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa, 'elementos_detalle': filas,
+                                   'error2': l}, context_instance=RequestContext(request))
+
+    nombre_form = 'Facturas Producciones Alternativas'
+    descripcion_form = 'Realizar Factura de Producciones Alternativas a Particulares'
+    titulo_form = 'Facturas Producciones Alternativas'
+    controlador_form = 'Facturas Producciones Alternativas'
+    accion_form = '/comerciax/comercial/factura_produccionespart/edit/' + idfa + '/'
+    cancelbtn_form = '/comerciax/comercial/factura_produccionespart/view/' + idfa + '/'
+    fecha_cierre = Fechacierre.objects.get(almacen='cm').fechaminima()
+    fecha_maxima = Fechacierre.objects.get(almacen='cm').fechamaxima()
+    c = None
+
+    l = []
+
+    detalles = DetalleFacturaProdAlterPart.objects.filter(factura=idfa).count()
+
+    if request.method == 'POST':
+        form = FacturaProduccionesPartForm(request.POST)
+
+        if form.is_valid():
+            nombre = form.data['nombre']
+            ci = form.data['ci']
+            recargo = form.data['recargo']
+            pk_user = User.objects.get(pk=request.user.id)
+
+            fact = FacturasProdAlterPart.objects.get(pk=idfa)
+            doc = Doc.objects.get(pk=idfa)
+
+            doc.fecha_doc = form.cleaned_data['fecha']
+            doc.operador = pk_user
+            doc.doc_operacion = datetime.date.today()
+            doc.observaciones = form.cleaned_data['observaciones']
+            fact.nombre = nombre
+            fact.ci = ci
+            fact.recargo = recargo
+            fact.observaciones = form.data['observaciones']
+
+            try:
+                doc.save()
+                fact.save()
+
+                return HttpResponseRedirect('/comerciax/comercial/factura_produccionespart/view/' + idfa)
+
+            except Exception, e:
+                exc_info = e.__str__()  # sys.exc_info()[:1]
+                c = exc_info.find("DETAIL:")
+
+                if c < 0:
+                    l = l + ["Error Fatal."]
+                else:
+                    c = exc_info[c + 7:]
+                    l = l + [c]
+
+                transaction.rollback()
+
+                form = FacturaProduccionesPartForm(request.POST)
+                return render_to_response('form/form_adddetalle.html',
+                                          {'tipocliente': '0', 'form': form, 'form_name': nombre_form,
+                                           'form_description': descripcion_form,
+                                           'accion': accion_form, 'titulo': titulo_form,
+                                           'controlador': controlador_form,
+                                           'cancelbtn': cancelbtn_form, 'fecha_minima': fecha_cierre,
+                                           'fecha_maxima': fecha_maxima, 'error2': l},
+                                          context_instance=RequestContext(request))
+            else:
+                transaction.commit()
+    else:
+        form = FacturaProduccionesPartForm(
+            initial={
+                     'nro': fact.factura_nro, 'fecha': fact.doc_factura.fecha_doc,
+                     'nombre': fact.nombre, 'ci': fact.ci,
+                      'recargo': fact.recargo,
+                      'observaciones': fact.doc_factura.observaciones})
+
+    return render_to_response('comercial/facturaproduccionespartedit.html',
+                              {'form': form, 'form_name': nombre_form, 'form_description': descripcion_form,
+                               'accion': accion_form, 'titulo': titulo_form, 'controlador': controlador_form,
+                               'cancelbtn': cancelbtn_form, 'fecha_minima': fecha_cierre, 'fecha_maxima': fecha_maxima},
+                              context_instance=RequestContext(request))
+
+@login_required
+# @transaction.commit_on_success()
+def detalleFacturaProduccionesPart_add(request, idfa):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    l = []
+    fact = FacturasProdAlterPart.objects.prefetch_related('detallefacturaprodalterpart_set').get(pk=idfa)
+    producc = [x.produccionalter.id for x in fact.detallefacturaprodalterpart_set.all()]
+
+    producciones = ProdAlter.objects.all().exclude(pk__in=producc).order_by('descripcion')
+    noelim = 0
+    if fact.confirmada == hashlib.sha1(fact.pk.__str__() + 'YES').hexdigest():
+        mensa = "No se puede adicionar producciones a la factura Nro. " + fact.factura_nro + " porque ya está confirmada"
+        noelim = 1
+    elif fact.confirmada != hashlib.sha1(fact.pk.__str__() + 'NO').hexdigest():
+        mensa = "No se puede adcionar producciones a la factura Nro. " + fact.factura_nro + " porque está corrupta"
+        noelim = 1
+    if noelim == 1:
+        l = [mensa]
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        nombre = fact.nombre
+        ci = fact.ci
+        recargo = fact.format_recargo()
+        rc_nro = fact.factura_nro
+        importecup = fact.get_importe_totalcup()
+
+        precio_CUP = "Precio CUP"
+
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = fact.detallefacturaprodalterpart_set.all().order_by('produccionalter.descripcion')
+
+
+        # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
+        hay_cup = 1
+        return render_to_response('comercial/viewfacturaproduccionespart.html',
+                                  {'hay_cup': hay_cup,  'eliminar': 0, 'editar': 1, 'cancelar': 0,
+                                   'confirmar': 0,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'nombre': nombre,
+                                   'ci': ci, 'fecha': rc_fecha, 'recargo': fact.format_recargo(),
+                                   'totalpagar':fact.get_importe_total(fact.recargo),
+                                   'observaciones': rc_observaciones, 'rc_id': idfa,
+                                   'elementos_detalle': filas,
+                                   'error2': l}, context_instance=RequestContext(request))
+
+    titulo_form = 'Facturas de Producciones Alternativas Particular'
+    nombre_form = 'Facturas de Producciones Alternativas Particular'
+    controlador_form = 'Facturas de Producciones Alternativas Particular'
+    descripcion_form = 'Seleccionar Producción Alternativa para la factura'
+
+    accion_form = 'detalleFacturaProduccionesPart_add'
+    cancelbtn_form = '/comerciax/comercial/factura_produccionespart/view/' + idfa
+
+    if request.method == 'POST':
+        form = DetalleFacturaProdAlterForm(request.POST)
+        if form.is_valid():
+            cantidad = form.cleaned_data['cantidad']
+            if Decimal(form.data['cantidad']) < 0.01:
+                l=['La cantidad debe ser mayor que 0.00']
+                return render_to_response('form/form_add.html',
+                                          {'form': form, 'form_name': nombre_form, 'form_description': descripcion_form,
+                                           'accion': accion_form, 'titulo': titulo_form, 'controlador': controlador_form,
+                                           'cancelbtn': cancelbtn_form, 'error2': l},
+                                          context_instance=RequestContext(request))
+            producto = form.cleaned_data['producto']
+            detalle = DetalleFacturaProdAlterPart.objects.filter(factura=idfa, produccionalter=producto)
+            if detalle:
+                detalle = DetalleFacturaProdAlterPart.objects.get(factura=idfa, produccionalter=producto)
+                detalle.cantidad = detalle.cantidad + cantidad
+                detalle.importe_mn = utils.redondeo(detalle.cantidad * detalle.precio_mn,2)
+            else:
+                detalle = DetalleFacturaProdAlterPart()
+                detalle.id_detalle = uuid4()
+                detalle.cantidad = cantidad
+                detalle.produccionalter = producto
+                detalle.precio_mn = producto.precio_mn
+                detalle.importe_mn = utils.redondeo(detalle.cantidad * detalle.precio_mn,2)
+                detalle.factura = fact
+            detalle.save()
+        if request.POST.__contains__('submit1'):
+            return HttpResponseRedirect('/comerciax/comercial/factura_produccionespart/view/' + idfa)
+
+    form = DetalleFacturaProdAlterForm()
+    return render_to_response('form/form_add.html',
+                              {'form': form, 'form_name': nombre_form, 'form_description': descripcion_form,
+                               'accion': accion_form, 'titulo': titulo_form, 'controlador': controlador_form,
+                               'cancelbtn': cancelbtn_form, 'error2': l}, context_instance=RequestContext(request))
+
+
+@login_required
+def detalleFacturaProduccionPart_delete(request, idfa, idproduccion):
+    if not request.user.has_perm('comercial.facturasprodalter'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    fact = FacturasProdAlterPart.objects.get(pk=idfa)
+
+    l = []
+
+    DetalleFacturaProdAlterPart.objects.get(produccionalter=idproduccion, factura=idfa).delete()
+
+    data = []
+    filas = DetalleFacturaProdAlterPart.objects.select_related().filter(factura=idfa).order_by('produccionalter__descripcion')
+    cant_renglones = filas.count()
+    total_produccion = str(filas.count())
+    elementos_detalle = []
+    importetotalcup = fact.get_importetotalcup()
+    recargo = fact.format_recargo()
+    totalpagar = fact.get_importe_total(recargo)
+    for a1 in filas:
+
+        # importetotalcup = a1.factura.get_importetotalcup()
+
+        elementos_detalle += [
+            {
+             'cant_renglones': cant_renglones,
+             'id_doc': a1.factura.doc_factura.id_doc,
+             'produccionalter': a1.produccionalter.descripcion,
+             'codigo': a1.produccionalter.codigo,
+             'importetotalcup': importetotalcup,
+             'produccionalter_id': a1.produccionalter.id,
+             'precio_cup': a1.format_precio_mn(),
+             'um':a1.produccionalter.um.descripcion,
+             'importe_cup': a1.format_importe_mn(),
+             'cantidad': a1.format_cantidad(),
+             'recargo': recargo,
+             'totalpagar':totalpagar}]
+
+    return HttpResponse(simplejson.dumps(elementos_detalle), content_type='application/javascript; charset=utf8')
+
+@login_required
+@transaction.commit_on_success()
+def detalleFacturaProduccionPart_edit(request, idfa, idproduccion):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    c = None
+    l = []
+
+    nombre_form = 'Editar Producción Alternativa Facturada'
+    descripcion_form = 'Editar Producción Alternativa Facturada'
+    titulo_form = 'Editar Producción Alternativa Facturada'
+    controlador_form = 'Editar Producción Alternativa Facturada'
+    accion_form = 'detalleFacturaProduccionPart_edit/' + idfa + '/' + idproduccion
+    cancelbtn_form = '/comerciax/comercial/factura_produccionespart/view/' + idfa + '/'
+
+    if request.method == 'POST':
+        form = DetalleFacturaProdAlterForm2(request.POST)
+
+        if form.is_valid():
+            fact = FacturasProdAlterPart.objects.select_related().get(pk=idfa)
+
+            prodsave = ProdAlter.objects.get(pk=idproduccion)
+            detalle = DetalleFacturaProdAlterPart.objects.get(produccionalter=prodsave, factura=fact)
+
+            try:
+
+                detalle.cantidad = form.data['cantidad']
+                detalle.precio_mn = prodsave.precio_mn
+                detalle.importe_mn = prodsave.precio_mn * Decimal(form.data['cantidad'])
+                detalle.save()
+                importecup = FacturasProdAlterPart.objects.get(pk=idfa).get_importetotalcup()
+                return factura_produccionespart_view(request, idfa)
+            except Exception, e:
+                exc_info = e.__str__()  # sys.exc_info()[:1]
+                c = exc_info.find("DETAIL:")
+                if c < 0:
+                    l = l + ["Error Fatal."]
+                else:
+                    c = exc_info[c + 7:]
+                    # l=l+[c]
+                    l = ['Error al cambiar la medida de salida del casco']
+                transaction.rollback()
+                form = DetalleFacturaProdAlterForm2(request.POST)
+                return render_to_response("form/form_edit.html",
+                                          {'tipocliente': '0', 'form': form, 'title': titulo_form,
+                                           'form_name': nombre_form, 'form_description': descripcion_form,
+                                           'controlador': controlador_form, 'accion': accion_form
+                                              , 'cancelbtn': cancelbtn_form, 'error2': l},
+                                          context_instance=RequestContext(request))
+            else:
+                transaction.commit()
+    else:
+        rp = ProdAlter.objects.select_related().get(pk=idproduccion)
+        fact = FacturasProdAlterPart.objects.select_related().get(pk=idfa)
+        detalle = DetalleFacturaProdAlterPart.objects.get(produccionalter=rp, factura=fact)
+        form = DetalleFacturaProdAlterForm2(initial={'producto': rp, 'cantidad':detalle.cantidad})
+        return render_to_response('form/form_edit.html', {'form': form, 'form_name': nombre_form,
+                                                          'form_description': descripcion_form, 'accion': accion_form,
+                                                          'titulo': titulo_form, 'controlador': controlador_form,
+                                                          'cancelbtn': cancelbtn_form},
+                                  context_instance=RequestContext(request))
+    return factura_produccionespart_view(request, idfa)
+
+@login_required
+@transaction.commit_on_success()
+def factura_produccionespart_confirmar(request, idfa):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    l = []
+    fact = FacturasProdAlterPart.objects.get(pk=idfa)
+    if fact.get_renglones() > 30:
+        l = []
+        cancelar = 0
+        fact = FacturasProdAlterPart.objects.select_related().get(pk=idfa)
+        if fact.cancelada == True:
+            cancelar = 1
+        confir = fact.get_confirmada()
+        confirmar = 2
+        if confir == 'N':
+            confirmar = 0
+        elif confir == 'S':
+            confirmar = 1
+
+        eliminar = 1
+        editar = 1
+        if confirmar == 2 or confirmar == 1:
+            eliminar = 0
+            editar = 0
+
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_nro = fact.factura_nro
+        importecup = fact.get_importetotalcup()
+        importecuc = fact.get_importecuc()
+        cant_renglones = fact.get_renglones()
+        # pmn = ClienteContrato.objects.select_related().get(cliente=fact.cliente.id, cerrado=False)
+        # mncosto = pmn.contrato.preciocostomn
+        # cuccosto = pmn.contrato.preciocostocuc
+
+        precio_CUP = "Precio CUP"
+
+        rc_observaciones = fact.doc_factura.observaciones
+        filas = DetalleFacturaProdAlterPart.objects.select_related().filter(factura=idfa).order_by(
+            'produccionalter__descripcion')
+
+
+        hay_cup = 1
+        l = ["La factura excede los 30 renglones, no se puede confirmar"]
+        return render_to_response('comercial/viewfacturaproduccionespart.html',
+                                  {'hay_cup': hay_cup, 'eliminar': eliminar, 'editar': editar,
+                                   'cancelar': cancelar, 'confirmar': confirmar,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'cliente': rc_cliente,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa, 'elementos_detalle': filas,
+                                   'error2': l, 'cant_renglones': cant_renglones},
+                                  context_instance=RequestContext(request))
+
+    else:
+
+        pk_user = User.objects.get(pk=request.user.id)
+        nrodoc = 1
+        if NumeroDoc.objects.count() != 0:
+            nrodoc = NumeroDoc.objects.get().nro_factura_prodalter + 1
+        nume = NumeroDoc()
+        if NumeroDoc.objects.count() == 0:
+            nume.id_numerodoc = uuid4()
+        else:
+            nume = NumeroDoc.objects.get()
+        nume.nro_factura_prodalter = nrodoc
+        nume.save()
+        Doc.objects.filter(pk=FacturasProdAlterPart.objects.get(pk=idfa).doc_factura).update(operador=pk_user)
+        FacturasProdAlterPart.objects.filter(pk=idfa).update(confirmada=hashlib.sha1(idfa.__str__() + 'YES').hexdigest(),
+                                                factura_nro=nrodoc, confirmar=True)
+        return HttpResponseRedirect('/comerciax/comercial/factura_produccionespart/view/' + idfa)
+
+@login_required
+@transaction.commit_on_success()
+def factura_produccionespart_cancelar(request, idfa):
+    if not request.user.has_perm('comercial.factura'):
+        return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
+
+    l = []
+    fact = FacturasProdAlterPart.objects.get(pk=idfa)
+    filas = DetalleFacturaProdAlterPart.objects.select_related().filter(factura=idfa).order_by(
+        'produccionalter.descripcion')
+    pagosfact = 0.0
+    if fact.confirmada != hashlib.sha1(fact.pk.__str__() + 'YES').hexdigest() or pagosfact != 0:
+        mensa = "No se puede cancelar la factura Nro. " + fact.factura_nro + " porque no está confirmada"
+        if pagosfact > 0:
+            mensa = "No se puede cancelar la factura Nro. " + fact.factura_nro + " porque se han realizado pagos"
+        l = [mensa]
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.cliente.nombre
+        rc_nro = fact.factura_nro
+        importecup = fact.get_importetotalcup()
+
+        precio_CUP = "Precio CUP"
+
+        rc_observaciones = fact.doc_factura.observaciones
+
+
+        # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
+        hay_cup = 1
+        return render_to_response('comercial/viewfacturaproduccionespart.html',
+                                  {'hay_cup': hay_cup, 'eliminar': 0, 'editar': 1, 'cancelar': 0,
+                                   'confirmar': 0,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'cliente': rc_cliente,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa, 'elementos_detalle': filas,
+                                   'error2': l}, context_instance=RequestContext(request))
+
+    try:
+        hay_cup = 1
+
+        FacturasProdAlterPart.objects.filter(pk=idfa).update(cancelada=True)
+        pk_user = User.objects.get(pk=request.user.id)
+        Doc.objects.filter(pk=FacturasProdAlter.objects.get(pk=idfa).doc_factura).update(operador=pk_user)
+
+        return HttpResponseRedirect('/comerciax/comercial/factura_produccionespart/index')
+    except Exception, e:
+        transaction.rollback()
+        l = ['Error al cancelar factura']
+        fact = FacturasProdAlterPart.objects.select_related().get(pk=idfa)
+        importecup = fact.get_importetotalcup()
+
+        rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
+        rc_cliente = fact.nombre
+        rc_nro = fact.factura_nro
+        rc_observaciones = fact.doc_factura.observaciones
+
+        precio_CUP = "Precio CUP"
+        return render_to_response('comercial/viewfacturaproduccionespart.html',
+                                  {'hay_cup': hay_cup,
+                                   'precio_CUP': precio_CUP, 'importecup': importecup,
+                                   'rc_nro': rc_nro, 'fecha': rc_fecha, 'cliente': rc_cliente,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa,
+                                   'elementos_detalle': filas,
+                                   'error2': l, 'cantcascos': '4'}, context_instance=RequestContext(request))
+    else:
+        transaction.commit()
