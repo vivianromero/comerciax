@@ -131,6 +131,7 @@ class Doc(models.Model):
     # 19- Devolucion de casco a clientes
     # 20- Factura de Servicios a Clientes
     # 21- Factura Prod. Altern. a Clientes
+    # 22- Factura Prod. Altern. a Partic.
 
     tipo_doc=models.CharField(max_length=2) 
     

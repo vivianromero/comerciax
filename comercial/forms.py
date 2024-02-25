@@ -710,7 +710,6 @@ class FacturaProduccionesForm(forms.Form):
     fecha = forms.DateField(required=True, widget=forms.DateInput(
         attrs={'class': 'validate date', 'value': Fechacierre.objects.get(almacen='cm').fechaminima(),
                'readonly': True}))
-    #    cliente=forms.ModelChoiceField(Cliente.objects.all(),widget=forms.Select(attrs={'class': 'required'}))
     organismo = forms.ModelChoiceField(required=False, queryset=Organismo.objects.filter().order_by('siglas_organismo'),
                                        widget=forms.Select())
     provincia = forms.ModelChoiceField(required=False,
@@ -718,30 +717,13 @@ class FacturaProduccionesForm(forms.Form):
     cliente1 = forms.ModelChoiceField(label='Cliente',
                                       queryset=Cliente.objects.filter(externo=False).order_by('nombre'),
                                       widget=forms.Select(attrs={'class': 'required'}))
-    #    cliente1= forms.ModelChoiceField(Cliente.objects.filter(externo=True).order_by('nombre'),widget=forms.Select(attrs={'class': 'required'}))
-    # chapa = forms.CharField(max_length=10, widget=forms.TextInput(attrs={'class': 'required'}))
-    # licencia = forms.CharField(max_length=10, widget=forms.TextInput(attrs={'class': 'required'}))
-    # transportador = forms.ModelChoiceField(label='Recibe', queryset=Transpotador.objects.all(),
-    #                                        widget=forms.Select(attrs={'class': 'required', 'disabled': 'disabled'}))
     observaciones = forms.CharField(required=False, widget=forms.Textarea(attrs={'cols': 80, 'rows': 20, 'value': ''}))
 
     def __init__(self, *args, **kwargs):
         super(FacturaProduccionesForm, self).__init__(*args, **kwargs)
 
-        # if len(args) > 0:
-        #     self.fields["transportador"] = forms.ModelChoiceField(
-        #         queryset=Transpotador.objects.select_related().filter(activo=True, contrato__cerrado=False,
-        #                                                               contrato__clientecontrato__cliente=Cliente.objects.get(
-        #                                                                   id=args[0]['cliente1'])),
-        #         widget=forms.Select(attrs={'class': 'required'}))
-
         if len(kwargs) > 0 and kwargs['initial'].has_key('cliente1'):
             cliente = kwargs['initial']['cliente1']
-            # self.fields["transportador"] = forms.ModelChoiceField(
-            #     queryset=Transpotador.objects.select_related().filter(activo=True, contrato__cerrado=False,
-            #                                                           contrato__clientecontrato__cliente=Cliente.objects.get(
-            #                                                               id=cliente.id)),
-            #     widget=forms.Select(attrs={'class': 'required'}))
 
 
 class FacturaProduccionesForm2(forms.Form):
@@ -780,9 +762,31 @@ class DetalleFacturaProdAlterForm2(forms.Form):
         initial=0.00
     )
 
-    # def __init__(self, *args, **kwargs):
-    #     super(DetalleFacturaProdAlterForm, self).__init__(*args, **kwargs)
-    #
-    #     if len(kwargs) > 0 and kwargs['initial'].has_key('cantidad'):
-    #         self.fields["producto"].widget.attrs= {"disabled": "disabled"}
-    #         self.fields["producto"].required = False
+
+class FacturaProduccionesPartForm(forms.Form):
+    fecha = forms.DateField(required=True, widget=forms.DateInput(
+        attrs={'class': 'validate date', 'value': Fechacierre.objects.get(almacen='cm').fechaminima(),
+               'readonly': True}))
+    ci = forms.CharField(label='Carné de Identidad',
+                         widget=forms.TextInput(attrs={'class': 'digits required', 'maxlength': 11, 'minlength': 11}))
+    nombre = forms.CharField(label='Nombre',
+                         widget=forms.TextInput(attrs={'class': 'required', 'maxlength': 50, 'minlength': 5}))
+    recargo = forms.DecimalField(label='% Recargo', widget=forms.TextInput(
+        attrs={'class': 'required number', 'max_digits': 7, 'decimal_places': 2, 'value': 0.0}))
+    observaciones = forms.CharField(required=False, widget=forms.Textarea(attrs={'cols': 80, 'rows': 20, 'value': ''}))
+
+    def __init__(self, *args, **kwargs):
+        super(FacturaProduccionesPartForm, self).__init__(*args, **kwargs)
+        # if len(kwargs) > 0:
+        #     if  kwargs['initial'].has_key('ci')
+        # if len(args) > 0:
+        #     self.fields["nombre"] = forms.ModelChoiceField(
+        #         queryset=RecepcionParticular.objects.filter(ci=args[0]['ci']).distinct('nombre').order_by('nombre'),
+        #         widget=forms.Select(attrs={'class': 'required'}))
+        #
+        # if len(kwargs) > 0 and kwargs['initial'].has_key('ci'):
+        #     cii = kwargs['initial']['ci']
+        #     self.fields["nombre"] = forms.ModelChoiceField(
+        #         queryset=RecepcionParticular.objects.filter(ci=cii).distinct('nombre').order_by('nombre'),
+        #         widget=forms.Select(attrs={'class': 'required'}))
+

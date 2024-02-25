@@ -1,0 +1,39 @@
+{% extends "form/form_edit.html" %}
+
+{% block js_code %}
+ 
+  $(function(){
+    var pickerOpts = {
+            dateFormat:"dd/mm/yy",
+            changeMonth: true,
+            changeYear: true,
+            minDate: '{{ fecha_minima }}',
+            maxDate: '{{ fecha_maxima }}'
+     };
+        $(".formulario").validate();
+        $(".date").datepicker(pickerOpts);
+    });
+ 
+   function confirm(message, callback) {
+    $('#confirm').modal({
+        closeHTML: "<a href='#' title='Close' class='modal-close'>x</a>",
+        position: ["20%",],
+        overlayId: 'confirm-overlay',
+        containerId: 'confirm-container', 
+        onShow: function (dialog) {
+            $('.message', dialog.data[0]).append(message);
+
+            // if the user clicks "yes"
+            $('.yes', dialog.data[0]).click(function () {
+                // call the callback
+                if ($.isFunction(callback)) {
+                    callback.apply();
+                }
+                // close the dialog
+                $.modal.close();
+            });
+        }
+    });
+};
+    
+{% endblock %}

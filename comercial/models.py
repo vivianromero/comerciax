@@ -103,7 +103,10 @@ class FacturasParticular(models.Model):
     class Meta:
         ordering = ['factura_nro']
         permissions = (("factura","factura"),)
-    
+
+    def format_recargo(self):
+        return '{:20,.2f}'.format(self.recargo)
+
     def get_importe(self,*deci):
         
         importes=DetalleFacturaPart.objects.filter(factura=self.doc_factura).aggregate(Sum('precio_particular'))
@@ -616,6 +619,111 @@ class FacturasProdAlter(models.Model):
 class DetalleFacturaProdAlter(models.Model):
     id_detalle = models.CharField(max_length=40, primary_key=True, unique=True)
     factura = models.ForeignKey(FacturasProdAlter)
+    produccionalter = models.ForeignKey(ProdAlter, on_delete=models.PROTECT)
+    cantidad = models.DecimalField(max_digits=7, decimal_places=2, default=0.0)
+    precio_mn = models.DecimalField(max_digits=18, decimal_places=2, default=0.0)
+    importe_mn = models.DecimalField(max_digits=18, decimal_places=2, default=0.0)
+
+    def format_precio_mn(self):
+        return '{:20,.2f}'.format(self.precio_mn)
+
+    def format_importe_mn(self):
+        return '{:20,.2f}'.format(self.importe_mn)
+
+    def format_cantidad(self):
+        return '{:20,.2f}'.format(self.cantidad)
+
+class FacturasProdAlterPart(models.Model):
+    doc_factura = models.OneToOneField(Doc, primary_key=True, unique=True)
+    factura_nro = models.CharField(max_length=10)
+    cancelada = models.BooleanField(default=False)
+    ci = models.CharField(max_length=11)
+    nombre = models.CharField(max_length=50)
+    confirmada = models.CharField(max_length=45)
+    confirmar = models.BooleanField(default=0)
+    recargo = models.DecimalField(max_digits=7, decimal_places=2, default=0.0)
+
+    def __unicode__(self):
+        return self.factura_nro
+
+    class Meta:
+        ordering = ['confirmar', 'factura_nro']
+        permissions = (("factura", "factura"),)
+
+    def format_recargo(self):
+        return '{:20,.2f}'.format(self.recargo)
+
+    def get_importecup(self, *deci):
+        importes = self.detallefacturaprodalterpart_set.aggregate(Sum('importe_mn'))
+        if len(deci) > 0:
+            if importes['importe_mn__sum'] is None:
+                return 0
+            return importes['importe_mn__sum']
+        a1 = 0.00 if importes['importe_mn__sum'] is None else importes['importe_mn__sum']
+        return '${:20,.2f}'.format(a1)
+
+
+    def get_importetotalcup(self, *deci):
+        importe_total = self.get_importecup(2)
+        if len(deci) > 0:
+            return importe_total
+        return '${:20,.2f}'.format(importe_total)
+
+    def get_confirmada(self):
+        import hashlib
+        pkf = self.pk.__str__()
+
+        if self.confirmada == hashlib.sha1(pkf + 'NO').hexdigest():
+            return 'N'
+        elif self.confirmada == hashlib.sha1(pkf + 'YES').hexdigest():
+            return 'S'
+        else:
+            return 'E'
+
+    def cantidad_producciones(self):
+        return self.detallefacturaprodalterpart_set.count()
+
+    def edad_factura(self):
+        import datetime
+        return (datetime.date.today() - self.doc_factura.fecha_doc).days
+
+    def get_fecha(self):
+        fecha = self.doc_factura.fecha_doc
+        dia = fecha.day
+        mes = fecha.month
+        year = fecha.year
+        dia1 = '0' + str(dia) if len(str(dia)) < 2 else str(dia)
+        mes1 = '0' + str(mes) if len(str(mes)) < 2 else str(mes)
+        return dia1 + "/" + mes1 + "/" + str(year)
+
+    def get_renglones(self):
+        detallesFact = DetalleFacturaProdAlterPart.objects.select_related().filter(factura=self.doc_factura).values('factura',
+                                                                                                       'precio_mn',
+                                                                                                       'produccionalter__codigo',
+                                                                                                       'produccionalter__descripcion', \
+                                                                                                       'produccionalter__um__descripcion') \
+            .annotate(cantidad=Count('produccionalter'))
+
+        return detallesFact.__len__()
+
+    def get_importe_total(self, *recarga):
+        importetotalcup_ = self.get_importe_total_value(recarga)
+        return '$' + '{:20,.2f}'.format(importetotalcup_)
+
+    def get_importe_total_value(self, *recarga):
+        recargo = float(self.recargo)
+        importes = DetalleFacturaProdAlterPart.objects.filter(factura=self.doc_factura).aggregate(Sum('importe_mn'))
+
+        a1 = 0.00 if importes['importe_mn__sum'] is None else importes['importe_mn__sum']
+        a1 = float(a1)
+        val = utils.redondeo((a1 * recargo) / 100, 2)
+        importetotalcup_ = utils.redondeo(a1 + val, 2)
+
+        return importetotalcup_
+
+class DetalleFacturaProdAlterPart(models.Model):
+    id_detalle = models.CharField(max_length=40, primary_key=True, unique=True)
+    factura = models.ForeignKey(FacturasProdAlterPart)
     produccionalter = models.ForeignKey(ProdAlter, on_delete=models.PROTECT)
     cantidad = models.DecimalField(max_digits=7, decimal_places=2, default=0.0)
     precio_mn = models.DecimalField(max_digits=18, decimal_places=2, default=0.0)
