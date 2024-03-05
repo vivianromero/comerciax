@@ -12133,6 +12133,7 @@ def verfacturaproducciones(request, idfactura, haycup, haycuc, cantproducciones)
     empresaobj1 = Empresa.objects.all()
     hay_cup = int(haycup)
     hay_cuc = int(haycuc)
+    es_producciones = True
     for empresaobj in empresaobj1:
         titular_name = empresaobj.nombre
         titular_dir = empresaobj.direccion
@@ -12155,12 +12156,14 @@ def verfacturaproducciones(request, idfactura, haycup, haycuc, cantproducciones)
 
     detallesFact = DetalleFacturaProdAlter.objects.select_related().filter(factura=idfactura).values('factura','precio_mn',
                                                                                                 'produccionalter__codigo',
+                                                                                                'cantidad',
+                                                                                                'importe_mn',
                                                                                                 'produccionalter__descripcion', \
-                                                                                                'produccionalter__um__descripcion') \
-        .annotate(cantidad=Count('produccionalter__descripcion'))
+                                                                                                'produccionalter__um__descripcion')
     for a1 in range(detallesFact.__len__()):
-        detallesFact[a1]['importecup'] = detallesFact[a1]['precio_mn'] * detallesFact[a1]['cantidad']
+        detallesFact[a1]['importecup'] = str(detallesFact[a1]['importe_mn'])
         detallesFact[a1]['precio_mn'] = str(detallesFact[a1]['precio_mn'])
+        detallesFact[a1]['cantidad'] = str(detallesFact[a1]['cantidad'])
 
     cliente = factura.cliente
     fecha_confeccionado = factura.doc_factura.fecha_doc
@@ -12178,12 +12181,6 @@ def verfacturaproducciones(request, idfactura, haycup, haycuc, cantproducciones)
     contrato_cuenta_mn = contrato.contrato.cuenta_mn
     contrato_cuenta_cuc = contrato.contrato.cuenta_usd
     contrato_nro = contrato.contrato.contrato_nro
-
-    # transportador = factura.transportador
-    # transportador_nombre = transportador.nombre
-    # transportador_ci = transportador.ci
-    # transportador_chapa = factura.chapa
-    # transportador_licencia = factura.licencia
 
     cancelada = factura.cancelada
 
@@ -12919,10 +12916,21 @@ def factura_produccionespart_view(request, idfa):
                               context_instance=RequestContext(request))
 
 def verfacturaproduccionespart(request, idfactura, haycup, haycuc, cantproducciones):
-    # empresaobj1 = Empresa.objects.all()
+    empresaobj1 = Empresa.objects.all()
     hay_cup = int(haycup)
     hay_cuc = int(haycuc)
-
+    es_producciones = True
+    for empresaobj in empresaobj1:
+        titular_name = empresaobj.nombre
+        titular_dir = empresaobj.direccion
+        titular_codigo = empresaobj.codigo
+        titular_email = empresaobj.email
+        titular_phone = empresaobj.telefono
+        titular_fax = empresaobj.fax
+        titular_cuenta_mn = empresaobj.cuenta_mn
+        titular_cuenta_cuc = empresaobj.cuenta_usd
+        titular_sucursal_mn = empresaobj.sucursal_mn
+        titular_sucursal_cuc = empresaobj.sucursal_usd
     factura = FacturasProdAlterPart.objects.select_related().get(doc_factura=idfactura)
     pk_user = User.objects.get(pk=request.user.id)
     # vendedor = pk_user.first_name + " " + pk_user.last_name
@@ -12931,14 +12939,20 @@ def verfacturaproduccionespart(request, idfactura, haycup, haycuc, cantproduccio
     operador_ = User.objects.get(pk=user_doc.id)
     confeccionado = operador_.first_name + " " + operador_.last_name
 
+    cliente_codigo = factura.ci
+    cliente_nombre = factura.nombre
+
     detallesFact = DetalleFacturaProdAlterPart.objects.select_related().filter(factura=idfactura).values('factura','precio_mn',
                                                                                                 'produccionalter__codigo',
-                                                                                                'produccionalter__descripcion', \
-                                                                                                'produccionalter__um__descripcion') \
-        .annotate(cantidad=Count('produccionalter__descripcion'))
+                                                                                                'cantidad',
+                                                                                                'importe_mn',
+                                                                                                'produccionalter__descripcion',
+                                                                                                'produccionalter__um__descripcion')
     for a1 in range(detallesFact.__len__()):
-        detallesFact[a1]['importecup'] = detallesFact[a1]['precio_mn'] * detallesFact[a1]['cantidad']
+
+        detallesFact[a1]['importecup'] = str(detallesFact[a1]['importe_mn'])
         detallesFact[a1]['precio_mn'] = str(detallesFact[a1]['precio_mn'])
+        detallesFact[a1]['cantidad'] = str(detallesFact[a1]['cantidad'])
 
     nombre = factura.nombre
     ci = factura.ci
@@ -12956,6 +12970,7 @@ def verfacturaproduccionespart(request, idfactura, haycup, haycuc, cantproduccio
         val = utils.redondeo((importe_ * recargo)/100, 2)
         importetotalcup_ = utils.redondeo(importe_ + val,2)
         importetotalcup_ = '$' + '{:20,.2f}'.format(importetotalcup_)
+        recargo = str(float(factura.recargo))
 
     return render_to_response("report/factura.html", locals(), context_instance=RequestContext(request))
 

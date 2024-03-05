@@ -197,7 +197,11 @@
             	 <th style="width:2%;">C&oacute;digo</th>
                  <th style="width:20%;">Descripci&oacute;n</th>
                  <th style="width:1%;">UM</th>
-                 <th style="width:1%;">Cant.</th>
+                 {% if es_producciones or es_servicios %}
+                    <th style="width:1%; " class="decimal">Cant.</th>
+                 {% else %}
+                     <th style="width:1%; " >Cant.</th>
+                 {% endif %}
                  </tr>
                  <tbody>
                  {% if es_servicios %}
@@ -206,7 +210,16 @@
                         <td>{{ detalleFact.servicio__codigo }}11</td>
                         <td>{{ detalleFact.servicio__descripcion }}</td>
                         <td>{{ detalleFact.servicio__um__descripcion }}</td>
-                        <td>{{ detalleFact.cantidad }}</td>
+                        <td class="decimal">{{ detalleFact.cantidad }}</td>
+                        </tr>
+                     {% endfor %}
+                 {% elif es_producciones %}
+                    {% for detalleFact in detallesFact %}
+                       <tr>
+                        <td>{{ detalleFact.produccionalter__codigo }}11</td>
+                        <td>{{ detalleFact.produccionalter__descripcion }}</td>
+                        <td>{{ detalleFact.produccionalter__um__descripcion }}</td>
+                        <td class="decimal">{{ detalleFact.cantidad }}</td>
                         </tr>
                      {% endfor %}
                  {% else %}
@@ -215,7 +228,7 @@
                         <td>{{ detalleFact.casco__producto_salida__codigo }}22</td>
                         <td>{{ detalleFact.casco__producto_salida__descripcion }}</td>
                         <td>{{ detalleFact.casco__producto_salida__um__descripcion }}</td>
-                        <td>{{ detalleFact.cantidad }}</td>
+                        <td >{{ detalleFact.cantidad }}</td>
                         </tr>
                      {% endfor %}
                  {% endif %}
@@ -243,25 +256,23 @@
 	                        <td>{{ detalleFact.casco__producto_salida__codigo }}</td>
 	                        <td>{{ detalleFact.casco__producto_salida__descripcion }}</td>
 	                        <td>{{ detalleFact.casco__producto_salida__um__descripcion }}</td>
-	                        <td>{{ detalleFact.cantidad }}</td>
+	                        <td class="decimal">{{ detalleFact.cantidad }}</td>
 	                        </tr>
 	                     {% endfor %}
 	                   {% endif %}
-
-                     
-                  </tbody>           	
+                  </tbody>
             </table>       
             </div>
-            <div id="tabla2" style="width: 25%;float: left;">
-            <table cellspacing="0" cellpadding="0" border="0" id="example" class="display">
-            	 <tr> 
+            <div id="tabla2" style="width: 25%;float: left; display: flex; margin:auto;" >
+
+            <table cellspacing="0" cellpadding="0" border="0" id="example" class="display" >
+            	 <tr>
             	  {% if hay_cup == 1 %}
-            	  	<th></th>
-                     <th  style="border-bottom:1px solid; text-align:center; ">CUP</th>
+
+                     <th  COLSPAN=2 style="border-bottom:1px solid; text-align:center;">CUP</th>
                   {% endif %}
                      {% if hay_cuc == 1 %}
-                     <th></th>
-                     <th  style="border-bottom:1px solid; text-align: center; ">MLC</th>
+                     <th  COLSPAN=2 style="border-bottom:1px solid; text-align: center; ">MLC</th>
                      {% endif %}
                      </tr>
                      <tr>
@@ -269,30 +280,30 @@
                             <th class="thdecimal">Precio</th>
                             <th class="thdecimal">Importe</th>
                             {% endif %}
-                            
+
                             {% if hay_cuc == 1 %}
                             <th class="thdecimal">Precio</th>
-                            <th class="thdecimal">Importe</th>   
-                            {% endif %}  
+                            <th class="thdecimal">Importe</th>
+                            {% endif %}
                      </tr>
                  <tbody>
                       {% for detalle in detallesFact %}
-                       <tr>                      
+                       <tr>
                         {% if hay_cup == 1 %}
                         <td class="decimal">{{ detalle.precio_mn }}</td>
                         <td class="decimal">{{ detalle.importecup }}</td>
                         {% endif %}
-                           
+
                         {% if hay_cuc == 1 %}
                         <td class="decimal">{{ detalle.precio_cuc }}</td>
                         <td class="decimal">{{ detalle.importecuc }}</td>
                         {% endif %}
-                       </tr> 
+                       </tr>
                     {% endfor %}
-                    
+
                      <tr class="no-border">
                             <th class="tfootdecimal">Total Serv.</th>
-                            
+
                             {% if hay_cup == 1 %}
                             <th class="borde-sup tfootdecimal">{{ importecup }}</th>
 
@@ -316,19 +327,19 @@
 
                     {% if hay_cup == 1 and hay_venta == 1 %}
 	                    {% for detalle in detallesFact_venta %}
-	                       <tr>                      
+	                       <tr>
 	                        <td class="decimal">{{ detalle.precio_casco }}</td>
 	                        <td class="decimal">{{ detalle.importecup }}</td>
 	                       </tr>
 	                    {% endfor %}
                     {% endif %}
-                  </tbody>    
+                  </tbody>
                   <tfoot>
                        {% if hay_cup == 1 and hay_venta == 1%}
-                        <tr class="no-border">                            
+                        <tr class="no-border">
                             <th class="tfootdecimal">Total Venta</th>
                             {% if hay_cup == 1 %}
-                            <th class="borde-sup tfootdecimal">{{ importecup_venta }}</th>                            
+                            <th class="borde-sup tfootdecimal">{{ importecup_venta }}</th>
                             {% endif %}
                             {% if hay_cup == 1 and hay_cuc == 1 %}
                             <th></th>
@@ -338,11 +349,11 @@
                             {% endif %}
                        {% endif %}
                        </tr>
-                        
-                        <tr class="no-border">                            
+
+                        <tr class="no-border">
                             <th >&nbsp;</th>
                             {% if hay_cup == 1 %}
-                            <th >&nbsp;</th>                            
+                            <th >&nbsp;</th>
                             {% endif %}
                             {% if hay_cup == 1 and hay_cuc == 1 %}
                             <th></th>
@@ -352,7 +363,7 @@
                             {% endif %}
                         </tr>
 
-                        <tr class="no-border">                            
+                        <tr class="no-border">
                             <th class="tfootdecimal">A Pagar</th>
                             {% if hay_cup == 1 %}
                               {% if recargo %}
@@ -368,13 +379,13 @@
                             <th class="tfootdecimal" style="width:2%;font-weight:bold;border-bottom: 1px solid;border-top: 1px solid ">{{ importetotalcuc }}</th>
                             {% endif %}
                         </tr>
-                        
+
                         </tr>
-                    
-                    </tfoot>       	
-            
-            </table> 
-                  
+
+                    </tfoot>
+
+            </table>
+
             </div>
             
             
