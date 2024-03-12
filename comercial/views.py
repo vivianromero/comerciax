@@ -8017,9 +8017,11 @@ def factcliente(request):
                 return render_to_response("comercial/reporteindex.html",{'form':form,'title':titulo_form, 'form_name':nombre_form,'form_description':descripcion_form,
                                                                 'controlador':controlador_form,'accion':accion_form,'error2':mesg,'email':1},context_instance = RequestContext(request))
             else:
-                sumas = DetalleFactura.objects.filter(factura__confirmar=True, factura__doc_factura__fecha_doc__gte=desde,
-                                              factura__doc_factura__fecha_doc__lte=hasta,
-                                              factura__cancelada=False).aggregate(Sum('precio_mn'), Sum('precio_cuc'), Sum('precio_casco'))
+                ids = [x.doc_factura.id_doc for x in resultado]
+                sumas = DetalleFactura.objects.filter(factura__doc_factura__id_doc__in=ids).aggregate(Sum('precio_mn'),
+                                                                                          Sum('precio_cuc'),
+                                                                                          Sum('precio_casco'))
+
                 total_cuc = '$'+'{:20,.2f}'.format(sumas['precio_cuc__sum'])
                 total_mn = '$'+'{:20,.2f}'.format(sumas['precio_mn__sum']+sumas['precio_casco__sum'])
 
@@ -13500,3 +13502,116 @@ def factura_produccionespart_cancelar(request, idfa):
                                    'error2': l, 'cantcascos': '4'}, context_instance=RequestContext(request))
     else:
         transaction.commit()
+
+@login_required
+def prodaltfacturas(request):
+    nombre_form = 'Reportes'
+    descripcion_form = 'Registro de Facturas de Prod. Alernativas'
+    titulo_form = 'Registro de Facturas de  Prod. Alernativas'
+    controlador_form = 'Reportes'
+    accion_form = '/comerciax/comercial/prodaltfacturas/reporte'
+    mesg = []
+
+    if request.method == 'POST':
+        form = Rep_RegFacturasProdAlter(request.POST)
+
+        if form.is_valid():
+            desde = form.cleaned_data['fecha_desde']
+            hasta = form.cleaned_data['fecha_hasta']
+            particular = form.cleaned_data['particular']
+            filtro = []
+            queryset = []
+            tit = 'Facturas de Prod. Alternativas emitidas entre el ' if not particular else 'Facturas de Prod. Alternativas a Particulares emitidas entre el '
+            filtro.append(
+              tit   + desde.strftime("%d/%m/%Y") + ' y el ' + hasta.strftime("%d/%m/%Y"))
+            resultado = FacturasProdAlter.objects.select_related().filter(doc_factura__fecha_doc__gte=desde,
+                                                                 doc_factura__fecha_doc__lte=hasta,
+                                                                 confirmar=True).order_by('factura_nro') if not particular else FacturasProdAlterPart.objects.select_related().filter(doc_factura__fecha_doc__gte=desde,
+                                                                 doc_factura__fecha_doc__lte=hasta,
+                                                                 confirmar=True).order_by('factura_nro')
+
+
+            if resultado.__len__() == 0:
+                mesg = mesg + ['No existe información para mostrar']
+                return render_to_response("comercial/reporteindex.html",
+                                          {'form': form, 'title': titulo_form, 'form_name': nombre_form,
+                                           'form_description': descripcion_form,
+                                           'controlador': controlador_form, 'accion': accion_form, 'error2': mesg},
+                                          context_instance=RequestContext(request))
+            else:
+                total_importecup1 = 0
+                total_cascocliente = 0
+                for k in range(resultado.__len__()):
+                    if resultado[k].get_confirmada() == 'S':
+                        val = Decimal('0.00') if resultado[k].cancelada else resultado[k].get_importetotalcup(1)
+                        queryset.append({'nombre': resultado[k].cliente.nombre if not particular else  resultado[k].nombre,
+                                         'tipo': 'Clientes' if not particular else 'Particular',
+                                         'codigo': resultado[k].cliente.codigo if not particular else resultado[k].ci,
+                                         'factura_nro': str(resultado[k].factura_nro),
+                                         'fecha_doc': resultado[k].get_fecha(),
+                                         'cascos': resultado[k].cantidad_producciones() if not resultado[k].cancelada else 0,
+                                         'importetotalcup': val,
+                                         'cancelada': 'Cancelada' if resultado[k].cancelada == True else ''
+                                         })
+                    if resultado[k].cancelada == False:
+                        total_cascocliente += resultado[k].cantidad_producciones()
+                        total_importecup1 += resultado[k].get_importetotalcup(1)
+
+                valor_cliente = total_importecup1
+                total_importecup3 = 0
+
+                total_cup = float(total_importecup1) + float(total_importecup3)
+                total_cascototal = total_cascocliente
+
+                total_cascototal = '{:20,.0f}'.format(total_cascototal)
+                total_cascocliente = '{:20,.0f}'.format(total_cascocliente)
+
+                total_importecup1 = 0 if total_importecup1 == 0 else '{:20,.2f}'.format(total_importecup1)
+                total_importecup3 = 0 if total_importecup3 == 0 else '{:20,.2f}'.format(total_importecup3)
+                encabeza = "Registro de Facturas de Prod. Alternativas" if not particular else "Registro de Facturas de Prod. Alternativas a Particulares"
+                if not request.POST.__contains__('submit1'):
+                    return render_to_response("report/registro_facturas_prodalter.html",
+                                              {'filtro': filtro, 'fecha_hoy': fecha_hoy(), \
+                                               'resultado': resultado, \
+                                               'encabeza': encabeza, \
+                                               'particular': particular, \
+                                               'total_importecup1': total_importecup1,
+                                               'total_importecup3': total_importecup3, \
+                                               'total_cup': '{:20,.2f}'.format(total_cup),
+                                               'valor_cliente': valor_cliente, \
+                                               'total_cascototal': total_cascototal, \
+                                               'total_cascocliente': total_cascocliente, \
+                                               'error2': mesg}, context_instance=RequestContext(request))
+
+                else:
+                    f = "Registro de Facturas de Prod Alternativas.pdf" if not particular else "Registro de Facturas de Prod Alternativas a Particulares.pdf"
+                    pdf_file_name = os.path.join(comerciax.settings.ADMIN_MEDIA_PDF, )
+                    if report_class.Reportes.GenerarRep(report_class.Reportes(), queryset, "registro_fac_serv",
+                                                        pdf_file_name, filtro) == 0:
+                        p = 'Debe cerrar el documento Registro de Facturas de Prod Alternativas.pdf' if not particular else 'Debe cerrar el documento Registro de Facturas de Prod Alternativas a Particulares.pdf'
+                        mesg = mesg + [p]
+                        return render_to_response("comercial/reporteindex.html",
+                                                  {'filtro': filtro, 'resultado': resultado, 'form': form,
+                                                   'title': titulo_form, 'form_name': nombre_form,
+                                                   'form_description': descripcion_form,
+                                                   'controlador': controlador_form, 'accion': accion_form,
+                                                   'error2': mesg}, context_instance=RequestContext(request))
+                    else:
+                        input = PdfFileReader(file(pdf_file_name, "rb"))
+                        output = PdfFileWriter()
+                        for page in input.pages:
+                            output.addPage(page)
+                        buffer = StringIO.StringIO()
+                        output.write(buffer)
+                        response = HttpResponse(mimetype='application/pdf')
+                        response['Content-Disposition'] = 'attachment; filename=%s' % (pdf_file_name)
+                        response.write(buffer.getvalue())
+                        return response
+
+    form = Rep_RegFacturasProdAlter()
+
+    return render_to_response("comercial/reporteindex.html",
+                              {'form': form, 'title': titulo_form, 'form_name': nombre_form,
+                               'form_description': descripcion_form,
+                               'controlador': controlador_form, 'accion': accion_form, 'error2': mesg},
+                              context_instance=RequestContext(request))
