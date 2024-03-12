@@ -790,3 +790,10 @@ class FacturaProduccionesPartForm(forms.Form):
         #         queryset=RecepcionParticular.objects.filter(ci=cii).distinct('nombre').order_by('nombre'),
         #         widget=forms.Select(attrs={'class': 'required'}))
 
+
+class Rep_RegFacturasProdAlter(forms.Form):
+    particular = forms.BooleanField(required=False)
+    fecha_desde = forms.DateField(label='Emitida desde', required=True, widget=forms.DateInput(
+        attrs={'class': 'validate date', 'value': fecha_hoy(), 'readonly': True}))
+    fecha_hasta = forms.DateField(label='Emitida hasta', required=True, widget=forms.DateInput(
+        attrs={'class': 'validate date', 'value': fecha_hoy(), 'readonly': True}))

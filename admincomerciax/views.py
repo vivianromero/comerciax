@@ -3681,7 +3681,7 @@ def addproducciones(request):
                 if request.POST.__contains__('submit1'):
                     return HttpResponseRedirect('/comerciax/admincom/producciones/view/' + myproducciones.id.__str__())
                 else:
-                    form = FProducciones(request.POST)
+                    form = FProducciones()
             except Exception, e:
                 transaction.rollback()
                 exc_info = e.__str__()  # sys.exc_info()[:1]
