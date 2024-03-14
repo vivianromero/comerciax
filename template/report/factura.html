@@ -434,33 +434,38 @@
             </div>
             <div class="clear"></div>
         </div>
-        <div id="foot_comprador" class="row">
-               <div class="comprador bloque">
-              <div class="mon-cliente2">
-                <ul>
-                    <li><span class="label">Trnasportador:</span> _____________________</li>
-                    <li><span class="label">Carn&eacute; I.:</span> _____________________</li>
-                </ul>    
-              </div>
-            </div>
-            <div class="comprador bloque">
-              <div class="mon-cliente2">
-                <ul>
-                    <li><span class="label">Licencia:</span> {{ factura.licencia }}</li>
-                    <li><span class="label">Chapa:</span> {{ transportador_chapa }}</li>
-                </ul>    
-              </div>
-            </div>        
-            <div class="comprador bloque">
-              <div class="mon-cliente2">
-                <ul>
-                    <li><span class="label">&nbsp;</span></li>
-                    <li><span class="label">Firma:</span> _______________________</li>
-                </ul>    
-              </div>
-            </div>
+            {% if not produccionalter %}
+            <div id="foot_comprador" class="row">
+                   <div class="comprador bloque">
+                  <div class="mon-cliente2">
+                    <ul>
+                        <li><span class="label">Transportador:</span> _____________________</li>
+                        <li><span class="label">Carn&eacute; I.:</span> _____________________</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="comprador bloque">
+                  <div class="mon-cliente2">
+                    <ul>
+                        <li><span class="label">Licencia:</span> {{ factura.licencia }}</li>
+                        <li><span class="label">Chapa:</span> {{ transportador_chapa }}</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="comprador bloque">
+                  <div class="mon-cliente2">
+                    <ul>
+                        <li><span class="label">&nbsp;</span></li>
+                        <li><span class="label">Firma:</span> _______________________</li>
+                    </ul>
+                  </div>
+                </div>
+
           <div class="clear"></div>
       </div>
+            {% endif %}
       <div id="foot_recibido" class="row">
                <div class="comprador bloque">
               <div class="mon-cliente2">

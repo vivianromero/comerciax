@@ -4058,7 +4058,7 @@ def verfacturapart(request,idfactura,haycup,haycuc,cantcascos):
         importetotalcup_ = utils.redondeo(importe_ + val,2)
         importetotalcup_ = '$' + '{:20,.2f}'.format(importetotalcup_)
 
-
+    produccionalter = True
     return render_to_response("report/factura.html",locals(),context_instance = RequestContext(request))
 
 def obtener_particular(request, idcl):
@@ -11967,14 +11967,14 @@ def get_fact_producciones_list(request):
 
 @login_required
 def factura_producciones_index(request):
-    if not request.user.has_perm('comercial.facturasprodalter'):
+    if not request.user.has_perm('comercial.factura'):
         return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
     return render_to_response('comercial/facturaproduccionesindex.html', locals(), context_instance=RequestContext(request))
 
 @login_required
 @transaction.commit_on_success()
 def factura_producciones_add(request):
-    if not request.user.has_perm('comercial.facturasprodalter'):
+    if not request.user.has_perm('comercial.factura'):
         return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
 
     nombre_form = 'Producciones Alternativas'
@@ -12075,7 +12075,7 @@ def factura_producciones_add(request):
 
 @login_required
 def factura_producciones_view(request, idfa):
-    if not request.user.has_perm('comercial.facturasprodalter'):
+    if not request.user.has_perm('comercial.factura'):
         return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
 
     l = []
@@ -12189,14 +12189,17 @@ def verfacturaproducciones(request, idfactura, haycup, haycuc, cantproducciones)
     importetotalcup = factura.get_importetotalcup()
     importecup = factura.get_importecup()
 
+    produccionalter = True
+
     observaciones = factura.doc_factura.observaciones
+    vendedor = pk_user.first_name + " " + pk_user.last_name
 
     return render_to_response("report/factura.html", locals(), context_instance=RequestContext(request))
 
 @login_required
 @transaction.commit_on_success()
 def factura_producciones_del(request, idfa):
-    if not request.user.has_perm('comercial.facturasprodalter'):
+    if not request.user.has_perm('comercial.factura'):
         return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
 
     l = []
@@ -12261,7 +12264,7 @@ def factura_producciones_del(request, idfa):
 
 @login_required
 def detalleFacturaProduccion_delete(request, idfa, idproduccion):
-    if not request.user.has_perm('comercial.facturasprodalter'):
+    if not request.user.has_perm('comercial.factura'):
         return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
 
     fact = FacturasProdAlter.objects.get(pk=idfa)
@@ -12767,14 +12770,14 @@ def get_fact_produccionespart_list(request):
 
 @login_required
 def factura_produccionespart_index(request):
-    if not request.user.has_perm('comercial.facturasprodalter'):
+    if not request.user.has_perm('comercial.factura'):
         return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
     return render_to_response('comercial/facturaproduccionespartindex.html', locals(), context_instance=RequestContext(request))
 
 @login_required
 @transaction.commit_on_success()
 def factura_produccionespart_add(request):
-    if not request.user.has_perm('comercial.facturasprodalter'):
+    if not request.user.has_perm('comercial.factura'):
         return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
 
     nombre_form = 'Producciones Alternativas Particular'
@@ -12857,7 +12860,7 @@ def factura_produccionespart_add(request):
 
 @login_required
 def factura_produccionespart_view(request, idfa):
-    if not request.user.has_perm('comercial.facturasprodalter'):
+    if not request.user.has_perm('comercial.factura'):
         return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
 
     l = []
@@ -12960,12 +12963,16 @@ def verfacturaproduccionespart(request, idfactura, haycup, haycuc, cantproduccio
     ci = factura.ci
     fecha_confeccionado = factura.doc_factura.fecha_doc
 
+    transportador_nombre = nombre
+    transportador_ci = ci
 
     importetotalcup = factura.get_importetotalcup()
     importecup = factura.get_importecup()
 
     observaciones = factura.doc_factura.observaciones
+    produccionalter = True
 
+    vendedor = pk_user.first_name + " " + pk_user.last_name
     if factura.recargo > 0.0:
         recargo = float(factura.recargo)
         importe_ = float(importetotalcup.replace(' ', '').replace(',', '').replace('$', ''))
@@ -12979,7 +12986,7 @@ def verfacturaproduccionespart(request, idfactura, haycup, haycuc, cantproduccio
 @login_required
 @transaction.commit_on_success()
 def factura_produccionespart_del(request, idfa):
-    if not request.user.has_perm('comercial.facturasprodalter'):
+    if not request.user.has_perm('comercial.factura'):
         return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
 
     l = []
@@ -13262,7 +13269,7 @@ def detalleFacturaProduccionesPart_add(request, idfa):
 
 @login_required
 def detalleFacturaProduccionPart_delete(request, idfa, idproduccion):
-    if not request.user.has_perm('comercial.facturasprodalter'):
+    if not request.user.has_perm('comercial.factura'):
         return render_to_response("denegado.html", locals(), context_instance=RequestContext(request))
 
     fact = FacturasProdAlterPart.objects.get(pk=idfa)
