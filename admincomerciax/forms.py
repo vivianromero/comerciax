@@ -254,6 +254,7 @@ class FProducciones(forms.Form):
     codigo = forms.CharField(label='Código', widget=forms.TextInput(attrs={'class': 'required', 'maxlength': 18}))
     producciones = forms.CharField(label='Prod.Altern.', widget=forms.TextInput(attrs={'class':'required', 'maxlength':50}))
     precio_mn = forms.DecimalField(label='Precio CUP', widget=forms.TextInput(attrs={'class':'required number', 'max_digits':7, 'decimal_places':2}))
+    precio_mn_part = forms.DecimalField(label='Precio Particular', widget=forms.TextInput(attrs={'class':'required number', 'max_digits':7, 'decimal_places':2}))
     unidad_medida = forms.ModelChoiceField(Umedida.objects.all(),widget=forms.Select(attrs={'class': 'required'}))
     activo = forms.BooleanField(initial=True, required=False)
 

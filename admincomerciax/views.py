@@ -3649,7 +3649,7 @@ def get_producciones_list(request):
     querySet = ProdAlter.objects.all().select_related()
     # columnIndexNameMap is required for correct sorting behavior
     columnIndexNameMap = {0: 'id', 1: 'codigo', 2: 'descripcion', 3: 'um',
-                          4: 'precio_mn', 5:'activo'}
+                          4: 'precio_mn', 5: 'precio_mn_part', 6:'activo'}
     # model fields listed in searchableColumns will be used for filtering (Search)
     searchableColumns = ['descripcion', 'codigo']
     # path to template used to generate json
@@ -3673,6 +3673,7 @@ def addproducciones(request):
             myproducciones.descripcion = form.cleaned_data['producciones']
             myproducciones.codigo = form.cleaned_data['codigo']
             myproducciones.precio_mn = form.cleaned_data['precio_mn']
+            myproducciones.precio_mn_part = form.cleaned_data['precio_mn_part']
             myproducciones.um = Umedida.objects.get(pk=form.data['unidad_medida'])
             myproducciones.activo = form.cleaned_data['activo']
             try:
@@ -3712,6 +3713,7 @@ def viewproducciones(request, idproducciones):
                               {'producciones_name': desc,
                                'producciones_id': idproducciones,
                                "preciomn": produccionesobj.precio_mn,
+                               "preciomnpart": produccionesobj.precio_mn_part,
                                "codigo": produccionesobj.codigo,
                                "um": produccionesobj.um.descripcion,
                                "activo": produccionesobj.activo,
@@ -3733,6 +3735,7 @@ def editproducciones(request, idproducciones):
             producciones.descripcion = form.cleaned_data['producciones']
             producciones.codigo = form.cleaned_data['codigo']
             producciones.precio_mn = form.cleaned_data['precio_mn']
+            producciones.precio_mn_part = form.cleaned_data['precio_mn_part']
             producciones.activo = form.cleaned_data['activo']
             producciones.um = um
             try:
@@ -3762,6 +3765,7 @@ def editproducciones(request, idproducciones):
         form = FProducciones(initial={"producciones": produccionesobj.descripcion,
                                       "codigo": produccionesobj.codigo,
                                       "precio_mn": produccionesobj.precio_mn,
+                                      "precio_mn_part": produccionesobj.precio_mn_part,
                                       "unidad_medida": produccionesobj.um.id,
                                       "activo":produccionesobj.activo})
 

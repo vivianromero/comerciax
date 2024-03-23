@@ -10,6 +10,7 @@
     	"{{prod.descripcion}}",
     	"{{prod.um.descripcion}}",
     	"{{prod.precio_mn}}",
+    	"{{prod.precio_mn_part}}",
     	"{{prod.activo|yesno:_("Si,No")}}"
     	
 	]
