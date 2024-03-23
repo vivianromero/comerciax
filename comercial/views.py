@@ -12650,6 +12650,16 @@ def detalleFacturaProducciones_add(request, idfa):
                                            'cancelbtn': cancelbtn_form, 'error2': l},
                                           context_instance=RequestContext(request))
             producto = form.cleaned_data['producto']
+
+            if float(producto.precio_mn) == 0.00:
+                l = ['El precio de este producto es 0.00']
+                return render_to_response('form/form_add.html',
+                                          {'form': form, 'form_name': nombre_form, 'form_description': descripcion_form,
+                                           'accion': accion_form, 'titulo': titulo_form,
+                                           'controlador': controlador_form,
+                                           'cancelbtn': cancelbtn_form, 'error2': l},
+                                          context_instance=RequestContext(request))
+
             detalle = DetalleFacturaProdAlter.objects.filter(factura=idfa, produccionalter=producto)
             if detalle:
                 detalle = DetalleFacturaProdAlter.objects.get(factura=idfa, produccionalter=producto)
@@ -13242,7 +13252,17 @@ def detalleFacturaProduccionesPart_add(request, idfa):
                                            'accion': accion_form, 'titulo': titulo_form, 'controlador': controlador_form,
                                            'cancelbtn': cancelbtn_form, 'error2': l},
                                           context_instance=RequestContext(request))
+
             producto = form.cleaned_data['producto']
+            if float(producto.precio_mn_part) == 0:
+                l = ['El precio de este producto es 0.00']
+                return render_to_response('form/form_add.html',
+                                          {'form': form, 'form_name': nombre_form, 'form_description': descripcion_form,
+                                           'accion': accion_form, 'titulo': titulo_form,
+                                           'controlador': controlador_form,
+                                           'cancelbtn': cancelbtn_form, 'error2': l},
+                                          context_instance=RequestContext(request))
+
             detalle = DetalleFacturaProdAlterPart.objects.filter(factura=idfa, produccionalter=producto)
             if detalle:
                 detalle = DetalleFacturaProdAlterPart.objects.get(factura=idfa, produccionalter=producto)
@@ -13253,7 +13273,7 @@ def detalleFacturaProduccionesPart_add(request, idfa):
                 detalle.id_detalle = uuid4()
                 detalle.cantidad = cantidad
                 detalle.produccionalter = producto
-                detalle.precio_mn = producto.precio_mn
+                detalle.precio_mn = producto.precio_mn_part
                 detalle.importe_mn = utils.redondeo(detalle.cantidad * detalle.precio_mn,2)
                 detalle.factura = fact
             detalle.save()
@@ -13335,8 +13355,8 @@ def detalleFacturaProduccionPart_edit(request, idfa, idproduccion):
             try:
 
                 detalle.cantidad = form.data['cantidad']
-                detalle.precio_mn = prodsave.precio_mn
-                detalle.importe_mn = prodsave.precio_mn * Decimal(form.data['cantidad'])
+                detalle.precio_mn = prodsave.precio_mn_part
+                detalle.importe_mn = prodsave.precio_mn_part * Decimal(form.data['cantidad'])
                 detalle.save()
                 importecup = FacturasProdAlterPart.objects.get(pk=idfa).get_importetotalcup()
                 return factura_produccionespart_view(request, idfa)

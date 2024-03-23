@@ -516,6 +516,7 @@ class ProdAlter(models.Model):
     codigo = models.CharField(max_length=18, unique=True)
     um = models.ForeignKey(Umedida, on_delete=models.PROTECT)
     precio_mn=models.DecimalField(max_digits=18, decimal_places=2)
+    precio_mn_part=models.DecimalField(max_digits=18, decimal_places=2)
     activo = models.BooleanField(default=1)
 
     def __unicode__(self):
