@@ -25,7 +25,7 @@ from django.db.models import Count,Max
 from comerciax import utils
 from django.db import connection
 from collections import OrderedDict
-from django.db.models import Q
+from django.db.models import Q, F
 
 
 from pyPdf import PdfFileReader, PdfFileWriter
@@ -13612,9 +13612,9 @@ def prodaltfacturas(request):
 
                 else:
                     f = "Registro de Facturas de Prod Alternativas.pdf" if not particular else "Registro de Facturas de Prod Alternativas a Particulares.pdf"
-                    pdf_file_name = os.path.join(comerciax.settings.ADMIN_MEDIA_PDF, )
-                    if report_class.Reportes.GenerarRep(report_class.Reportes(), queryset, "registro_fac_serv",
-                                                        pdf_file_name, filtro) == 0:
+                    pdf_file_name = os.path.join(comerciax.settings.ADMIN_MEDIA_PDF, f)
+                    if report_class.Reportes.GenerarRep(report_class.Reportes(), queryset, "registro_fac_prodalt",
+                                                        pdf_file_name, filtro, 1 if particular else 0) == 0:
                         p = 'Debe cerrar el documento Registro de Facturas de Prod Alternativas.pdf' if not particular else 'Debe cerrar el documento Registro de Facturas de Prod Alternativas a Particulares.pdf'
                         mesg = mesg + [p]
                         return render_to_response("comercial/reporteindex.html",
@@ -13636,6 +13636,184 @@ def prodaltfacturas(request):
                         return response
 
     form = Rep_RegFacturasProdAlter()
+
+    return render_to_response("comercial/reporteindex.html",
+                              {'form': form, 'title': titulo_form, 'form_name': nombre_form,
+                               'form_description': descripcion_form,
+                               'controlador': controlador_form, 'accion': accion_form, 'error2': mesg},
+                              context_instance=RequestContext(request))
+
+@login_required
+def ventasprodalt(request):
+    nombre_form = 'Reportes'
+    descripcion_form = 'Reporte de Ventas de Prod. Alernativas'
+    titulo_form = 'Reporte de Ventas de Prod. Alernativas'
+    controlador_form = 'Reportes'
+    accion_form = '/comerciax/comercial/ventasprodalt/reporte'
+    mesg = []
+
+    if request.method == 'POST':
+        form = Rep_VentasProdAlter(request.POST)
+
+        if form.is_valid():
+            desde = form.cleaned_data['fecha_desde']
+            hasta = form.cleaned_data['fecha_hasta']
+            filtro = []
+            queryset = []
+            tit = 'Ventas de Producciones Alternativas realizadas entre el '
+            filtro.append(
+              tit   + desde.strftime("%d/%m/%Y") + ' y el ' + hasta.strftime("%d/%m/%Y"))
+
+            detalles = DetalleFacturaProdAlter.objects.select_related('produccionalter').values('produccionalter__descripcion',
+                                                                                     'produccionalter__codigo',
+                                                                                     'produccionalter__um__descripcion').filter(
+                factura__doc_factura__fecha_doc__gte=desde,
+                factura__doc_factura__fecha_doc__lte=hasta,
+                factura__confirmar=True, factura__cancelada=False).annotate(cant=Sum('cantidad'),
+                                                                            importe=Sum('importe_mn'))
+
+            detalles_part = DetalleFacturaProdAlterPart.objects.select_related('produccionalter').values(
+                'produccionalter__descripcion',
+                'produccionalter__codigo',
+                'produccionalter__um__descripcion').filter(
+                factura__doc_factura__fecha_doc__gte=desde,
+                factura__doc_factura__fecha_doc__lte=hasta,
+                factura__confirmar=True, factura__cancelada=False).annotate(cant=Sum('cantidad'),
+                                                                            importe=Sum('importe_mn'))
+
+            if detalles.__len__() == 0 and detalles_part.__len__() == 0:
+                mesg = mesg + ['No existe información para mostrar']
+                return render_to_response("comercial/reporteindex.html",
+                                          {'form': form, 'title': titulo_form, 'form_name': nombre_form,
+                                           'form_description': descripcion_form,
+                                           'controlador': controlador_form, 'accion': accion_form, 'error2': mesg},
+                                          context_instance=RequestContext(request))
+            else:
+
+                total_importe = 0
+                total_importepart = 0
+                dicc ={}
+                for k in detalles:
+                    codigo = k['produccionalter__codigo']
+                    descripcion = k['produccionalter__descripcion']
+                    um = k['produccionalter__um__descripcion']
+                    importe = float(k['importe'])
+                    importe1 = k['importe']
+                    cantidad = float(k['cant'])
+                    cantidad1 = k['cant']
+                    total_importe += importe
+
+                    dicc[codigo] = {'descripcion': descripcion, 'um':um,
+                                    'cantidad': cantidad,
+                                    'cantidad1': cantidad1,
+                                    'importe': importe,
+                                    'importe1': importe1,
+                                    'cantidadpart': 0.00,
+                                    'cantidadpart1': Decimal('0.00'),
+                                    'importepart': 0.00,
+                                    'importepart1': Decimal('0.00'),
+                                    'ftotal': importe,
+                                    'ftotal1': importe1,
+                                    'fcantidad': cantidad,
+                                    'fcantidad1': cantidad1
+                                    }
+
+                for k in detalles_part:
+                    codigo = k['produccionalter__codigo']
+                    descripcion = k['produccionalter__descripcion']
+                    um = k['produccionalter__um__descripcion']
+                    importe = float(k['importe'])
+                    importe1 = k['importe']
+                    cantidad = float(k['cant'])
+                    cantidad1 = k['cant']
+                    total_importepart += importe
+
+                    if dicc.has_key(codigo):
+                        dicc[codigo]['importepart'] = importe
+                        dicc[codigo]['importepart1'] = importe1
+                        dicc[codigo]['cantidadpart'] = cantidad
+                        dicc[codigo]['cantidadpart1'] = cantidad1
+                        dicc[codigo]['ftotal'] = importe + dicc[codigo]['importe']
+                        dicc[codigo]['fcantidad'] = cantidad + dicc[codigo]['fcantidad']
+                        dicc[codigo]['ftotal1'] = Decimal(str(importe + dicc[codigo]['importe']))
+                        dicc[codigo]['fcantidad1'] =  Decimal(str(cantidad + dicc[codigo]['cantidad']))
+
+                    else:
+                        dicc[codigo] = {
+                                        'descripcion': descripcion, 'um': um,
+                                        'importe': 0.00,
+                                        'importe1': Decimal('0.00'),
+                                        'importepart': importe,
+                                        'importepart1': importe1,
+                                        'cantidad': 0.00,
+                                        'cantidad1': Decimal('0.00'),
+                                        'cantidadpart': cantidad,
+                                        'cantidadpart1': cantidad1,
+                                        'ftotal': importe,
+                                        'fcantidad': cantidad,
+                                        'ftotal1':Decimal(str(importe)),
+                                        'fcantidad1': Decimal(str(cantidad))}
+
+                keys = dicc.keys()
+                for k in keys:
+                    queryset.append({'codigo': k,
+                                     'descripcion': dicc[k]['descripcion'],
+                                     'um': dicc[k]['um'],
+                                     'cantidad': '{:20,.2f}'.format(dicc[k]['cantidad']),
+                                     'cantidad1': dicc[k]['cantidad1'],
+                                     'importe': '$'+'{:20,.2f}'.format(dicc[k]['importe']),
+                                     'importe1': dicc[k]['importe1'],
+                                     'cantidadpart': '{:20,.2f}'.format(dicc[k]['cantidadpart']),
+                                     'cantidadpart1': dicc[k]['cantidadpart1'],
+                                     'importepart': '$'+'{:20,.2f}'.format(dicc[k]['importepart']),
+                                     'importepart1': dicc[k]['importepart1'],
+                                     'ftotal': '$'+'{:20,.2f}'.format(dicc[k]['ftotal']),
+                                     'ftotal1': dicc[k]['ftotal1'],
+                                     'fcantidad': '{:20,.2f}'.format(dicc[k]['fcantidad']),
+                                     'fcantidad1': dicc[k]['fcantidad1']
+                                     })
+                total_total = total_importepart + total_importe
+                total_importepart = '$'+'{:20,.2f}'.format(total_importepart)
+                total_importe= '$'+'{:20,.2f}'.format(total_importe)
+                total_total= '$'+'{:20,.2f}'.format(total_total)
+
+                encabeza = "Venta de Producciones Alternativas"
+                if not request.POST.__contains__('submit1'):
+                    return render_to_response("report/reporte_ventas_prodalter.html",
+                                              {'filtro': filtro, 'fecha_hoy': fecha_hoy(),
+                                               'resultado': queryset,
+                                               'encabeza': encabeza,
+                                               'total_importepart': total_importepart,
+                                               'total_importe': total_importe,
+                                               'total_total': total_total,
+                                               'error2': mesg}, context_instance=RequestContext(request))
+
+                else:
+                    f = "Venta de Producciones Alternativas"
+                    pdf_file_name = os.path.join(comerciax.settings.ADMIN_MEDIA_PDF, f)
+                    if report_class.Reportes.GenerarRep(report_class.Reportes(), queryset, "ventas_prodalt",
+                                                        pdf_file_name, filtro) == 0:
+                        p = 'Debe cerrar el documento Venta de Producciones Alternativas.pdf'
+                        mesg = mesg + [p]
+                        return render_to_response("comercial/reporteindex.html",
+                                                  {'filtro': filtro, 'resultado': queryset, 'form': form,
+                                                   'title': titulo_form, 'form_name': nombre_form,
+                                                   'form_description': descripcion_form,
+                                                   'controlador': controlador_form, 'accion': accion_form,
+                                                   'error2': mesg}, context_instance=RequestContext(request))
+                    else:
+                        input = PdfFileReader(file(pdf_file_name, "rb"))
+                        output = PdfFileWriter()
+                        for page in input.pages:
+                            output.addPage(page)
+                        buffer = StringIO.StringIO()
+                        output.write(buffer)
+                        response = HttpResponse(mimetype='application/pdf')
+                        response['Content-Disposition'] = 'attachment; filename=%s' % (pdf_file_name)
+                        response.write(buffer.getvalue())
+                        return response
+
+    form = Rep_VentasProdAlter()
 
     return render_to_response("comercial/reporteindex.html",
                               {'form': form, 'title': titulo_form, 'form_name': nombre_form,
