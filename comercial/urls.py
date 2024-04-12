@@ -279,6 +279,10 @@ urlpatterns = patterns('comerciax.comercial.views',
     #############################################################
     url(r'^prodaltfacturas', 'prodaltfacturas', name='prodaltfacturas'),
     #############################################################
+    #              REPORTE DE VENTA DE PROD ALTERNATIVAS        #
+    #############################################################
+    url(r'^ventasprodalt', 'ventasprodalt', name='ventasprodalt'),
+    #############################################################
     #              FACTURAS X CLIENTES                          #
     #############################################################   
     url(r'^factcliente', 'factcliente', name='factcliente'), 

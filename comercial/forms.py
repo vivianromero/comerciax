@@ -797,3 +797,9 @@ class Rep_RegFacturasProdAlter(forms.Form):
         attrs={'class': 'validate date', 'value': fecha_hoy(), 'readonly': True}))
     fecha_hasta = forms.DateField(label='Emitida hasta', required=True, widget=forms.DateInput(
         attrs={'class': 'validate date', 'value': fecha_hoy(), 'readonly': True}))
+
+class Rep_VentasProdAlter(forms.Form):
+    fecha_desde = forms.DateField(label='Emitida desde', required=True, widget=forms.DateInput(
+        attrs={'class': 'validate date', 'value': fecha_hoy(), 'readonly': True}))
+    fecha_hasta = forms.DateField(label='Emitida hasta', required=True, widget=forms.DateInput(
+        attrs={'class': 'validate date', 'value': fecha_hoy(), 'readonly': True}))
