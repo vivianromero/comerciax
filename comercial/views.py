@@ -13755,7 +13755,9 @@ def ventasprodalt(request):
                                         'fcantidad1': Decimal(str(cantidad))}
 
                 keys = dicc.keys()
-                for k in keys:
+                sorted_keys = sorted(keys)
+
+                for k in sorted_keys:
                     queryset.append({'codigo': k,
                                      'descripcion': dicc[k]['descripcion'],
                                      'um': dicc[k]['um'],

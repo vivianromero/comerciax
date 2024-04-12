@@ -513,7 +513,7 @@ class Servicio(models.Model):
 class ProdAlter(models.Model):
     id=models.CharField(max_length=40, primary_key=True, unique=True)
     descripcion=models.CharField(max_length=50, unique=True)
-    codigo = models.CharField(max_length=18, unique=True)
+    codigo = models.CharField(max_length=5, unique=True)
     um = models.ForeignKey(Umedida, on_delete=models.PROTECT)
     precio_mn=models.DecimalField(max_digits=18, decimal_places=2)
     precio_mn_part=models.DecimalField(max_digits=18, decimal_places=2)
