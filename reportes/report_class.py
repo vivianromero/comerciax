@@ -1606,15 +1606,15 @@ class Reportes():
                 class band_detail(ReportBand):
                     height = 0.25 * cm
                     elements = [
-                        ObjectValue(expression='codigo', left=0.01 * cm, style={'fontSize': 6}),
-                        ObjectValue(expression='descripcion', width=11 * cm, left=1 * cm, style={'fontSize': 6}),
-                        ObjectValue(expression='um', left=5.6 * cm, style={'fontSize': 6}),
-                        ObjectValue(expression='cantidad1', left=6.8 * cm, width=1 * cm, style={'fontSize': 6, 'alignment': TA_RIGHT}),
-                        ObjectValue(expression='importe1', left=9 * cm, width=1 * cm, style={'fontSize': 6, 'alignment': TA_RIGHT}),
-                        ObjectValue(expression='cantidadpart1', left=11.2 * cm, width=1 * cm, style={'fontSize': 6, 'alignment': TA_RIGHT}),
-                        ObjectValue(expression='importepart1', left=13.4 * cm, width=1 * cm, style={'fontSize': 6, 'alignment': TA_RIGHT}),
-                        ObjectValue(expression='fcantidad1', left=15.6 * cm, width=1 * cm, style={'fontSize': 6, 'alignment': TA_RIGHT}),
-                        ObjectValue(expression='ftotal1', left=17.8 * cm, width=1 * cm, style={'fontSize': 6, 'alignment': TA_RIGHT}),
+                        ObjectValue(expression='codigo', left=0.01 * cm, style={'fontSize': 8}),
+                        ObjectValue(expression='descripcion', width=11 * cm, left=1 * cm, style={'fontSize': 8}),
+                        ObjectValue(expression='um', left=5.6 * cm, style={'fontSize': 8}),
+                        ObjectValue(expression='cantidad1', left=6.8 * cm, width=1 * cm, style={'fontSize': 8, 'alignment': TA_RIGHT}),
+                        ObjectValue(expression='importe1', left=9 * cm, width=1 * cm, style={'fontSize': 8, 'alignment': TA_RIGHT}),
+                        ObjectValue(expression='cantidadpart1', left=11.2 * cm, width=1 * cm, style={'fontSize': 8, 'alignment': TA_RIGHT}),
+                        ObjectValue(expression='importepart1', left=13.4 * cm, width=1 * cm, style={'fontSize': 8, 'alignment': TA_RIGHT}),
+                        ObjectValue(expression='fcantidad1', left=15.6 * cm, width=1 * cm, style={'fontSize': 8, 'alignment': TA_RIGHT}),
+                        ObjectValue(expression='ftotal1', left=17.8 * cm, width=1 * cm, style={'fontSize': 8, 'alignment': TA_RIGHT}),
 
                     ]
 
@@ -1638,13 +1638,18 @@ class Reportes():
                     tope = tope + 0.3 * cm
                     height = tope + 0.5 * cm
 
-                    elements += [Label(text="Código", top=tope, left=0.01 * cm, style={'fontSize': 8}),
-                                 Label(text="Descripción", top=tope, left=1 * cm, style={'fontSize': 8}),
+                    elements += [Label(text="Código", top=tope, left=0 * cm, style={'fontSize': 8}),
+                                 Label(text="Descripción", top=tope, left=1.5 * cm, style={'fontSize': 8}),
                                  Label(text="U.M", top=tope, left=5.6 * cm, style={'fontSize': 8}),
+                                 Label(text="Clientes Estatales", top=tope-7, width=4 * cm ,left=6.8 * cm, style={'fontSize': 8}),
                                  Label(text="Cantidad", top=tope, left=6.8 * cm, style={'fontSize': 8}),
                                  Label(text="Importe", top=tope, left=9 * cm, style={'fontSize': 8}),
+                                 Label(text="Clientes Particulares", top=tope - 7, width=4 * cm, left=11.2 * cm,
+                                       style={'fontSize': 8}),
                                  Label(text="Cantidad", top=tope, left=11.2 * cm, style={'fontSize': 8}),
                                  Label(text="Importe", top=tope, left=13.4 * cm, style={'fontSize': 8}),
+                                 Label(text="Totales por Producto", top=tope - 7, width=4 * cm, left=15.6 * cm,
+                                       style={'fontSize': 8}),
                                  Label(text="Cantidad", top=tope, left=15.6 * cm, style={'fontSize': 8}),
                                  Label(text="Importe", top=tope, left=17.8 * cm, style={'fontSize': 8}),
 
@@ -1657,11 +1662,11 @@ class Reportes():
                         Label(text='Total General:',
                               style={'fontName': 'Helvetica-Bold', 'fontSize': 8, 'alignment': TA_RIGHT}),
                         ObjectValue(expression='sum(importe1)', left=9 * cm, width=1 * cm,
-                                    style={'fontName': 'Helvetica-Bold', 'fontSize': 7, 'alignment': TA_RIGHT}),
+                                    style={'fontName': 'Helvetica-Bold', 'fontSize': 8, 'alignment': TA_RIGHT}),
                         ObjectValue(expression='sum(importepart1)', left=13.4 * cm, width=1 * cm,
-                                    style={'fontName': 'Helvetica-Bold', 'fontSize': 7, 'alignment': TA_RIGHT}),
+                                    style={'fontName': 'Helvetica-Bold', 'fontSize': 8, 'alignment': TA_RIGHT}),
                         ObjectValue(expression='sum(ftotal1)', left=17.8 * cm, width=1 * cm,
-                                    style={'fontName': 'Helvetica-Bold', 'fontSize': 7, 'alignment': TA_RIGHT}),
+                                    style={'fontName': 'Helvetica-Bold', 'fontSize': 8, 'alignment': TA_RIGHT}),
                     ]
 
                 class band_page_footer(ReportBand):
