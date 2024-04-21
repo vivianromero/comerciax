@@ -13464,6 +13464,8 @@ def factura_produccionespart_confirmar(request, idfa):
                                                 factura_nro=nrodoc, confirmar=True)
         return HttpResponseRedirect('/comerciax/comercial/factura_produccionespart/view/' + idfa)
 
+#
+
 @login_required
 @transaction.commit_on_success()
 def factura_produccionespart_cancelar(request, idfa):
@@ -13472,8 +13474,6 @@ def factura_produccionespart_cancelar(request, idfa):
 
     l = []
     fact = FacturasProdAlterPart.objects.get(pk=idfa)
-    filas = DetalleFacturaProdAlterPart.objects.select_related().filter(factura=idfa).order_by(
-        'produccionalter.descripcion')
     pagosfact = 0.0
     if fact.confirmada != hashlib.sha1(fact.pk.__str__() + 'YES').hexdigest() or pagosfact != 0:
         mensa = "No se puede cancelar la factura Nro. " + fact.factura_nro + " porque no está confirmada"
@@ -13488,6 +13488,7 @@ def factura_produccionespart_cancelar(request, idfa):
         precio_CUP = "Precio CUP"
 
         rc_observaciones = fact.doc_factura.observaciones
+        filas = DetalleFacturaProdAlterPart.objects.select_related().filter(factura=idfa).order_by('produccionalter.descripcion')
 
 
         # Verificar si se puede editar. Se puede editar si todos los cascos relacionados con el estado es Casco
@@ -13505,30 +13506,30 @@ def factura_produccionespart_cancelar(request, idfa):
 
         FacturasProdAlterPart.objects.filter(pk=idfa).update(cancelada=True)
         pk_user = User.objects.get(pk=request.user.id)
-        Doc.objects.filter(pk=FacturasProdAlter.objects.get(pk=idfa).doc_factura).update(operador=pk_user)
+        Doc.objects.filter(pk=FacturasProdAlterPart.objects.get(pk=idfa).doc_factura).update(operador=pk_user)
 
         return HttpResponseRedirect('/comerciax/comercial/factura_produccionespart/index')
     except Exception, e:
         transaction.rollback()
         l = ['Error al cancelar factura']
-        fact = FacturasProdAlterPart.objects.select_related().get(pk=idfa)
+        fact = FacturasProdAlter.objects.select_related().get(pk=idfa)
         importecup = fact.get_importetotalcup()
 
         rc_fecha = fact.doc_factura.fecha_doc.strftime("%d/%m/%Y")
-        rc_cliente = fact.nombre
+        rc_cliente = fact.cliente.nombre
         rc_nro = fact.factura_nro
         rc_observaciones = fact.doc_factura.observaciones
 
         precio_CUP = "Precio CUP"
-        return render_to_response('comercial/viewfacturaproduccionespart.html',
+        return render_to_response('comercial/viewfacturaproducciones.html',
                                   {'hay_cup': hay_cup,
                                    'precio_CUP': precio_CUP, 'importecup': importecup,
                                    'rc_nro': rc_nro, 'fecha': rc_fecha, 'cliente': rc_cliente,
-                                   'observaciones': rc_observaciones, 'rc_id': idfa,
-                                   'elementos_detalle': filas,
+                                   'observaciones': rc_observaciones, 'rc_id': idfa, 'elementos_detalle': filas,
                                    'error2': l, 'cantcascos': '4'}, context_instance=RequestContext(request))
     else:
         transaction.commit()
+
 
 @login_required
 def prodaltfacturas(request):
